@@ -1,0 +1,5 @@
+/login        /app/index.html  302
+/app          /app/index.html  302
+/student/*    /app/index.html  302
+/teacher/*    /app/index.html  302
+/admin/*      /app/index.html  302

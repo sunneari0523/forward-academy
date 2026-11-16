@@ -349,6 +349,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 #tttip{position:fixed;z-index:200;display:none;max-width:280px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:10px 12px;font-size:13px;line-height:1.55;color:var(--ink);pointer-events:none}
 #tttip b{font-size:15px;display:block;margin-bottom:2px}#tttip span{color:var(--muted);font-size:12px}#tttip small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px}
 #tttip .tg{display:inline-block;background:var(--butter-soft);color:#7A5600;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;margin-bottom:4px}
+.pwbtn{display:block;margin-top:6px;background:rgba(255,255,255,.1);border:none;color:#C5D3DA;font-size:12px;border-radius:8px;padding:5px 8px;cursor:pointer}.pwbtn:hover{background:rgba(255,255,255,.18);color:#fff}
 .tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
 .trend{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:12px;padding:0 4px}
 .trend>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
@@ -480,6 +481,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:14px}
 .m-top{display:none;align-items:center;justify-content:space-between;margin-bottom:14px}
 .m-top img{height:28px}
 </style>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})});if(window.caches)caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})})}</script>
 </head>
 <body>
 <div id="app"></div>
@@ -1136,10 +1138,10 @@ function staffView(){
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
-    <aside class="side"><img src="logo-mark.png" alt=""><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b></div>
+    <aside class="side"><img src="logo-mark.png" alt=""><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button></div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</nav>
       <button class="out" onclick="logout()">로그아웃 →</button></aside>
-    <main class="main"><div class="m-top"><img src="logo.png" alt=""><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div>${body}</main></div>`;
+    <main class="main"><div class="m-top"><img src="logo.png" alt=""><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="changePw()">🔑</button><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>${body}</main></div>`;
   if(UI.tv==='qa'&&UI.q){const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight}
 }
 function tHome(){
@@ -1933,6 +1935,22 @@ function saveCls(id){const n=$('#ec-n').value.trim();if(!n){toast('반 이름을
 function addTch(){
   modal(`<h3 class="jua">강사 추가</h3><label class="lb">이름</label><input class="inp" id="at-n"><label class="lb">비밀번호</label><input class="inp" id="at-p" value="0000">
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" onclick="const n=$('#at-n').value.trim();if(!n)return;DB.T.push({id:'t'+uid(),name:n,role:'teacher',pw:$('#at-p').value||'0000'});save();closeModal();render();toast('강사를 추가했어요')">추가</button></div>`);
+}
+function changePw(){
+  modal(`<h3 class="jua">🔑 비밀번호 변경</h3><p class="muted" style="font-size:13px">${esc(tch(ME.id).name)} ${isOwner()?'원장님':'선생님'} 계정의 로그인 비밀번호를 바꿔요.</p>
+  <label class="lb">지금 비밀번호</label><input class="inp" type="password" id="pw0" autocomplete="current-password">
+  <label class="lb">새 비밀번호 (4자 이상)</label><input class="inp" type="password" id="pw1" autocomplete="new-password">
+  <label class="lb">새 비밀번호 한 번 더</label><input class="inp" type="password" id="pw2" autocomplete="new-password">
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" onclick="savePw()">바꾸기</button></div>`);
+  setTimeout(()=>{const e=$('#pw0');if(e)e.focus()},50);
+}
+function savePw(){
+  const me=tch(ME.id),a=$('#pw0').value,b=$('#pw1').value,c=$('#pw2').value;
+  if(me.pw!==undefined&&me.pw!==a){toast('지금 비밀번호가 맞지 않아요');$('#pw0').focus();return}
+  if(b.length<4){toast('새 비밀번호는 4자 이상으로 해주세요');$('#pw1').focus();return}
+  if(b!==c){toast('새 비밀번호 두 개가 달라요');$('#pw2').focus();return}
+  if(b==='0000'){toast('0000은 너무 쉬워요. 다른 비밀번호로 해주세요');return}
+  me.pw=b;save();closeModal();toast('비밀번호를 바꿨어요. 다음 로그인부터 새 비밀번호를 쓰세요 🔑');
 }
 function editTch(id){
   const t=tch(id);

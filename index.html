@@ -742,5 +742,7 @@
   (function(){var rn=document.getElementById('rain');for(var i=0;i<40;i++){var e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.animationDelay=(Math.random()*1)+'s';e.style.animationDuration=(.7+Math.random()*.6)+'s';rn.appendChild(e)}})();
   render(false);
 </script>
+<script>(function(){try{if(sessionStorage.getItem('fw-hit'))return;sessionStorage.setItem('fw-hit','1')}catch(e){}
+fetch('https://ltvejlubynybtladghkm.supabase.co/rest/v1/rpc/fw_hit',{method:'POST',headers:{apikey:'sb_publishable_3trcVQfRXg5HONzqdS2jkg_KyWlV73k','Content-Type':'application/json'},body:'{}'}).catch(function(){})})();</script>
 </body>
 </html>

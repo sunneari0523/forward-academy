@@ -346,6 +346,9 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .tt-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}.tt-legend span{display:flex;align-items:center;gap:5px}
 .lg{display:inline-block;width:16px;height:11px;border-radius:3px;background:#DCE8DE;border-left:3px solid var(--sage)}.lg.one{border:1.5px dashed var(--sage);background:#fff}.lg.off{background:#EEE;border-left-color:#B9C0BA}
 .onebox{background:var(--butter-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;color:var(--ink);margin-top:10px}
+#tttip{position:fixed;z-index:200;display:none;max-width:280px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:10px 12px;font-size:13px;line-height:1.55;color:var(--ink);pointer-events:none}
+#tttip b{font-size:15px;display:block;margin-bottom:2px}#tttip span{color:var(--muted);font-size:12px}#tttip small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px}
+#tttip .tg{display:inline-block;background:var(--butter-soft);color:#7A5600;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;margin-bottom:4px}
 .tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
 .trend{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:12px;padding:0 4px}
 .trend>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
@@ -988,7 +991,7 @@ function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_log
    학생 화면
    ========================================================= */
 let UI={};
-function render(){ if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} ME.role==='student'?studentView():staffView(); }
+function render(){ ttTipHide(); if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} ME.role==='student'?studentView():staffView(); }
 function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
 function studentView(){
@@ -1197,7 +1200,7 @@ function ttView(){
   list.forEach(c=>{const di=TDAYS.indexOf(c.day),ri=ROOMS.findIndex(r=>r[0]===c.room);if(di<0||ri<0)return;const a=Math.max(rowOf(toMin(c.start)),3),b=Math.min(rowOf(toMin(c.end)),nSlots+3);if(b<=a)return;
     const t=tch(c.tid)||{name:'-'},col=tcolor(c.tid),n=(c.sids||[]).length;
     const tag=c._off==='cancel'?'휴강':c._off==='move'?'이 주 변경됨':c.kind==='extra'?'보충':c.kind==='move'?'변경':'';
-    cells+=`<div class="tt-blk ${c._off?'off':''} ${c.kind?'one':''}" style="grid-row:${a}/${b};grid-column:${2+di*3+ri};--c:${col}" onclick="editSess('${c.id}')" title="${esc(c.name)} · ${esc(t.name)} · ${c.start}~${c.end} · ${n}명${tag?' · '+tag:''}">${tag?`<i class="tag">${tag}</i>`:''}<b>${esc(c.name)}</b><span>${esc(t.name)}</span><span>${c.start}~${c.end}</span><span>👥 ${n}</span></div>`});
+    cells+=`<div class="tt-blk ${c._off?'off':''} ${c.kind?'one':''}" style="grid-row:${a}/${b};grid-column:${2+di*3+ri};--c:${col}" onclick="editSess('${c.id}')" onmouseenter="ttTip(event,'${c.id}','${ws}')" onmouseleave="ttTipHide()">${tag?`<i class="tag">${tag}</i>`:''}<b>${esc(c.name)}</b><span>${esc(t.name)}</span><span>${c.start}~${c.end}</span><span>👥 ${n}</span></div>`});
   return `<div class="card tt-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><h3 class="sec" style="margin:0">🗓️ ${UI.ttf==='all'?'전체 시간표':esc((tch(UI.ttf)||{}).name||'')+' 선생님 시간표'}</h3>
     <div class="wk-nav"><button onclick="UI.ttw=addD(UI.ttw,-7);render()">‹</button><span>${isThis?'이번 주 · ':addD(ws,7)===wkStart(TODAY)?'지난주 · ':ws===addD(wkStart(TODAY),7)?'다음 주 · ':''}${lbl(wd[0])} ~ ${lbl(wd[6])}</span><button onclick="UI.ttw=addD(UI.ttw,7);render()">›</button></div>${isThis?'':`<button class="btn btn-ghost btn-sm" onclick="UI.ttw=wkStart(TODAY);render()">이번 주로</button>`}
     <div class="chips-sel"><button class="${UI.ttf==='all'?'on':''}" onclick="UI.ttf='all';render()">전체</button>${ts.map(t=>`<button class="${UI.ttf===t.id?'on':''}" onclick="UI.ttf='${t.id}';render()"><i class="tdot" style="background:${tcolor(t.id)}"></i>${esc(t.name)}</button>`).join('')}</div></div>
@@ -1205,6 +1208,20 @@ function ttView(){
   <div class="tt-wrap"><div class="ttg" style="grid-template-rows:28px 22px repeat(${nSlots},20px)">${cells}</div></div>
   <div class="tt-legend"><span><i class="lg"></i>매주 정규 수업</span><span><i class="lg one"></i>이 주만 보충·변경</span><span><i class="lg off"></i>이 주 휴강·옮겨짐</span></div></div>`;
 }
+function ttTip(ev,id,ws){
+  const c=weekSess(ws).find(x=>x.id===id);if(!c)return;const t=tch(c.tid)||{name:'-'},room=ROOMS.find(r=>r[0]===c.room)||['','-'];
+  const st=(c.sids||[]).map(i=>stu(i)).filter(Boolean);
+  const tag=c._off==='cancel'?'🚫 이 주 휴강':c._off==='move'?'🔁 이 주는 다른 시간으로 옮겨짐':c.kind==='extra'?'➕ 이 주만 보충':c.kind==='move'?'🔁 이 주만 변경된 시간':'';
+  let el=document.getElementById('tttip');if(!el){el=document.createElement('div');el.id='tttip';document.body.appendChild(el)}
+  el.style.setProperty('--c',tcolor(c.tid));
+  el.innerHTML=`${tag?`<div class="tg">${tag}</div>`:''}<b>${esc(c.name)}</b><div>🕒 ${WD[c.day]} ${c.start}~${c.end}</div><div>🧑‍🏫 ${esc(t.name)} · 🚪 ${room[1]}</div><div>👥 ${st.length}명${st.length?': '+st.map(x=>esc(x.name)+(x.school?` <span>${esc(x.school)} ${esc(x.grade||'')}</span>`:'')).join(', '):''}</div>${c.memo?`<div>💬 ${esc(c.memo)}</div>`:''}<small>눌러서 수정</small>`;
+  const r=ev.currentTarget.getBoundingClientRect();el.style.display='block';
+  const w=el.offsetWidth,h=el.offsetHeight;let x=r.right+8,y=r.top;
+  if(x+w>innerWidth-8)x=r.left-w-8;if(x<8)x=8;if(y+h>innerHeight-8)y=innerHeight-h-8;if(y<8)y=8;
+  el.style.left=x+'px';el.style.top=y+'px';
+}
+function ttTipHide(){const el=document.getElementById('tttip');if(el)el.style.display='none'}
+document.addEventListener('scroll',ttTipHide,true);
 const timesList=()=>{const t=[];for(let m=11*60;m<=TT_END*60;m+=SLOT)t.push(fromMin(m));return t};
 function editSess(id,day,start,room){
   const ws=UI.ttw||wkStart(TODAY), wd=wkDays(ws);

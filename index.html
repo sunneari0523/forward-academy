@@ -326,6 +326,12 @@
   .eat .catbox{animation:pbump .5s ease 2!important}
   .purr .catbox{animation:pbump .5s ease!important}
   @keyframes pbump{0%,100%{transform:translateX(-50%) scale(1)}40%{transform:translateX(-50%) scale(1.07) rotate(2deg)}}
+.inqf{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
+.inqf h3{margin:0;font-size:18px}.inqf .sm{margin:0;font-size:13px;color:var(--muted,#8a7380)}
+.inqf .r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.inqf input,.inqf textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;background:#FFFDFE}
+.inqf .agree{font-size:12.5px;display:flex;gap:6px;align-items:flex-start;color:var(--muted,#8a7380)}
+.inqf .agree input{width:auto;margin-top:2px}
 </style>
 <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icon-180.png"><meta name="theme-color" content="#D68FA5"><meta name="apple-mobile-web-app-title" content="포워드">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})}).catch(function(){});if(window.caches)caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})})}</script>
@@ -361,7 +367,7 @@
         <h1 class="display">오늘의 공부가<br><span class="hl">내일의 실력</span>이 되도록</h1>
         <p class="lead">아는 척 넘어가지 않아요. 이해할 때까지 설명하고, 통과할 때까지 다시 봅니다. 한 걸음씩, 내 속도로 앞으로 나아가는 영어 공부.</p>
         <div class="hero-btns">
-          <a href="#contact" class="btn btn-navy">무료 상담 신청하기 →</a>
+          <a href="#inqf" class="btn btn-navy">무료 상담 신청하기 →</a>
           <a href="#curriculum" class="btn btn-ghost">커리큘럼 보기</a>
         </div>
       </div>
@@ -604,6 +610,16 @@
         <a href="tel:053-716-0859" class="btn">📞 지금 전화 상담하기</a>
       </div>
       <div class="info rv" style="transition-delay:.1s">
+        <form id="inqf" class="inqf" onsubmit="return sendInq(event)">
+          <h3>📝 온라인 상담 신청</h3>
+          <p class="sm">남겨 주시면 원장님이 직접 연락드려요.</p>
+          <div class="r2"><input name="name" placeholder="학생 이름 *" required maxlength="20"><input name="parent" type="tel" placeholder="학부모 연락처 *" required maxlength="20"></div>
+          <div class="r2"><input name="school" placeholder="학교 (예: 경북예고)" maxlength="30"><input name="grade" placeholder="학년 (예: 중3)" maxlength="15"></div>
+          <textarea name="msg" rows="3" placeholder="궁금한 점이나 원하는 수업 시간을 적어 주세요" maxlength="600"></textarea>
+          <label class="agree"><input type="checkbox" name="ok" required> 상담 연락을 위한 개인정보(이름·연락처) 수집에 동의해요</label>
+          <button class="btn btn-navy" type="submit" style="width:100%;justify-content:center">상담 신청하기</button>
+          <div id="inqdone" class="sm" style="display:none;text-align:center;font-weight:700;color:var(--navy)"></div>
+        </form>
         <div class="info-row"><div class="ic" style="background:var(--navy-soft)">📞</div><div><small>상담 전화</small><b>053-716-0859</b></div></div>
         <div class="info-row"><div class="ic" style="background:var(--sage-soft)">🏫</div><div><small>대상 학교</small><b>경북예고 · 수성구 인근 초·중·고</b></div></div>
         <div class="info-row"><div class="ic" style="background:var(--butter-soft)">📖</div><div><small>과정</small><b>초·중등 내신 · 고등 내신 · 수능</b></div></div>
@@ -744,5 +760,14 @@
 </script>
 <script>(function(){try{if(sessionStorage.getItem('fw-hit'))return;sessionStorage.setItem('fw-hit','1')}catch(e){}
 fetch('https://ltvejlubynybtladghkm.supabase.co/rest/v1/rpc/fw_hit',{method:'POST',headers:{apikey:'sb_publishable_3trcVQfRXg5HONzqdS2jkg_KyWlV73k','Content-Type':'application/json'},body:'{}'}).catch(function(){})})();</script>
+<script>
+function sendInq(e){e.preventDefault();var f=e.target,b=f.querySelector('button[type=submit]'),d={};
+['name','parent','school','grade','msg'].forEach(function(k){d[k]=(f[k].value||'').trim()});
+if((d.parent.match(/[0-9]/g)||[]).length<9){alert('연락처를 다시 확인해 주세요');return false}
+b.disabled=true;b.textContent='보내는 중...';
+fetch('https://ltvejlubynybtladghkm.supabase.co/rest/v1/rpc/fw_inquiry',{method:'POST',headers:{apikey:'sb_publishable_3trcVQfRXg5HONzqdS2jkg_KyWlV73k','Content-Type':'application/json'},body:JSON.stringify({p:d})})
+.then(function(r){if(!r.ok)throw 0;f.reset();b.textContent='신청 완료 ✓';var m=document.getElementById('inqdone');m.style.display='block';m.textContent='상담 신청이 접수됐어요! 곧 연락드릴게요 😊'})
+.catch(function(){b.disabled=false;b.textContent='상담 신청하기';alert('접수가 잠시 안 되고 있어요. 053-716-0859로 전화 주세요!')});return false}
+</script>
 </body>
 </html>

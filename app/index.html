@@ -690,7 +690,7 @@ function risk(sid){
   const ex=DB.E.filter(e=>e.res[sid]).sort((a,b)=>a.date<b.date?1:-1)[0];
   if(ex){const p=examScore(ex,sid).pct;if(p<60)why.push('최근 시험 '+p+'점')}
   const redo=ts.filter(t=>t.status==='redo').length;if(redo>=2)why.push('다시 제출 '+redo+'회');
-  if(ME&&ME.role!=='student'){const pc=pcDays(sid);if(pc===null||pc>=14)why.push(pc===null?'학부모 연락 기록 없음':'학부모 연락 '+pc+'일 전')}
+  if(ME&&ME.role!=='student'&&pcLate(sid))why.push('학부모 연락 '+pcDays(sid)+'일째 없음');
   return {why,lv:why.length>=2?'danger':why.length?'warn':''};
 }
 function riskBadge(sid){const r=risk(sid);return r.lv?`<span class="risk ${r.lv}" title="${esc(r.why.join(' · '))}">⚠️ ${r.lv==='danger'?'위험':'주의'}</span>`:''}
@@ -1286,8 +1286,11 @@ function tPlan(){
 /* ----- 수업 일지 · 학부모 연락 ----- */
 const PCHOW=['📞 통화','💬 카톡','✉️ 문자','🤝 대면'];
 function lastPC(sid){return DB.PC.filter(p=>p.sid===sid).sort((a,b)=>a.date<b.date?1:-1)[0]}
-function pcDays(sid){const s=stu(sid);const p=lastPC(sid);if(p)return diffD(p.date,TODAY);if(s&&s.reg&&diffD(s.reg,TODAY)<14)return diffD(s.reg,TODAY);return null}
-function pcBadge(sid){const d=pcDays(sid),p=lastPC(sid);if(!p&&d!==null)return `<span class="chip c-todo">📞 신규 · 연락 전</span>`;if(d===null)return `<span class="chip c-redo">📞 연락 기록 없음</span>`;return d>=14?`<span class="chip c-redo">📞 ${d}일째 연락 없음</span>`:`<span class="chip c-ok">📞 ${d===0?'오늘':d+'일 전'} 연락</span>`}
+/* 일지·학부모 연락 경고는 이 날짜부터 집계 (첫 주는 적응 기간) */
+const CARE_START='2026-11-23';
+function pcDays(sid){const s=stu(sid),p=lastPC(sid);let base=CARE_START;if(p&&p.date>base)base=p.date;if(s&&s.reg&&s.reg>base)base=s.reg;return Math.max(0,diffD(base,TODAY))}
+const pcLate=sid=>pcDays(sid)>=14;
+function pcBadge(sid){const p=lastPC(sid),d=pcDays(sid);if(pcLate(sid))return `<span class="chip c-redo">📞 ${p?d+'일째 연락 없음':'2주째 연락 기록 없음'}</span>`;return p?`<span class="chip c-ok">📞 ${diffD(p.date,TODAY)===0?'오늘':diffD(p.date,TODAY)+'일 전'} 연락</span>`:`<span class="chip c-todo">📞 연락 기록 전</span>`}
 function autoLog(sid,date){
   const vr=DB.R.filter(r=>r.sid===sid&&r.voca&&r.date===date).map(r=>r.title.replace('단어 · ','')+' '+r.value);
   const ex=DB.E.filter(e=>e.date===date&&e.res&&e.res[sid]).map(e=>e.title+' '+examScore(e,sid).pct+'점');
@@ -1365,16 +1368,18 @@ function occurrences(from,to){
 }
 function hasLog(sid,date){return DB.L.some(l=>l.sid===sid&&l.date===date)}
 function hasHW(sid,date){return DB.tasks.some(t=>t.sid===sid&&(t.made===date||(t.date>date&&t.date<=addD(date,7)&&(!t.made||t.made>=date))))}
-function missingFor(sid){return occurrences(addD(TODAY,-6),TODAY).filter(o=>o.sid===sid&&!hasLog(sid,o.date))}
+const careFrom=()=>{const f=addD(TODAY,-6);return f<CARE_START?CARE_START:f};
+function missingFor(sid){return TODAY<CARE_START?[]:occurrences(careFrom(),TODAY).filter(o=>o.sid===sid&&!hasLog(sid,o.date))}
 function careBoard(){
   UI.cbOpen=UI.cbOpen||{};
-  const occ=occurrences(addD(TODAY,-6),TODAY);
+  const occ=TODAY<CARE_START?[]:occurrences(careFrom(),TODAY);
   const ts=DB.T.filter(t=>occ.some(o=>o.tid===t.id)||DB.S.some(s=>sTid(s)===t.id));
   if(!ts.length)return '';
   const rows=ts.map(t=>{const o=occ.filter(x=>x.tid===t.id),nl=o.filter(x=>!hasLog(x.sid,x.date)),nh=o.filter(x=>!hasHW(x.sid,x.date));
-    const studs=DB.S.filter(s=>sTid(s)===t.id||sessOf(s.id).some(c=>c.tid===t.id)),pc=studs.filter(s=>{const d=pcDays(s.id);return d===null||d>=14});
+    const studs=DB.S.filter(s=>sTid(s)===t.id||sessOf(s.id).some(c=>c.tid===t.id)),pc=studs.filter(s=>pcLate(s.id));
     return {t,o,nl,nh,studs,pc,bad:nl.length+nh.length+pc.length}});
   return `<div class="card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><h3 class="sec" style="margin:0">📋 강사별 학생 관리 현황 <span class="muted" style="font-size:12.5px;font-weight:400">최근 7일 수업 기준 · 모든 선생님이 함께 봐요</span></h3></div>
+  ${TODAY<CARE_START?`<div class="onebox" style="margin-top:8px">🌱 이번 주는 적응 기간이에요. <b>${lbl(CARE_START)}부터</b> 일지·숙제 경고를 집계하고, 학부모 연락 2주 경고는 그날부터 2주 뒤에 떠요. 미리 써두면 그대로 기록돼요.</div>`:''}
   <div class="tbwrap" style="margin-top:10px"><table class="tb"><tr><th>선생님</th><th>수업</th><th>📝 일지 안 씀</th><th>🗓️ 숙제 안 냄</th><th>📞 학부모 연락 2주↑</th><th></th></tr>
   ${rows.map(r=>`<tr class="${r.bad?'':'okrow'}"><td><b style="color:var(--ink)"><i class="tdot" style="background:${tcolor(r.t.id)}"></i>${esc(r.t.name)}</b>${r.t.id===ME.id?' <span class="muted" style="font-size:12px">(나)</span>':''}</td><td>${r.o.length}회</td>
     <td>${r.nl.length?`<b style="color:var(--red)">${r.nl.length}건</b>`:'<span style="color:var(--sage-d)">✓ 다 씀</span>'}</td><td>${r.nh.length?`<b style="color:var(--red)">${r.nh.length}건</b>`:'<span style="color:var(--sage-d)">✓</span>'}</td>
@@ -1383,7 +1388,7 @@ function careBoard(){
     ${UI.cbOpen[r.t.id]?`<tr><td colspan="6" style="background:var(--bg)"><div class="cbdet">
       ${r.nl.map(x=>`<button onclick="UI.tv='plan';UI.pmode=null;UI.ws='${x.sid}';UI.pw=wkStart(TODAY);render();scrollTo(0,0)">📝 ${lbl(x.date)} ${esc(stu(x.sid).name)}${x.cname?' · '+esc(x.cname):''} <em>일지 없음</em></button>`).join('')}
       ${r.nh.map(x=>`<button onclick="UI.tv='plan';UI.pmode=null;UI.ws='${x.sid}';UI.pw=wkStart(TODAY);render();scrollTo(0,0)">🗓️ ${lbl(x.date)} ${esc(stu(x.sid).name)} <em>숙제 없음</em></button>`).join('')}
-      ${r.pc.map(s=>`<button onclick="UI.tv='plan';UI.pmode=null;UI.ws='${s.id}';UI.pw=wkStart(TODAY);render();scrollTo(0,0)">📞 ${esc(s.name)} <em>${pcDays(s.id)===null?'연락 기록 없음':pcDays(s.id)+'일째 연락 없음'}</em></button>`).join('')}
+      ${r.pc.map(s=>`<button onclick="UI.tv='plan';UI.pmode=null;UI.ws='${s.id}';UI.pw=wkStart(TODAY);render();scrollTo(0,0)">📞 ${esc(s.name)} <em>${pcDays(s.id)}일째 연락 없음</em></button>`).join('')}
     </div></td></tr>`:''}`).join('')}</table></div></div>`;
 }
 
@@ -1494,7 +1499,7 @@ function stuStats(sid){
 /* 학생 찾기 · 묶기 (이름/학교/학년 검색, 담당쌤, 요일) */
 function FST(){return UI.F=UI.F||{q:'',day:null,tids:[],st:'all'}}
 function stuMatch(s,q){q=(q||'').replace(/\s/g,'');if(!q)return true;return (s.name+(s.school||'')+(s.grade||'')+(s.school||'')+' '+(s.grade||'')).replace(/\s/g,'').includes(q)||((s.school||'')+(s.grade||'')).includes(q)}
-function stuFilter(list){const F=FST();return list.filter(s=>stuMatch(s,F.q)&&(!F.tids.length||F.tids.includes(sTid(s))||sessOf(s.id).some(c=>F.tids.includes(c.tid)))&&(F.day===null||sDays(s).includes(F.day))&&(F.st==='all'||(F.st==='risk'?risk(s.id).lv:F.st==='sub'?stuStats(s.id).sub:F.st==='today'?nextClass(s.id)===TODAY:F.st==='pr'?pendingPR().some(r=>r.sid===s.id):F.st==='nolog'?missingFor(s.id).length>0:F.st==='nopc'?(pcDays(s.id)===null||pcDays(s.id)>=14):true)))}
+function stuFilter(list){const F=FST();return list.filter(s=>stuMatch(s,F.q)&&(!F.tids.length||F.tids.includes(sTid(s))||sessOf(s.id).some(c=>F.tids.includes(c.tid)))&&(F.day===null||sDays(s).includes(F.day))&&(F.st==='all'||(F.st==='risk'?risk(s.id).lv:F.st==='sub'?stuStats(s.id).sub:F.st==='today'?nextClass(s.id)===TODAY:F.st==='pr'?pendingPR().some(r=>r.sid===s.id):F.st==='nolog'?missingFor(s.id).length>0:F.st==='nopc'?pcLate(s.id):true)))}
 function filterBar(mode){
   const F=FST(), ts=DB.T.filter(t=>myStudents().some(s=>sTid(s)===t.id)||sessions().some(c=>c.tid===t.id));
   return `<div class="fbar">
@@ -1517,7 +1522,7 @@ function dayGroups(list,day){
 function spCard(s){const st=stuStats(s.id),nc=nextClass(s.id),n=nc?diffD(TODAY,nc):99,rk=risk(s.id);return `<button class="spcard ${rk.lv}" onclick="UI.ws='${s.id}';UI.pw=wkStart(TODAY);UI.lf='all';render();scrollTo(0,0)">
       <div class="top"><b>${esc(s.name)}</b><span class="pm">${MOODICON[mood(petDays(s.id))]}</span></div>
       <div class="muted" style="font-size:12.5px">${esc(s.school||'')} ${esc(s.grade||'')} · ${esc(sLabel(s))} · <span style="color:${n<=1?'var(--red)':'inherit'};font-weight:${n<=1?700:400}">${classLabel(nc)}</span></div>
-      <div class="badges">${missingFor(s.id).length?`<span class="chip c-redo">📝 일지 ${missingFor(s.id).length}건 안 씀</span>`:''}${(()=>{const d=pcDays(s.id);return d===null||d>=14?'<span class="chip c-redo">📞 연락 2주↑</span>':''})()}${pendingPR().some(r=>r.sid===s.id)?'<span class="chip c-redo">📝 플랜 수정 요청</span>':''}${st.sub?`<span class="chip c-sub">📸 확인 ${st.sub}</span>`:''}${st.miss?`<span class="chip c-redo">밀림 ${st.miss}</span>`:''}${rk.lv?riskBadge(s.id):''}${!st.sub&&!st.miss&&!rk.lv?'<span class="chip c-ok">순조로움</span>':''}</div>
+      <div class="badges">${missingFor(s.id).length?`<span class="chip c-redo">📝 일지 ${missingFor(s.id).length}건 안 씀</span>`:''}${pcLate(s.id)?'<span class="chip c-redo">📞 연락 2주↑</span>':''}${pendingPR().some(r=>r.sid===s.id)?'<span class="chip c-redo">📝 플랜 수정 요청</span>':''}${st.sub?`<span class="chip c-sub">📸 확인 ${st.sub}</span>`:''}${st.miss?`<span class="chip c-redo">밀림 ${st.miss}</span>`:''}${rk.lv?riskBadge(s.id):''}${!st.sub&&!st.miss&&!rk.lv?'<span class="chip c-ok">순조로움</span>':''}</div>
       <div class="bar"><div class="prog"><i style="width:${st.rate2||0}%;background:${(st.rate2||0)>=80?'var(--sage)':(st.rate2||0)>=50?'var(--butter)':'var(--peach)'}"></i></div><small>${st.rate2===null?'숙제 없음':'2주 '+st.rate2+'%'}</small></div>
     </button>`}
 function hubList(){

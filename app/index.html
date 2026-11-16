@@ -351,6 +351,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 #tttip .tg{display:inline-block;background:var(--butter-soft);color:#7A5600;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;margin-bottom:4px}
 .pwbtn{display:block;margin-top:6px;background:#fff;border:1px solid var(--line);color:#8A6A76;font-size:12px;border-radius:8px;padding:5px 8px;cursor:pointer}.pwbtn:hover{color:var(--ink)}
 .tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.vdrow{display:grid;grid-template-columns:50px auto 50px auto 1fr 24px;gap:6px;align-items:center;margin-bottom:6px}.vdrow .inp{margin:0;padding:9px 8px}.vdrow span{font-size:13px;color:var(--muted)}.vdrow .x{border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer}
 .chartbox{margin-top:12px;padding:10px 6px 4px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .cleg{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13px;padding:0 6px 6px}.cleg .ci{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.cleg .ci i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .rgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.rbox{background:var(--navy-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}.rbox span{font-size:12.5px;color:var(--muted)}.rbox b{font-size:20px}.rbox small{font-size:11px;color:var(--muted)}
@@ -1516,39 +1517,55 @@ function careBoard(){
 /* ----- 결석 보충 영상 ----- */
 function ytId(u){const m=String(u||'').match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([A-Za-z0-9_-]{11})/);return m?m[1]:null}
 function addVideo(sids,date,title){
-  UI.vd={sids:(sids||[]).slice(),q:''};
+  const mine=DB.V.filter(v=>v.book).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1),last=mine.find(v=>v.by===ME.id)||mine[0];
+  const books=[...new Set(mine.map(v=>v.book))].slice(0,20);
+  UI.vd={sids:(sids||[]).slice(),q:'',rows:[{u:last&&last.unit?String(+last.unit+1):'',p:'1',url:''}]};
   const absent=DB.L.filter(l=>l.att==='결석'&&l.date>=addD(TODAY,-14)).map(l=>l.sid);
   modal(`<h3 class="jua">📺 결석 보충 영상 올리기</h3><p class="muted" style="font-size:13px">유튜브에 <b>일부 공개</b>로 올린 뒤 링크를 붙여 넣으세요. 고른 학생만 자기 학생코드로 로그인해서 볼 수 있어요.</p>
-  <label class="lb">영상 제목</label><input class="inp" id="vd-t" value="${esc(title?title.split('\n')[0]:'')}" placeholder="예) 11/16 사대부고3 2과 본문 분석">
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px"><div><label class="lb">유튜브 링크</label><input class="inp" id="vd-u" placeholder="https://youtu.be/..."></div><div><label class="lb">수업 날짜</label><input class="inp" type="date" id="vd-d" value="${date||TODAY}"></div></div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px"><div><label class="lb">책 이름</label><input class="inp" id="vd-b" list="vd-bl" value="${esc(last?last.book:'')}" placeholder="예) 올림포스 영어독해 기본1"><datalist id="vd-bl">${books.map(b=>`<option value="${esc(b)}">`).join('')}</datalist></div><div><label class="lb">수업 날짜</label><input class="inp" type="date" id="vd-d" value="${date||TODAY}"></div></div>
+  <label class="lb">영상 <span class="muted" style="font-weight:400">· 링크 여러 개를 한 번에 붙여 넣으면 1번, 2번… 자동으로 나눠져요</span></label>
+  <div id="vd-rows"></div>
+  <button class="btn btn-soft btn-sm" style="margin-top:6px" onclick="vdAdd()">+ 영상 추가</button>
   <label class="lb">볼 수 있는 학생 <span class="muted" id="vd-cnt">${UI.vd.sids.length}명</span>${absent.length?` <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="UI.vd.sids=[...new Set(UI.vd.sids.concat(${JSON.stringify([...new Set(absent)]).replace(/"/g,"'")}))];vdList()">최근 결석생 넣기</button>`:''}</label>
   <input class="inp" placeholder="🔍 이름 · 학교 · 학년으로 찾기" oninput="UI.vd.q=this.value.trim();vdList()" style="margin-bottom:8px">
   <div class="chips-sel" id="vd-list" style="max-height:180px;overflow:auto"></div>
   <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="saveVideo()">올리기</button></div>`);
-  vdList();
+  vdRows();vdList();
 }
+function vdRows(){const box=$('#vd-rows');if(!box)return;
+  box.innerHTML=UI.vd.rows.map((r,i)=>`<div class="vdrow"><input class="inp" inputmode="numeric" value="${esc(r.u)}" placeholder="과" oninput="UI.vd.rows[${i}].u=this.value.trim();UI.mdirty=true"><span>과</span><input class="inp" inputmode="numeric" value="${esc(r.p)}" placeholder="번" oninput="UI.vd.rows[${i}].p=this.value.trim();UI.mdirty=true"><span>번</span><input class="inp" value="${esc(r.url)}" placeholder="https://youtu.be/..." oninput="vdUrl(${i},this.value)">${UI.vd.rows.length>1?`<button class="x" onclick="UI.vd.rows.splice(${i},1);vdRows()">✕</button>`:'<i></i>'}</div>`).join('')}
+function vdAdd(){const r=UI.vd.rows,l=r[r.length-1]||{u:'',p:'0'};r.push({u:l.u,p:l.p&&!isNaN(+l.p)?String(+l.p+1):'',url:''});vdRows();const ins=$('#vd-rows').querySelectorAll('.vdrow');const last=ins[ins.length-1];if(last)last.querySelectorAll('input')[2].focus()}
+function vdUrl(i,v){UI.mdirty=true;const urls=(v.match(/https?:\/\/\S+/g)||[]).filter(u=>ytId(u));
+  if(urls.length<2){UI.vd.rows[i].url=v.trim();return}
+  const base=UI.vd.rows[i],p0=+base.p||1,add=urls.map((u,k)=>({u:base.u,p:String(p0+k),url:u}));
+  UI.vd.rows.splice(i,1,...add);vdRows();toast(`영상 ${urls.length}개로 나눴어요`)}
+function vdTitle(b,u,p){return [b,u?u+'과':'',p?p+'번':''].filter(Boolean).join(' ')}
 function vdList(){const box=$('#vd-list');if(!box)return;const L=DB.S.slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,UI.vd.q));
   box.innerHTML=L.map(s=>`<button class="s ${UI.vd.sids.includes(s.id)?'on':''}" onclick="const i=UI.vd.sids.indexOf('${s.id}');if(i>=0)UI.vd.sids.splice(i,1);else UI.vd.sids.push('${s.id}');vdList()">${UI.vd.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('');
   const c=$('#vd-cnt');if(c)c.textContent=UI.vd.sids.length+'명'}
 function saveVideo(){
-  const title=$('#vd-t').value.trim(),url=$('#vd-u').value.trim(),date=$('#vd-d').value||TODAY;
-  if(!title){toast('영상 제목을 적어주세요');return}
-  if(!ytId(url)){toast('유튜브 링크를 확인해 주세요 (youtu.be/… 또는 youtube.com/watch?v=…)');return}
+  const book=$('#vd-b').value.trim(),date=$('#vd-d').value||TODAY;
+  const rows=UI.vd.rows.filter(r=>r.url);
+  if(!book){toast('책 이름을 적어주세요');$('#vd-b').focus();return}
+  if(!rows.length){toast('영상 링크를 붙여 넣어 주세요');return}
+  const bad=rows.findIndex(r=>!ytId(r.url));if(bad>=0){toast(`${bad+1}번째 링크를 확인해 주세요 (youtu.be/… 또는 youtube.com/watch?v=…)`);return}
   if(!UI.vd.sids.length){toast('볼 수 있는 학생을 골라주세요');return}
-  const vid='v'+uid();UI.vd.sids.forEach(sid=>DB.V.push({id:vid+'_'+sid,vid,sid,title,url,date,by:ME.id,at:nowStr(),seen:''}));
-  save();closeModal();render();toast(`${UI.vd.sids.length}명에게 보충 영상을 올렸어요 📺`);
+  const bid='b'+uid(),at=nowStr();
+  rows.forEach((r,k)=>{const vid='v'+uid()+k,title=vdTitle(book,r.u,r.p);UI.vd.sids.forEach(sid=>DB.V.push({id:vid+'_'+sid,vid,bid,sid,title,book,unit:r.u,part:r.p,url:r.url,date,by:ME.id,at,seen:''}))});
+  save();closeModal();render();toast(`${UI.vd.sids.length}명에게 보충 영상 ${rows.length}개를 올렸어요 📺`);
 }
+function vSort(a,b){return a.date<b.date?1:a.date>b.date?-1:((+a.unit||0)-(+b.unit||0))||((+a.part||0)-(+b.part||0))||(a.title<b.title?-1:1)}
 function videoAdmin(){
   const g={};DB.V.forEach(v=>{(g[v.vid]=g[v.vid]||[]).push(v)});
-  const list=Object.values(g).sort((a,b)=>a[0].date<b[0].date?1:-1).slice(0,8);
+  const list=Object.values(g).sort((a,b)=>vSort(a[0],b[0])).slice(0,12);
   return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 class="sec" style="margin:0">📺 결석 보충 영상</h3><button class="btn btn-navy btn-sm" onclick="addVideo()">+ 영상 올리기</button></div>
   ${list.length?list.map(vs=>{const v=vs[0];return `<div class="list-row"><span style="font-size:20px">▶️</span><div style="flex:1;min-width:0"><b style="color:var(--ink);font-size:14px">${esc(v.title)}</b><div class="muted" style="font-size:12.5px">${lbl(v.date)} · ${vs.map(x=>esc((stu(x.sid)||{}).name||'')+(x.seen?' ✓':'')).join(', ')}${vs.some(x=>x.seen)?' <span style="color:var(--sage-d)">(✓ = 다 봄)</span>':''}</div></div><a class="btn btn-ghost btn-sm" href="${esc(v.url)}" target="_blank" rel="noopener">열기</a><button class="btn btn-ghost btn-sm" onclick="if(this.dataset.c){DB.V=DB.V.filter(x=>x.vid!=='${v.vid}');save();render()}else{this.dataset.c=1;this.textContent='정말?'}">삭제</button></div>`}).join(''):'<div class="muted" style="font-size:13px;padding:10px 0">결석한 학생에게 유튜브 수업 영상을 올려 줄 수 있어요. 수업 일지에서 <b>결석</b>을 고르면 바로 올리는 창이 떠요.</div>'}</div>`;
 }
 function sVideos(s){
-  const vs=DB.V.filter(v=>v.sid===s.id).sort((a,b)=>a.date<b.date?1:-1);if(!vs.length)return '';
+  const vs=DB.V.filter(v=>v.sid===s.id).sort(vSort);if(!vs.length)return '';
   const nw=vs.filter(v=>!v.seen);
   return `<div class="task" style="border-color:${nw.length?'var(--navy)':'var(--line)'}"><b>📺 수업 다시보기 ${nw.length?`<span class="chip c-redo">새 영상 ${nw.length}</span>`:''}</b>
-  ${vs.slice(0,5).map(v=>`<div class="list-row" style="cursor:pointer" onclick="openVideo('${v.id}')"><span style="font-size:18px">${v.seen?'✅':'▶️'}</span><div style="flex:1"><b style="color:var(--ink);font-size:14px">${esc(v.title)}</b><div class="muted" style="font-size:12px">${lbl(v.date)} 수업</div></div><span class="btn btn-soft btn-sm">보기</span></div>`).join('')}</div>`;
+  ${vs.slice(0,10).map(v=>`<div class="list-row" style="cursor:pointer" onclick="openVideo('${v.id}')"><span style="font-size:18px">${v.seen?'✅':'▶️'}</span><div style="flex:1"><b style="color:var(--ink);font-size:14px">${esc(v.title)}</b><div class="muted" style="font-size:12px">${lbl(v.date)} 수업</div></div><span class="btn btn-soft btn-sm">보기</span></div>`).join('')}</div>`;
 }
 function openVideo(id){
   const v=DB.V.find(x=>x.id===id);if(!v)return;

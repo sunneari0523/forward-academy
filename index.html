@@ -766,8 +766,8 @@ function sendInq(e){e.preventDefault();var f=e.target,b=f.querySelector('button[
 if((d.parent.match(/[0-9]/g)||[]).length<9){alert('연락처를 다시 확인해 주세요');return false}
 b.disabled=true;b.textContent='보내는 중...';
 fetch('https://ltvejlubynybtladghkm.supabase.co/rest/v1/rpc/fw_inquiry',{method:'POST',headers:{apikey:'sb_publishable_3trcVQfRXg5HONzqdS2jkg_KyWlV73k','Content-Type':'application/json'},body:JSON.stringify({p:d})})
-.then(function(r){if(!r.ok)throw 0;f.reset();b.textContent='신청 완료 ✓';var m=document.getElementById('inqdone');m.style.display='block';m.textContent='상담 신청이 접수됐어요! 곧 연락드릴게요 😊'})
-.catch(function(){b.disabled=false;b.textContent='상담 신청하기';alert('접수가 잠시 안 되고 있어요. 053-716-0859로 전화 주세요!')});return false}
+.then(function(r){if(!r.ok)throw 0;f.reset();b.textContent='신청 완료 ✓';var m=document.getElementById('inqdone');m.style.display='block';m.textContent='상담 신청이 접수됐어요! 원장님이 확인하고 직접 연락드릴게요 😊'})
+.catch(function(){b.disabled=false;b.textContent='상담 신청하기';var t='[포워드 상담 신청]\n학생: '+d.name+' '+d.school+' '+d.grade+'\n연락처: '+d.parent+(d.msg?'\n문의: '+d.msg:'');if(confirm('지금 온라인 접수가 잠시 안 돼요. 같은 내용을 문자로 원장님께 보낼까요?'))location.href='sms:01076727352?&body='+encodeURIComponent(t)});return false}
 </script>
 </body>
 </html>

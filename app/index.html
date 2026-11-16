@@ -1224,7 +1224,7 @@ function pendingQ(){const ss=myStudents().map(s=>s.id);return DB.Q.filter(q=>ss.
 function staffView(){
   const me=tch(ME.id); UI.tv=UI.tv||'home';
   const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['qa','💬','질문',pendingQ().length],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length]];
-  DB.I=DB.I||[];
+  DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
@@ -1241,7 +1241,7 @@ function tHome(){
   const vtoday=DB.tasks.filter(t=>ids.includes(t.sid)&&t.kind==='voca'&&t.date===TODAY), vdone=vtoday.filter(t=>t.status==='ok');
   const vres=DB.R.filter(r=>r.voca&&ids.includes(r.sid)&&r.date>=addD(TODAY,-2)).slice(-8).reverse();
   const toGrade=DB.E.filter(e=>exS(e).some(s=>ids.includes(s.id))).map(e=>({e,miss:exS(e).filter(s=>ids.includes(s.id)&&!e.res[s.id]).length})).filter(x=>x.miss).sort((a,b)=>a.e.date<b.e.date?1:-1);
-  return `<div class="ph" style="margin-bottom:10px"><div><h2 class="jua">안녕하세요, ${esc(tch(ME.id).name)}${isOwner()?'님':' 선생님'} 👋</h2><p>${lbl(TODAY)}</p></div></div>
+  return `<div class="ph" style="margin-bottom:10px"><div><h2 class="jua">안녕하세요, ${esc(tch(ME.id).name)}${isOwner()?'님':' 선생님'} 👋</h2><p>${lbl(TODAY)}</p></div></div>${inqBanner()}
   ${visitCard()}
   ${pendingPR().map(r=>`<div class="prbanner" onclick="UI.tv='plan';UI.pmode=null;UI.ws='${r.sid}';UI.pw='${r.week}';UI.lf='all';render();scrollTo(0,0)">📝 <b>${esc((stu(r.sid)||{}).name||'')}</b> 학생이 ${lbl(r.week)} 주 플랜 수정을 요청했어요 <span>확인하기 ›</span></div>`).join('')}
   ${ttView()}
@@ -2035,6 +2035,8 @@ function tInq(){
     ${i.memo?`<div class="muted" style="font-size:13px;margin-top:6px;white-space:pre-wrap">📝 ${esc(i.memo)}</div>`:''}
     <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-soft btn-sm" onclick="inqMemo('${i.id}')">📝 상담 메모</button>${i.status==='reg'?'':`<button class="btn btn-navy btn-sm" onclick="inqReg('${i.id}')">👤 학생으로 등록</button>`}${isOwner()?`<button class="btn btn-ghost btn-sm" onclick="inqDel('${i.id}',this)">삭제</button>`:''}</div></div>`).join(''):`<div class="empty">${UI.iq==='new'?'새로 들어온 문의가 없어요':'해당하는 문의가 없어요'}</div>`}`;
 }
+function inqBanner(){const nw=(DB.I||[]).filter(i=>i.status==='new').sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);if(!nw.length)return '';
+  return `<div class="card" style="margin-bottom:14px;border:2px solid var(--navy);background:var(--navy-soft);cursor:pointer" onclick="UI.tv='inq';UI.iq='new';render();scrollTo(0,0)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:16px">📥 새 상담 신청 ${nw.length}건</b><div style="margin-top:4px;font-size:14px">${nw.slice(0,3).map(i=>`${esc(i.name||'')} <span class="muted">${esc([i.school,i.grade].filter(Boolean).join(' '))} · ${esc(i.parent||'')}</span>`).join('<br>')}</div></div><span class="btn btn-navy btn-sm">확인하고 전화하기 →</span></div></div>`}
 function inq(id){return DB.I.find(i=>i.id===id)}
 function inqSet(id,k){const i=inq(id);if(!i)return;i.status=k;i.upd=nowStr();save();render()}
 function inqMemo(id){const i=inq(id);modal(`<h3 class="jua">상담 메모 · ${esc(i.name||'')}</h3><textarea class="inp" id="iq-m" rows="6" placeholder="예) 11/18 어머니와 통화. 금요일 4시 방문 상담 예약.">${esc(i.memo||'')}</textarea><div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="inq('${id}').memo=$('#iq-m').value.trim();save();closeModal();render();toast('저장했어요')">저장</button></div>`)}

@@ -54,7 +54,7 @@ begin
   insert into fw_rec(col,id,data,sid,updated_at) values('I',v_id,jsonb_build_object(
     'id',v_id,'status','new','at',to_char(now() at time zone 'Asia/Seoul','YYYY-MM-DD HH24:MI'),
     'name',left(trim(p->>'name'),20),'parent',v_ph,'school',left(coalesce(p->>'school',''),30),
-    'grade',left(coalesce(p->>'grade',''),15),'msg',left(coalesce(p->>'msg',''),600)),null,clock_timestamp());
+    'grade',left(coalesce(p->>'grade',''),15),'msg',left(coalesce(p->>'msg',''),600),'type',left(coalesce(p->>'type',''),10)),null,clock_timestamp());
   return jsonb_build_object('ok',true);
 end $$;
 grant execute on function public.fw_inquiry(jsonb) to anon, authenticated;

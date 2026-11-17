@@ -543,7 +543,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:14px}
 .m-top img{height:28px}
 </style>
 <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icon-180.png"><meta name="theme-color" content="#D68FA5"><meta name="apple-mobile-web-app-title" content="포워드">
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister()})}).catch(function(){});if(window.caches)caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})})}</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var w=r.active||r.waiting||r.installing;if(!(w&&/push-sw\.js/.test(w.scriptURL)))r.unregister()})}).catch(function(){});if(window.caches)caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})})}</script>
 </head>
 <body>
 <div id="app"></div>
@@ -1076,7 +1076,34 @@ async function doLogin(){
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
-function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
+/* ----- 알림(웹 푸시) ----- */
+const FN_URL=SB_URL?SB_URL+'/functions/v1/notify':'';
+async function fnCall(op,o){const r=await fetch(FN_URL,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({op},o||{}))});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j}
+function notify(to,title,body){if(!ONLINE||!TOKEN||!FN_URL)return;to=[...new Set((to||[]).filter(x=>x&&x!==ME.id))];if(!to.length)return;const tk=TOKEN;pushNow();queue(()=>fnCall('send',{token:tk,to,title,body}).catch(()=>{}))}
+function pushOn(){try{return 'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('fw_push')===String(ME&&ME.id)}catch(e){return false}}
+function pushBtn(cls){return pushOn()?'':`<button class="btn ${cls||'btn-ghost'} btn-sm" onclick="pushSetup()">🔔 알림 켜기</button>`}
+function b64u(x){const p='='.repeat((4-x.length%4)%4),r=atob((x+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+function pushGuide(){modal(`<h3 class="jua">🔔 아이폰에서 알림 받기</h3><p style="font-size:14.5px;line-height:1.7">아이폰은 <b>홈 화면에 추가한 앱</b>에서만 알림이 와요.</p>
+  <ol style="font-size:14.5px;line-height:1.9;padding-left:20px"><li>사파리 아래쪽 <b>공유 버튼(□↑)</b> 누르기</li><li><b>홈 화면에 추가</b> 누르기</li><li>홈 화면에 생긴 <b>포워드</b> 아이콘으로 열기</li><li>로그인 후 <b>🔔 알림 켜기</b> 누르기</li></ol>
+  <p class="muted" style="font-size:12.5px">iOS 16.4 이상에서 돼요. (설정 → 일반 → 정보에서 확인)</p><div class="btns"><button class="btn btn-navy" onclick="closeModal()">알겠어요</button></div>`)}
+async function pushSetup(){
+  if(!ONLINE){toast('시연 버전에서는 알림을 켤 수 없어요');return}
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){if(ios&&!standalone)return pushGuide();toast('이 브라우저는 알림을 지원하지 않아요. 크롬이나 사파리로 열어 주세요');return}
+  if(ios&&!standalone)return pushGuide();
+  try{
+    const p=await Notification.requestPermission();if(p!=='granted'){toast('알림이 꺼져 있어요. 휴대폰 설정에서 포워드 알림을 허용해 주세요');return}
+    toast('알림 켜는 중…');
+    const reg=await navigator.serviceWorker.register('/app/push-sw.js',{scope:'/app/'});await navigator.serviceWorker.ready;
+    const {key}=await fnCall('key');
+    let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
+    await fnCall('sub',{token:TOKEN,sub:sub.toJSON()});
+    localStorage.setItem('fw_push',String(ME.id));render();toast('🔔 알림을 켰어요!');
+  }catch(e){toast('알림을 켜지 못했어요: '+(e.message||e))}
+}
+function pushOff(tk){try{localStorage.removeItem('fw_push')}catch(e){}if(!('serviceWorker' in navigator)||!FN_URL)return;navigator.serviceWorker.getRegistration('/app/').then(r=>r&&r.pushManager.getSubscription()).then(sub=>{if(!sub)return;fnCall('unsub',{token:tk,endpoint:sub.endpoint}).catch(()=>{}).then(()=>sub.unsubscribe())}).catch(()=>{})}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.fwPush&&typeof pullNow==='function')pullNow()});
+function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushOff(t);pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
 
 /* =========================================================
    학생 화면
@@ -1092,7 +1119,7 @@ function studentView(){
   if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else body=sQA(s);
   const chatting=UI.st==='qa'&&UI.q;
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
-    <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div>
+    <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
     ${chatting?'':`<div class="bnav"><div class="in" style="--n:4">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
@@ -1140,7 +1167,7 @@ function submitHW(id){
 function confirmHW(){
   const t=DB.tasks.find(x=>x.id===UI.up.id), memo=$('#upmemo').value.trim();
   t.photos=UI.up.imgs;t.status='sub';t.subAt=nowStr();t.note=memo?'나: '+memo:'';
-  const r=feedPet(ME.id,30); save(); closeModal(); render();
+  const r=feedPet(ME.id,30); save(); closeModal(); render();notify([sTid(stu(ME.id))],'📸 숙제 제출',stu(ME.id).name+' · '+t.title);
   setTimeout(()=>petCelebrate(r,'🐟','냠냠! 숙제 고마워냥! 🐟'),60);
   toast('제출 완료! 콩떡이에게 생선을 줬어요 🐟');
 }
@@ -1196,7 +1223,7 @@ function sendMsg(){
   q.msgs.push({f,text:tx.trim(),img,at:nowStr()});
   if(UI.cimg&&UI.cimg[1])q.msgs.push({f,text:'',img:UI.cimg[1],at:nowStr()});
   q.last=nowStr(); if(f==='s')q.uT=1;else q.uS=1;
-  UI.cimg=[];save();render();setTimeout(()=>{const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight;window.scrollTo(0,document.body.scrollHeight)},30);
+  UI.cimg=[];save();if(f==='s')notify([q.tid,q.by],'💬 질문 답장',(stu(q.sid)||{}).name+' · '+q.title);else notify([q.sid],'💬 선생님 답변','"'+q.title+'" 질문에 답이 왔어요');render();setTimeout(()=>{const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight;window.scrollTo(0,document.body.scrollHeight)},30);
 }
 function askAbout(tid){const t=DB.tasks.find(x=>x.id===tid);newQ(t.title)}
 function newQ(title){
@@ -1214,7 +1241,7 @@ function sendQ(){
   const at=nowStr(), msgs=[{f:'s',text:body,img:UI.nq.imgs[0]||'',at}];
   if(UI.nq.imgs[1])msgs.push({f:'s',text:'',img:UI.nq.imgs[1],at});
   const q={id:uid(),sid:s.id,tid:sTid(s),title,msgs,uS:0,uT:1,last:at};
-  DB.Q.push(q);save();closeModal();UI.st='qa';UI.q=q.id;render();toast('질문을 보냈어요! 답이 오면 알려줄게요');
+  DB.Q.push(q);save();notify([q.tid,ownerId()],'💬 새 질문',s.name+' · '+title);closeModal();UI.st='qa';UI.q=q.id;render();toast('질문을 보냈어요! 답이 오면 알려줄게요');
 }
 
 /* =========================================================
@@ -1229,10 +1256,10 @@ function staffView(){
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
-    <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button></div>
+    <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</nav>
       <button class="out" onclick="logout()">로그아웃 →</button></aside>
-    <main class="main"><div class="m-top"><img src="logo.png" alt="" style="cursor:pointer" onclick="goHome()"><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="changePw()">🔑</button><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>${body}</main></div>`;
+    <main class="main"><div class="m-top"><img src="logo.png" alt="" style="cursor:pointer" onclick="goHome()"><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="changePw()">🔑</button><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>${body}</main></div>`;
   if(UI.tv==='qa'&&UI.q){const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight}
 }
 function tHome(){
@@ -1552,7 +1579,7 @@ function saveVideo(){
   if(!UI.vd.sids.length){toast('볼 수 있는 학생을 골라주세요');return}
   const bid='b'+uid(),at=nowStr();
   rows.forEach((r,k)=>{const vid='v'+uid()+k,title=vdTitle(book,r.u,r.p);UI.vd.sids.forEach(sid=>DB.V.push({id:vid+'_'+sid,vid,bid,sid,title,book,unit:r.u,part:r.p,url:r.url,date,by:ME.id,at,seen:''}))});
-  save();closeModal();render();toast(`${UI.vd.sids.length}명에게 보충 영상 ${rows.length}개를 올렸어요 📺`);
+  save();notify(UI.vd.sids,'📺 보충 영상',book+' 영상 '+rows.length+'개가 올라왔어요');closeModal();render();toast(`${UI.vd.sids.length}명에게 보충 영상 ${rows.length}개를 올렸어요 📺`);
 }
 function vSort(a,b){return a.date<b.date?1:a.date>b.date?-1:((+a.unit||0)-(+b.unit||0))||((+a.part||0)-(+b.part||0))||(a.title<b.title?-1:1)}
 function videoAdmin(){
@@ -1608,7 +1635,7 @@ function prSend(){
   if(!ch.length){toast('바꾼 내용이 없어요. 양을 고치거나 요일을 옮겨주세요');return}
   if(!reason){toast('선생님께 이유를 짧게 적어주세요');$('#pr-r').focus();return}
   DB.PR.push({id:'pr'+uid(),sid:ME.id,week:UI.pr.ws,items:ch,reason,status:'wait',at:nowStr()});
-  save();closeModal();render();toast('선생님께 플랜 수정 요청을 보냈어요 📝');
+  save();notify([sTid(stu(ME.id)),ownerId()],'📝 플랜 수정 요청',stu(ME.id).name+' · '+reason.slice(0,40));closeModal();render();toast('선생님께 플랜 수정 요청을 보냈어요 📝');
 }
 function prStaffCard(r){
   return `<div class="card prcard"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 class="sec" style="margin:0">📝 플랜 수정 요청 <span class="muted" style="font-size:12.5px;font-weight:400">${lbl(r.week)} 주 · ${esc(r.at.slice(5))}</span></h3></div>
@@ -1621,7 +1648,7 @@ function prStaffCard(r){
 function prDecide(id,st){
   const r=DB.PR.find(x=>x.id===id),cm=($('#prc-'+id)||{}).value||'';
   if(st==='ok'){r.items.forEach(it=>{const t=DB.tasks.find(x=>x.id===it.tid);if(!t)return;if(it.del){DB.tasks=DB.tasks.filter(x=>x.id!==it.tid);return}t.title=it.title;t.date=it.date;t.note=(t.note?t.note+' · ':'')+'플랜 수정됨'})}
-  r.status=st;r.reply=cm.trim();r.by=ME.id;r.done=nowStr();save();render();toast(st==='ok'?'플래너를 바꿨어요 ✓':'반려했어요');
+  r.status=st;r.reply=cm.trim();r.by=ME.id;r.done=nowStr();save();notify([r.sid],st==='ok'?'✅ 플랜 수정 승인':'↩ 플랜 수정 반려',st==='ok'?'요청한 대로 플래너가 바뀌었어요':'선생님 답을 확인해 보세요');render();toast(st==='ok'?'플래너를 바꿨어요 ✓':'반려했어요');
 }
 
 /* ----- 플래너·숙제 (학생별) ----- */
@@ -1762,7 +1789,7 @@ function taskSet(id,st){
   const was=t.status;t.status=st;if(cm)t.note=cm;else if(st==='ok'&&was==='redo')t.note='';if(d)t.date=d;
   if(st==='ok'&&!t.subAt)t.subAt=nowStr();
   if(st==='ok'&&was==='todo'){const r=pet(t.sid);if(r.last!==TODAY)feedPet(t.sid,t.kind==='voca'?20:30)}
-  save();closeModal();render();toast(st==='ok'?'완료 ✓':st==='redo'?'다시 제출을 요청했어요':'완료를 취소했어요');
+  save();if(st==='redo')notify([t.sid],'↩ 숙제 다시 제출',t.title+(cm?' · '+cm.slice(0,40):''));closeModal();render();toast(st==='ok'?'완료 ✓':st==='redo'?'다시 제출을 요청했어요':'완료를 취소했어요');
 }
 function togStu(id){const i=UI.ps.indexOf(id);if(i>=0)UI.ps.splice(i,1);else UI.ps.push(id);render()}
 function addPlan(d){
@@ -1786,7 +1813,7 @@ function savePlan(){
   if(!UI.ad.days.length){toast('날짜를 골라주세요');return}
   let n=0;UI.ad.days.forEach(d=>UI.ps.forEach(sid=>{DB.tasks.push({id:uid(),sid,date:d,title,kind:UI.ad.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY});n++}));
   if($('#adtpl').checked&&!DB.TPL.includes(title))DB.TPL.unshift(title);
-  save();closeModal();render();toast(`숙제 ${n}개를 내줬어요 ✅`);
+  save();notify(UI.ps,'📚 새 숙제',title);closeModal();render();toast(`숙제 ${n}개를 내줬어요 ✅`);
 }
 function delGroup(i){
   const {d,title,kind}=UI.pg[i];

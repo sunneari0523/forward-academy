@@ -73,6 +73,11 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .s-top b{color:var(--ink);font-size:17px}
 .s-top small{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.sdcard{text-align:center;padding:22px 16px}.sdcard.run{border:2px solid var(--navy);background:var(--navy-soft)}
+.sdclock{font-size:clamp(46px,14vw,72px);font-weight:800;letter-spacing:2px;color:var(--ink);font-variant-numeric:tabular-nums;margin:14px 0}
+.sdbtn{font-size:19px;padding:14px 34px;min-width:220px;justify-content:center}
+.sdsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.sdsum>div{background:var(--card,#fff);border-radius:14px;padding:12px;text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.04)}.sdsum small{display:block;color:var(--muted,#888);font-size:12px}.sdsum b{font-size:17px;color:var(--ink)}
+.sdbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:150px;align-items:end}.sdbars .b{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:4px}.sdbars i{display:block;width:70%;min-height:3px;border-radius:6px 6px 2px 2px;background:var(--sage)}.sdbars small{font-size:10.5px;color:var(--ink);font-weight:700;white-space:nowrap}.sdbars span{font-size:12px;color:var(--muted,#888)}
 .bnav .in{display:grid;grid-template-columns:repeat(var(--n),1fr);width:100%;max-width:560px}
 .bnav button{padding:9px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;font-weight:700;color:var(--muted);position:relative}
 .bnav button .i{font-size:22px;line-height:1.1;filter:grayscale(1);opacity:.6}
@@ -659,8 +664,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1210,7 +1215,8 @@ setInterval(()=>{const c=document.getElementById('kclock');if(c)c.textContent=hm
 /* 선생님 출결 화면 */
 function tAtt(){UI.ad2=UI.ad2||TODAY;UI.am=UI.am||'day';const d=UI.ad2,ss=myStudents().slice().sort((a,b)=>a.name<b.name?-1:1);
   const head=`<div class="ph"><div><h2 class="jua">🏫 출결</h2><p>학생이 키오스크에서 휴대폰 뒷번호를 찍으면 등원·하원이 기록돼요</p></div><button class="btn btn-navy" onclick="kioskOpen()">🖥️ 출결 키오스크 열기</button></div>
-  <div class="chips-sel" style="margin-bottom:12px">${[['day','📅 날짜별'],['month','📊 월별 통계']].map(([k,l])=>`<button class="${UI.am===k?'on':''}" onclick="UI.am='${k}';render()">${l}</button>`).join('')}</div>`;
+  <div class="chips-sel" style="margin-bottom:12px">${[['day','📅 날짜별'],['month','📊 월별 통계'],['study','⏱️ 공부 시간']].map(([k,l])=>`<button class="${UI.am===k||(k==='study'&&UI.am==='sdstu')?'on':''}" onclick="UI.am='${k}';render()">${l}</button>`).join('')}</div>`;
+  if(UI.am==='study'||UI.am==='sdstu')return head+tStudy(ss);
   if(UI.am==='month'){const ym=(UI.aym||TODAY.slice(0,7));const days=new Set();atRows().forEach(a=>{if(a.date.slice(0,7)===ym)days.add(a.date)});
     const rows=ss.map(s=>{const L=atRows().filter(a=>a.sid===s.id&&a.date.slice(0,7)===ym&&(a.v||[]).length);const tot=L.reduce((x,a)=>x+atMins(a),0);return {s,n:L.length,tot,avg:L.length?tot/L.length:0,last:L.map(a=>a.date).sort().pop()}}).sort((a,b)=>b.tot-a.tot);
     return head+`<div class="card"><div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="UI.aym=ymAdd('${ym}',-1);render()">‹</button><b style="font-size:17px">${ym.slice(0,4)}년 ${+ym.slice(5)}월</b><button class="btn btn-ghost btn-sm" ${ym>=TODAY.slice(0,7)?'disabled':''} onclick="UI.aym=ymAdd('${ym}',1);render()">›</button></div>
@@ -1222,6 +1228,50 @@ function tAtt(){UI.ad2=UI.ad2||TODAY;UI.am=UI.am||'day';const d=UI.ad2,ss=myStud
   const nIn=list.filter(x=>x.st===1).length,nOut=list.filter(x=>x.st===2).length;
   return head+`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><input class="inp" type="date" value="${d}" style="max-width:170px;margin:0" onchange="UI.ad2=this.value||TODAY;render()"><span class="chip c-ok">🏫 학원에 ${nIn}명</span><span class="chip">🏠 하원 ${nOut}명</span><span class="chip c-todo">⏳ 아직 ${list.length-nIn-nOut}명</span></div>
   ${list.map(x=>`<div class="list-row"><b style="min-width:72px">${esc(x.s.name)}</b><span class="muted" style="font-size:12px;min-width:60px">${esc(x.s.grade||'')}</span><span style="flex:1;font-size:13.5px">${x.v.length?x.v.map(v=>`${v.in} 등원${v.out?' → '+v.out+' 하원':''}`).join(' · '):'<span class="muted">기록 없음</span>'}</span>${x.v.length?`<b style="font-size:13px">${fmtMin(atMins(x.a,d===TODAY))}</b>`:''}${x.st===1?'<span class="chip c-ok">학원에 있음</span>':x.st===2?'<span class="chip">하원</span>':''}${d===TODAY?`<button class="btn btn-ghost btn-sm" onclick="const r=atToggle('${x.s.id}');render();toast(r.name+' '+(r.kind==='in'?'등원':'하원')+' '+r.t)">${x.st===1?'하원 처리':'등원 처리'}</button>`:''}</div>`).join('')}</div>`}
+/* ----- ⏱️ 공부 타이머 (SD) ----- */
+const SDSUBJ=['단어','숙제','독해','문법','내신 대비','모의고사','기타'];
+const SDMAX=240;
+function sdRows(){return DB.SD||(DB.SD=[])}
+function sdOf(sid){return sdRows().filter(r=>r.sid===sid&&!r.del)}
+function sdLive(sid){return sdOf(sid).find(r=>!r.end)}
+function sdM(r){return r.end?(r.mins||0):Math.min(SDMAX,Math.max(0,(Date.now()-r.start)/60000))}
+function sdDay(sid,d){return sdOf(sid).filter(r=>r.date===d).reduce((a,r)=>a+sdM(r),0)}
+function sdWeek(sid,ws){const ds=wkDays(ws);return sdOf(sid).filter(r=>ds.includes(r.date)).reduce((a,r)=>a+sdM(r),0)}
+function sdClock(ms){const t=Math.max(0,Math.floor(ms/1000)),h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60;return [h,m,x].map(v=>String(v).padStart(2,'0')).join(':')}
+function sdTick(){clearInterval(UI.sdT);UI.sdT=setInterval(()=>{const els=document.querySelectorAll('[data-sdstart]');if(!els.length){clearInterval(UI.sdT);return}els.forEach(e=>{const st=+e.dataset.sdstart;e.textContent=e.dataset.fmt==='min'?fmtMin(Math.min(SDMAX,(Date.now()-st)/60000)+(+e.dataset.base||0)):sdClock(Math.min(SDMAX*60000,Date.now()-st))})},1000)}
+function sdStart(){const s=stu(ME.id);if(sdLive(s.id))return;const subj=UI.sdsub||'숙제';sdRows().push({id:'sd'+uid(),sid:s.id,date:TODAY,subj,start:Date.now(),end:null});save();render();toast('⏱️ 공부 시작! 화이팅 💪')}
+function sdStop(){const r=sdLive(ME.id);if(!r)return;r.end=Date.now();const m=Math.round((r.end-r.start)/60000);if(m<1){r.del=true;save();render();toast('1분이 안 돼서 기록하지 않았어요');return}r.mins=Math.min(SDMAX,m);save();render();toast(m>SDMAX?`한 번에 최대 4시간까지만 기록돼요 (${fmtMin(SDMAX)})`:`👏 ${r.subj} ${fmtMin(r.mins)} 기록했어요!`)}
+function sdDel(id,b){if(!b.dataset.c){b.dataset.c=1;b.textContent='지울까요?';return}const r=sdRows().find(x=>x.id===id);if(r){r.del=true;save();render()}}
+function sdBars(sid){const days=[...Array(7)].map((_,i)=>addD(TODAY,i-6)),v=days.map(d=>sdDay(sid,d)),mx=Math.max(60,...v);
+  return `<div class="sdbars">${days.map((d,i)=>`<div class="b"><small>${v[i]?fmtMin(v[i]).replace('시간','h').replace('분','m').replace(' ',''):''}</small><i style="height:${Math.round(v[i]/mx*100)}%;${d===TODAY?'background:var(--navy)':''}"></i><span>${d===TODAY?'오늘':WD[pd(d).getDay()]}</span></div>`).join('')}</div>`}
+function sdTodayCard(s){const live=sdLive(s.id),t=sdDay(s.id,TODAY);setTimeout(sdTick,0);
+  return `<div class="attline" style="cursor:pointer" onclick="UI.st='timer';render();scrollTo(0,0)">⏱️ ${live?`<b>${esc(live.subj)}</b> 공부 중 · <b data-sdstart="${live.start}" data-fmt="min" data-base="${t-sdM(live)}">${fmtMin(t)}</b>`:t?`오늘 <b>${fmtMin(t)}</b> 공부했어요`:'오늘 공부 타이머를 아직 안 켰어요'} <span style="margin-left:auto">${live?'타이머 보기':'시작하기'} ›</span></div>`}
+function sTimer(s){const live=sdLive(s.id),t=sdDay(s.id,TODAY),wk=sdWeek(s.id,wkStart(TODAY)),lw=sdWeek(s.id,addD(wkStart(TODAY),-7));UI.sdsub=UI.sdsub||'숙제';setTimeout(sdTick,0);
+  const today=sdOf(s.id).filter(r=>r.date===TODAY).sort((a,b)=>b.start-a.start);
+  const tm=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  return `<div class="sec-t"><h3 class="jua">⏱️ 공부 타이머</h3><span class="muted" style="font-size:13px">선생님도 공부 시간을 볼 수 있어요</span></div>
+  <div class="card sdcard ${live?'run':''}">
+    ${live?`<div class="muted" style="font-weight:700">${esc(live.subj)} 공부 중 · ${tm(live.start)} 시작</div>`:`<div class="chips-sel" style="justify-content:center">${SDSUBJ.map(x=>`<button class="${UI.sdsub===x?'on':''}" onclick="UI.sdsub='${x}';render()">${x}</button>`).join('')}</div>`}
+    <div class="sdclock" ${live?`data-sdstart="${live.start}"`:''}>${live?sdClock(Date.now()-live.start):'00:00:00'}</div>
+    ${live?`<button class="btn btn-warn sdbtn" onclick="sdStop()">⏹ 공부 끝!</button>`:`<button class="btn btn-navy sdbtn" onclick="sdStart()">▶ ${esc(UI.sdsub)} 공부 시작</button>`}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">다른 화면으로 가거나 앱을 꺼도 타이머는 계속 돌아가요. 한 번에 최대 4시간까지 기록돼요.</p>
+  </div>
+  <div class="sdsum"><div><small>오늘</small><b>${fmtMin(t)}</b></div><div><small>이번 주</small><b>${fmtMin(wk)}</b></div><div><small>지난주</small><b>${fmtMin(lw)}</b></div></div>
+  <div class="card"><h3 class="sec" style="margin-top:0">최근 7일</h3>${sdBars(s.id)}</div>
+  <div class="card"><h3 class="sec" style="margin-top:0">오늘 기록</h3>${today.length?today.map(r=>`<div class="list-row"><b style="min-width:64px">${esc(r.subj)}</b><span class="muted" style="flex:1;font-size:13px">${tm(r.start)} ~ ${r.end?tm(r.end):'지금'}</span><b>${r.end?fmtMin(r.mins):'공부 중'}</b>${r.end?`<button class="btn btn-ghost btn-sm" onclick="sdDel('${r.id}',this)">삭제</button>`:''}</div>`).join(''):'<p class="muted" style="margin:0">아직 기록이 없어요. 위에서 시작을 눌러봐요!</p>'}</div>`}
+function tStudy(ss){setTimeout(sdTick,0);
+  if(UI.am==='sdstu'&&stu(UI.sds)){const s=stu(UI.sds),L=sdOf(s.id).sort((a,b)=>b.start-a.start),live=sdLive(s.id);const by={};L.forEach(r=>{(by[r.date]=by[r.date]||[]).push(r)});
+    const tm=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+    const sub={};L.filter(r=>diffD(r.date,TODAY)<30).forEach(r=>sub[r.subj]=(sub[r.subj]||0)+sdM(r));
+    return `<button class="backlink" onclick="UI.am='study';render()">← 공부 시간 목록</button><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b style="font-size:17px">${esc(s.name)} <span class="muted" style="font-size:13px;font-weight:400">${esc(s.grade||'')}</span></b>${live?`<span class="chip c-ok">⏱️ ${esc(live.subj)} 공부 중 · <b data-sdstart="${live.start}" data-fmt="min">${fmtMin(sdM(live))}</b></span>`:''}</div>
+    <div class="sdsum" style="margin:12px 0"><div><small>오늘</small><b>${fmtMin(sdDay(s.id,TODAY))}</b></div><div><small>이번 주</small><b>${fmtMin(sdWeek(s.id,wkStart(TODAY)))}</b></div><div><small>지난주</small><b>${fmtMin(sdWeek(s.id,addD(wkStart(TODAY),-7)))}</b></div></div>
+    ${sdBars(s.id)}
+    ${Object.keys(sub).length?`<h3 class="sec">최근 30일 과목별</h3><div style="display:flex;gap:6px;flex-wrap:wrap">${Object.entries(sub).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span class="chip">${esc(k)} ${fmtMin(v)}</span>`).join('')}</div>`:''}
+    <h3 class="sec">날짜별 기록</h3>${Object.keys(by).slice(0,30).map(d=>`<div class="list-row" style="align-items:flex-start"><b style="min-width:80px">${lbl(d)}</b><span style="flex:1;font-size:13px">${by[d].map(r=>`${esc(r.subj)} ${tm(r.start)}~${r.end?tm(r.end):'지금'}`).join(' · ')}</span><b>${fmtMin(by[d].reduce((a,r)=>a+sdM(r),0))}</b></div>`).join('')||'<p class="muted">아직 기록이 없어요</p>'}</div>`}
+  const ws=wkStart(TODAY),rows=ss.map(s=>({s,live:sdLive(s.id),t:sdDay(s.id,TODAY),w:sdWeek(s.id,ws),lw:sdWeek(s.id,addD(ws,-7))})).sort((a,b)=>b.w-a.w||b.t-a.t),nl=rows.filter(r=>r.live).length;
+  return `<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><span class="chip c-ok">⏱️ 지금 공부 중 ${nl}명</span><span class="chip">이번 주 합계 ${fmtMin(rows.reduce((a,r)=>a+r.w,0))}</span></div>
+  <table class="stable att"><thead><tr><th>학생</th><th>오늘</th><th>이번 주</th><th>지난주</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr onclick="UI.am='sdstu';UI.sds='${r.s.id}';render()" style="cursor:pointer"><td><b>${esc(r.s.name)}</b> <span class="muted" style="font-size:12px">${esc(r.s.grade||'')}</span></td><td>${r.t?fmtMin(r.t):'-'}</td><td><b>${r.w?fmtMin(r.w):'-'}</b></td><td class="muted">${r.lw?fmtMin(r.lw):'-'}</td><td>${r.live?`<span class="chip c-ok">${esc(r.live.subj)} 공부 중</span>`:''}</td></tr>`).join('')}</tbody></table>
+  <p class="muted" style="font-size:12px;margin:10px 0 0">학생이 앱의 ⏱️ 타이머로 잰 시간이에요. 학생을 누르면 날짜별 기록이 보여요.</p></div>`}
 /* 학생 화면 한 줄 */
 function sAttLine(s){const a=atGet(s.id,TODAY);if(!a||!(a.v||[]).length)return '';const l=a.v[a.v.length-1];return `<div class="attline">${atIn(a)?`🏫 <b>${l.in}</b>에 등원했어요 · 학원에 ${fmtMin(atMins(a,true))}째`:`🏠 오늘 ${a.v[0].in} 등원 → ${l.out} 하원 · <b>${fmtMin(atMins(a))}</b> 공부했어요`}</div>`}
 /* ----- ⚔️ 1:1 도전장 테스트 ----- */
@@ -1458,7 +1508,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117202627';
+const APP_VER='20261117223426';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1614,16 +1664,16 @@ function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
 function studentView(){
   const s=stu(ME.id); UI.st=UI.st||'today';
-  const nav=[['today','📅','오늘'],['voca','✏️','단어'],['score','📊','성적'],['note','✉️','쪽지']];
+  const nav=[['today','📅','오늘'],['timer','⏱️','타이머'],['voca','✏️','단어'],['score','📊','성적'],['note','✉️','쪽지']];
   let body='';
-  if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else if(UI.st==='note')body=sNoteTab(s);else body=sQA(s);
+  if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else if(UI.st==='note')body=sNoteTab(s);else if(UI.st==='timer')body=sTimer(s);else body=sQA(s);
   if(UI.st==='qa'){UI.st='note';UI.q=null}
   const chatting=false;
   if(UI.st==='note'&&ONLINE&&!UI.kpoll){UI.kpoll=setInterval(()=>{if(UI.st==='note'&&ME&&ME.role==='student'&&document.visibilityState==='visible')refresh()},8000)}
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
     <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
-    ${chatting?'':`<div class="bnav"><div class="in" style="--n:4">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
+    ${chatting?'':`<div class="bnav"><div class="in" style="--n:5">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
 const KIND={hw:['📸','var(--navy-soft)'],voca:['✏️','#EFE8FB']};
 const STAT={todo:['할 일','c-todo'],sub:['확인 중','c-sub'],ok:['완료','c-ok'],redo:['다시 제출','c-redo']};
@@ -1637,7 +1687,7 @@ function sToday(s){
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,-7)}';render()">‹ 지난주</button><b style="color:var(--ink)">${pd(ws).getMonth()+1}월 ${pd(ws).getDate()}일 주</b><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,7)}';render()">다음주 ›</button></div>
   <div class="week">${strip}</div>
   ${overdue.length&&UI.day===TODAY?`<div class="task" style="border-color:var(--peach);background:var(--peach-soft)"><b style="color:var(--red)">⏰ 밀린 숙제 ${overdue.length}개</b><div class="meta" style="color:var(--red)">${overdue.slice(0,3).map(t=>esc(lbl(t.date)+' '+t.title)).join(' · ')}</div><div class="acts"><button class="btn btn-warn btn-sm" onclick="UI.day='${overdue[0].date}';render()">밀린 숙제 보러 가기</button></div></div>`:''}
-  ${sAttLine(s)}${sXBanner(s)}${sNoteBanner(s)}${sVideos(s)}
+  ${sAttLine(s)}${sdTodayCard(s)}${sXBanner(s)}${sNoteBanner(s)}${sVideos(s)}
   ${prStudentCard(s,ws)}
   <div class="sec-t"><h3 class="jua">${UI.day===TODAY?'오늘 할 일':lbl(UI.day)+' 할 일'}</h3><span class="muted" style="font-size:13.5px;font-weight:700">${done} / ${list.length} 완료</span></div>
   ${list.length?list.map(taskCard).join(''):`<div class="empty"><div class="e">🌿</div>이 날은 숙제가 없어요</div>`}`;
@@ -2505,6 +2555,7 @@ function tStuProfile(sid){
       <div class="kv"><span>등록일</span><b>${esc(s.reg||'-')}</b></div>
       <div class="kv"><span>담당 선생님</span><b>${esc((tch(sTid(s))||{name:'-'}).name)}</b></div>
       <div class="kv"><span>수업</span><b>${sessOf(sid).sort((a,b)=>TDAYS.indexOf(a.day)-TDAYS.indexOf(b.day)||(a.start<b.start?-1:1)).map(c=>`${WD[c.day]} ${c.start}~${c.end} · ${esc(c.name)} <span class="muted" style="font-weight:400">(${ROOMS.find(r=>r[0]===c.room)[1]} · ${esc((tch(c.tid)||{}).name||'')})</span>`).join('<br>')||esc(sDaysL(s))+(s.time?' · '+esc(s.time):'')}</b></div>
+      <div class="kv"><span>⏱️ 공부 시간</span><b style="cursor:pointer" onclick="UI.tv='att';UI.am='sdstu';UI.sds='${s.id}';render();scrollTo(0,0)">${sdLive(s.id)?'<span class="chip c-ok">지금 공부 중</span> ':''}오늘 ${fmtMin(sdDay(s.id,TODAY))} · 이번 주 ${fmtMin(sdWeek(s.id,wkStart(TODAY)))} ›</b></div>
       <div class="kv"><span>학생 연락처</span><b>${esc(s.phone||'-')}</b></div>
       <div class="kv"><span>학부모 연락처</span><b>${esc(s.parent||'-')}</b></div>
       <div class="kv"><span>숙제 제출률</span><b>${st.rate===null?'-':st.rate+'%'} <span class="muted" style="font-weight:400">(누적 ${st.done}/${st.total})</span></b></div>

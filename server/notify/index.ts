@@ -52,11 +52,12 @@ Deno.serve(async (req) => {
     if (!to.length) return out({ sent: 0 });
     webpush.setVapidDetails("https://forwardeng.co.kr", v.publicKey, v.privateKey);
     const { data: subs } = await sb.from("fw_push_subs").select("endpoint,sub").in("uid", to);
-    let sent = 0;
+    let sent = 0; const fails: string[] = [];
     await Promise.all((subs || []).map(async (r) => {
       try { await webpush.sendNotification(r.sub, JSON.stringify({ title, body, url: "/app/index.html", tag: b.tag })); sent++; }
-      catch (e) { const c = (e as { statusCode?: number }).statusCode; if (c === 404 || c === 410) await sb.from("fw_push_subs").delete().eq("endpoint", r.endpoint); }
+      catch (e) { const c = (e as { statusCode?: number }).statusCode; fails.push(String(c || (e as Error).message).slice(0, 60)); if (c === 404 || c === 410) await sb.from("fw_push_subs").delete().eq("endpoint", r.endpoint); }
     }));
+    console.log(JSON.stringify({ op: b.op || "send", title, to: to.length, devices: (subs || []).length, sent, fails }));
     return out({ sent });
   } catch (e) { return out({ error: String(e) }, 500); }
 });

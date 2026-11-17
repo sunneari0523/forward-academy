@@ -367,6 +367,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .mback{display:none;font-size:24px;line-height:1;padding:0 6px;color:var(--ink)}
 .mbody{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
 .mline{display:flex;flex-direction:column;align-items:flex-start}.mline.me{align-items:flex-end}.mline .msg{max-width:80%}
+.pp-steps{background:var(--navy-soft);border-radius:14px;padding:12px 14px;margin:10px 0 4px;font-size:14.5px}.pp-steps ol{margin:6px 0 0;padding-left:20px;line-height:1.9}
 .mmore{display:none}
 .moregrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.moregrid button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 8px;border:1px solid var(--line);border-radius:16px;background:#fff;font-weight:700;font-size:15px;color:var(--ink)}.moregrid button.on{background:var(--navy-soft);border-color:var(--navy)}.moregrid .i{font-size:28px}.moregrid .n{position:absolute;top:8px;right:10px;background:var(--peach);color:#fff;font-size:11.5px;border-radius:9px;padding:1px 7px}
 .vp{font-size:11px;font-weight:800;border-radius:8px;padding:1px 6px;margin-left:2px}.vp.ok{background:#E3F1E6;color:#3F7A50}.vp.mid{background:#FFF3D6;color:#946A0A}.vp.no{background:#F6E6EA;color:#B0607A}.vpw{white-space:nowrap;margin-right:6px}
@@ -1214,7 +1215,7 @@ function notify(to,title,body){if(!ONLINE||!TOKEN||!FN_URL)return;to=[...new Set
 function pushOn(){try{return 'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('fw_push')===String(ME&&ME.id)}catch(e){return false}}
 function pushBtn(cls){return pushOn()?'':`<button class="btn ${cls||'btn-ghost'} btn-sm" onclick="pushSetup()">🔔 알림 켜기</button>`}
 function b64u(x){const p='='.repeat((4-x.length%4)%4),r=atob((x+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))}
-function pushGuide(){modal(`<h3 class="jua">🔔 아이폰에서 알림 받기</h3><p style="font-size:14.5px;line-height:1.7">아이폰은 <b>홈 화면에 추가한 앱</b>에서만 알림이 와요.</p>
+function pushGuide(){try{sessionStorage.setItem('fw_pp','1')}catch(e){}modal(`<h3 class="jua">🔔 아이폰에서 알림 받기</h3><p style="font-size:14.5px;line-height:1.7">아이폰은 <b>홈 화면에 추가한 앱</b>에서만 알림이 와요.</p>
   <ol style="font-size:14.5px;line-height:1.9;padding-left:20px"><li>사파리 아래쪽 <b>공유 버튼(□↑)</b> 누르기</li><li><b>홈 화면에 추가</b> 누르기</li><li>홈 화면에 생긴 <b>포워드</b> 아이콘으로 열기</li><li>로그인 후 <b>🔔 알림 켜기</b> 누르기</li></ol>
   <p class="muted" style="font-size:12.5px">iOS 16.4 이상에서 돼요. (설정 → 일반 → 정보에서 확인)</p><div class="btns"><button class="btn btn-navy" onclick="closeModal()">알겠어요</button></div>`)}
 async function pushSetup(){
@@ -1232,9 +1233,23 @@ async function pushSetup(){
     localStorage.setItem('fw_push',String(ME.id));render();toast('🔔 알림을 켰어요!');
   }catch(e){toast('알림을 켜지 못했어요: '+(e.message||e))}
 }
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+function pushPrompt(){
+  if(!ONLINE||!ME||pushOn())return;try{if(sessionStorage.getItem('fw_pp'))return;sessionStorage.setItem('fw_pp','1')}catch(e){}
+  if('Notification' in window&&Notification.permission==='denied'){return}
+  const ios=isIOS(),inApp=ios&&!isStandalone(),who=ME.role==='student'?'숙제 확인, 선생님 쪽지·답변':'숙제 제출, 질문, 쌤톡, 상담 신청';
+  modal(`<h3 class="jua">🔔 알림을 꼭 켜주세요!</h3><p style="font-size:14.5px;line-height:1.7">${who} 알림을 휴대폰으로 바로 받을 수 있어요. <b>한 번만 켜두면 계속 켜져 있어요.</b></p>
+  ${inApp?`<div class="pp-steps"><b>아이폰은 이렇게 해주세요</b><ol><li>사파리 아래쪽 <b>공유 버튼(□↑)</b> 누르기</li><li><b>홈 화면에 추가</b> 누르기</li><li>홈 화면에 생긴 <b>포워드</b> 아이콘으로 열고 로그인</li><li>뜨는 창에서 <b>알림 켜기 → 허용</b></li></ol><p class="muted" style="font-size:12px;margin:4px 0 0">iOS 16.4 이상에서 돼요 · 앞으로도 홈 화면 아이콘으로 들어오면 편해요</p></div>`
+  :`<div class="pp-steps"><ol><li>아래 <b>🔔 지금 알림 켜기</b> 누르기</li><li>휴대폰에서 묻는 창에서 <b>허용</b> 누르기</li></ol>${ios?'':'<p class="muted" style="font-size:12px;margin:4px 0 0">안드로이드는 크롬에서 열어 주세요. 홈 화면에 추가해두면 앱처럼 쓸 수 있어요 (메뉴 ⋮ → 홈 화면에 추가)</p>'}</div>`}
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">나중에</button>${inApp?'<button class="btn btn-navy" onclick="closeModal()">알겠어요</button>':'<button class="btn btn-navy" onclick="closeModal();pushSetup()">🔔 지금 알림 켜기</button>'}</div>`)}
+async function pushResync(){try{if(!ONLINE||!TOKEN||!ME||!('serviceWorker' in navigator)||!('Notification' in window)||Notification.permission!=='granted')return;if(localStorage.getItem('fw_push')!==String(ME.id))return;
+  const reg=await navigator.serviceWorker.register('/app/push-sw.js',{scope:'/app/'});await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+  if(!sub){const {key}=await fnCall('key');sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)})}
+  await fnCall('sub',{token:TOKEN,sub:sub.toJSON()})}catch(e){}}
 function pushOff(tk){try{localStorage.removeItem('fw_push')}catch(e){}if(!('serviceWorker' in navigator)||!FN_URL)return;navigator.serviceWorker.getRegistration('/app/').then(r=>r&&r.pushManager.getSubscription()).then(sub=>{if(!sub)return;fnCall('unsub',{token:tk,endpoint:sub.endpoint}).catch(()=>{}).then(()=>sub.unsubscribe())}).catch(()=>{})}
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.fwPush&&typeof pullNow==='function')pullNow()});
-function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushOff(t);pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
+function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
 
 /* =========================================================
    학생 화면
@@ -2424,7 +2439,7 @@ function visitCard(){
 }
 function afterLoad(){
   const got=processEvents();
-  navRestoreOnLoad();render();trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
+  navRestoreOnLoad();render();setTimeout(()=>{pushResync();if(!(got&&ME&&ME.role==='student'))pushPrompt()},1200);trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
   if(got&&ME&&ME.role==='student'){setTimeout(()=>petCelebrate(got.r,'🍤',`단어 시험 ${got.e.score}/${got.e.n} 통과! 간식 맛있다냥 🍤`),300);toast('단어 시험 통과! 플래너가 체크되고 콩떡이에게 간식을 줬어요 🍤')}
 }
 load();

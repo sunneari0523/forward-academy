@@ -381,7 +381,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .selbar{background:var(--sage-soft);border-radius:12px;padding:9px 12px;font-size:13.5px;color:var(--sage-d);margin-bottom:12px;font-weight:600}
 .stable .srow{cursor:pointer}.stable .srow:hover td{background:var(--navy-soft)}.stable .srow.warn td:first-child{box-shadow:inset 3px 0 0 #F4CF72}.stable .srow.danger td:first-child{box-shadow:inset 3px 0 0 var(--peach)}
 .stable td{vertical-align:middle}.stable .bdg{display:flex;flex-wrap:wrap;gap:3px;min-width:120px}.stable .bdg .chip{font-size:11px;padding:2px 7px}
-.psplit{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;align-items:start}
+.psplit{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:start}
 .slist{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px}
 .mini-q{padding:8px 10px;font-size:13.5px;margin-bottom:8px}
 .mrow{display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;width:100%;text-align:left;padding:8px 10px;border-radius:10px;margin-bottom:2px;position:relative}
@@ -1707,13 +1707,14 @@ function hubList(){
 function miniList(){
   const list=stuFilter(myStudents()).sort((a,b)=>{const na=nextClass(a.id)||'9999',nb=nextClass(b.id)||'9999';return na!==nb?(na<nb?-1:1):(a.name<b.name?-1:1)});
   return `<button class="backlink" style="margin:0 0 6px" onclick="UI.ws=null;render();scrollTo(0,0)">← 전체 목록</button>
-  <input class="inp mini-q" placeholder="🔍 학생 찾기" value="${esc(FST().q)}" oninput="FST().q=this.value;const b=$('#mlist');if(b)b.innerHTML=miniRows()">
+  <input class="inp mini-q" placeholder="🔍 이름 · 학교 · 학년" value="${esc(UI.mq||'')}" oninput="UI.mq=this.value;const b=$('#mlist');if(b)b.innerHTML=miniRows()"><div class="muted" style="font-size:12px;margin:-2px 2px 6px">전체 ${miniPool().length}명</div>
   <div id="mlist">${miniRows()}</div>`;
 }
+function miniPool(q){const f=FST(),q0=f.q;f.q=q||'';const L=stuFilter(myStudents());f.q=q0;return L}
 function miniRows(){
-  const list=stuFilter(myStudents()).sort((a,b)=>{const na=nextClass(a.id)||'9999',nb=nextClass(b.id)||'9999';return na!==nb?(na<nb?-1:1):(a.name<b.name?-1:1)});
+  const list=miniPool(UI.mq).sort((a,b)=>{const na=nextClass(a.id)||'9999',nb=nextClass(b.id)||'9999';return na!==nb?(na<nb?-1:1):(a.name<b.name?-1:1)});
   return list.map(s=>{const st=stuStats(s.id),warn=risk(s.id).lv||missingFor(s.id).length||pcLate(s.id)||pendingPR().some(r=>r.sid===s.id);
-    return `<button class="mrow ${s.id===UI.ws?'on':''}" onclick="UI.ws='${s.id}';UI.pw=wkStart(TODAY);UI.lf='all';render();scrollTo(0,0)"><b>${esc(s.name)}</b><small>${esc(s.grade||'')} · ${classLabel(nextClass(s.id))}</small>${st.sub?`<i class="dot sub">${st.sub}</i>`:''}${warn?'<i class="dot warn">!</i>':''}</button>`}).join('')||'<div class="muted" style="font-size:13px;padding:10px">없어요</div>';
+    return `<button class="mrow ${s.id===UI.ws?'on':''}" onclick="UI.ws='${s.id}';UI.pw=wkStart(TODAY);UI.lf='all';render();scrollTo(0,0)"><b>${esc(s.name)}</b><small>${esc([s.school,s.grade].filter(Boolean).join(' '))} · ${classLabel(nextClass(s.id))}</small>${st.sub?`<i class="dot sub">${st.sub}</i>`:''}${warn?'<i class="dot warn">!</i>':''}</button>`}).join('')||'<div class="muted" style="font-size:13px;padding:10px">없어요</div>';
 }
 function tPlanHub(){
   if(UI.pmode==='class')return tPlan();

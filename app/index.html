@@ -1516,7 +1516,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118011559';
+const APP_VER='20261118011649';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1680,7 +1680,7 @@ function sunSeen(){try{if(localStorage.getItem('fw_sun_'+ME.id))return true}catc
 function sunMark(){try{localStorage.setItem('fw_sun_'+ME.id,'1')}catch(e){}if(ME.role==='student')pet(ME.id).sun=1;else{const t=tch(ME.id);if(t)t.sun=1}save()}
 function sunDone(){closeModal()}
 function sunPop(){if(!sunWho()||sunSeen())return false;setTimeout(sunMark,0);
-  modal(`<div class="sunletter"><div class="sl-top">✉️</div><div class="sl-to jua">To. 2027 수능 전 마지막 포워드를 켠 고3에게</div><div class="sl-body">${esc(SUN_MSG).replace(/\n/g,'<br>')}</div><div class="sl-sign">— 포워드 영어학원</div><button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:16px;font-size:16px" onclick="sunDone()">💪 잘 보고 올게요!</button></div>`);return true}
+  modal(`<div class="sunletter"><div class="sl-top">✉️</div><div class="sl-to jua">To. 2027 수능 전 마지막 포워드를 켠 고3에게</div><div class="sl-body">${esc(SUN_MSG).replace(/\n/g,'<br>')}</div><div class="sl-sign">— 포워드 영어학원</div><button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:16px;font-size:16px" onclick="sunDone()">🍀 수능 대박나기</button></div>`);return true}
 function pushPrompt(){
   if(!ONLINE||!ME||pushOn())return;try{if(sessionStorage.getItem('fw_pp'))return;sessionStorage.setItem('fw_pp','1')}catch(e){}
   if('Notification' in window&&Notification.permission==='denied'){return}

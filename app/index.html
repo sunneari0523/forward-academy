@@ -1458,7 +1458,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117200928';
+const APP_VER='20261117202627';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -2609,10 +2609,35 @@ function inqBanner(){const nw=(DB.I||[]).filter(i=>i.status==='new').sort((a,b)=
 /* 신규 상담 일지 → 학부모 카톡 */
 const CSF=[
  ['기본 정보',[['name','학생 이름','예) 김하늘',1],['school','학교','예) 경북예고',1],['grade','학년','예) 중3 (예비고1)',1],['parent','학부모 연락처','010-',1],['date','상담일','',1,'date'],['how','상담 방식','방문 / 전화',1]]],
- ['상담 기록',[['study','이전 공부 방법 · 문제점','예) ○○어학원 중1~중3 문법 위주. 단어는 꾸준히 외우는데 독해는 해석만 하고 넘어가서 문장 구조를 못 잡음',0,'area'],['diag','상담 내용','예) 고1 첫 내신 1등급 목표. CORE 구문독해로 문장 구조부터 잡고 경북예고 내신반 합류. 화·목 18:00~20:00, 11/24 첫 수업',0,'area'],['etc','특이사항','예) 실기 때문에 평일 저녁만 가능 / 서술형 대비 요청',0,'area']]]];
+ ['🔒 상담 기록 (선생님들만 봐요)',[['study','이전 공부 방법 · 문제점','예) ○○어학원 중1~중3 문법 위주. 단어는 꾸준히 외우는데 독해는 해석만 하고 넘어가서 문장 구조를 못 잡음',0,'area'],['diag','상담 내용','예) 고1 첫 내신 1등급 목표. CORE 구문독해로 문장 구조부터 잡고 경북예고 내신반 합류. 화·목 18:00~20:00, 11/24 첫 수업',0,'area'],['etc','특이사항','예) 실기 때문에 평일 저녁만 가능 / 서술형 대비 요청',0,'area']]],
+ ['🎉 등록 안내 (단톡방 카톡에 들어가요)',[['phone','학생 휴대폰','010- (뒷번호로 학생코드가 만들어져요)',1],['level','수업 레벨 · 반','예) 경북예고 고1 내신반 / CORE 구문독해',1],['sched','수업 요일 · 시간','예) 화·목 18:00~20:00',1],['first','첫 수업일','',1,'date'],['bring','첫 수업 준비물 (선택)','예) 고단끝 단어장, 필기구, 학교 교과서',0]]]];
+/* 학원 공통 안내 (모든 선생님이 함께 쓰는 문구) */
+const WDEF={addr:'',site:'https://forwardeng.co.kr/login',book:'포워드는 단어장으로 「고단끝」을 사용해요.\n첫 수업 전까지 온라인 서점에서 \'고단끝\'을 검색해서 구매해 주세요.',extra:''};
+function wcfg(){const n=DB.N.find(x=>x.id==='cfg_welcome');return Object.assign({},WDEF,n||{})}
+function wcfgEdit(iid){const w=wcfg();modal(`<h3 class="jua">✏️ 학원 공통 안내 문구</h3><p class="muted" style="font-size:13px;margin-top:4px">한 번만 적어두면 모든 선생님의 등록 안내 카톡에 똑같이 들어가요.</p>
+  <label class="lb">📍 학원 위치 (주소 · 찾아오는 길 · 주차)</label><textarea class="inp" id="wc-addr" rows="3" placeholder="예) 대구 수성구 ○○로 00, ○○빌딩 3층 (○○역 2번 출구 도보 3분)">${esc(w.addr)}</textarea>
+  <label class="lb">📱 학습관리 사이트 주소</label><input class="inp" id="wc-site" value="${esc(w.site)}">
+  <label class="lb">📚 고단끝 구매 안내</label><textarea class="inp" id="wc-book" rows="3">${esc(w.book)}</textarea>
+  <label class="lb">📌 그 밖에 늘 넣는 안내 (선택)</label><textarea class="inp" id="wc-extra" rows="3" placeholder="예) 결석 시 수업 영상이 앱에 올라가요 / 수강료는 수납톡으로 안내드려요">${esc(w.extra)}</textarea>
+  <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="wcfgSave('${iid||''}')">저장</button></div>`)}
+function wcfgSave(iid){let n=DB.N.find(x=>x.id==='cfg_welcome');if(!n){n={id:'cfg_welcome',logs:[]};DB.N.push(n)}['addr','site','book','extra'].forEach(k=>n[k]=$('#wc-'+k).value.trim());n.upd=nowStr();save();closeModal();render();toast('공통 안내를 저장했어요')}
+function welcomeMsg(i){
+  const c=i.c||{},hon=c.hon||'어머님',nm=i.name||'학생',w=wcfg(),L=[];
+  const st=i.sid&&stu(i.sid), code=st?st.code:(last4(c.phone||'')?codeYear()+last4(c.phone):'');
+  const sec=(t,lines)=>{lines=lines.filter(x=>x&&String(x).trim());if(lines.length)L.push('',t,...lines)};
+  L.push(`안녕하세요, ${hon}! 포워드 영어학원입니다 😊`,`${nm} 학생의 등록을 진심으로 환영해요 🎉`,`앞으로 이 방에서 수업 · 숙제 · 시험 소식을 안내드릴게요.`);
+  sec('📅 수업 안내',[c.level&&`- 반 · 레벨: ${c.level}`,c.sched&&`- 수업 시간: ${c.sched}`,c.first&&`- 첫 수업: ${lbl(c.first)}`,st&&tch(sTid(st))&&`- 담당: ${tch(sTid(st)).name} 선생님`]);
+  sec('📍 학원 위치',[w.addr]);
+  sec('📱 포워드 학습관리 사이트',[w.site&&`- 주소: ${w.site}`,`- 아이디: ${nm}`,`- 비밀번호(학생코드): ${code||'(학생 휴대폰 번호를 적으면 자동으로 들어가요)'}`,`- '학생'으로 로그인하면 숙제 · 단어시험 · 플래너를 여기서 해요`,`- 처음 로그인할 때 🔔 알림 켜기를 꼭 눌러주세요!`]);
+  sec('📚 교재 구매 안내',[w.book]);
+  sec('🎒 첫 수업 준비물',[c.bring]);
+  sec('📌 안내',[w.extra]);
+  L.push('',`궁금하신 점은 언제든 이 방에 편하게 남겨주세요 🙏`,`포워드 영어학원 ☎ 053-716-0859`);
+  return L.join('\n');
+}
 function newConsult(){const id='i'+uid();DB.I.push({id,status:'done',src:'direct',at:nowStr(),name:'',school:'',grade:'',parent:'',c:{date:TODAY,how:'방문',hon:'어머님'}});save();UI.iq='done';UI.cs=id;render();scrollTo(0,0)}
 function cv(i,k){return ['name','school','grade','parent'].includes(k)?(i[k]||''):((i.c||{})[k]||'')}
-function consultSet(id,k,v){const i=inq(id);if(!i)return;i.c=i.c||{};if(['name','school','grade','parent'].includes(k))i[k]=v;else i.c[k]=v;i.c.upd=nowStr();clearTimeout(UI.cst);UI.cst=setTimeout(save,800);const pv=$('#cs-pv');if(pv)pv.textContent=consultMsg(i);const t=$('#cs-title');if(t&&k==='name')t.textContent=(v||'새 학생')+' 상담 일지'}
+function consultSet(id,k,v){const i=inq(id);if(!i)return;i.c=i.c||{};if(['name','school','grade','parent'].includes(k))i[k]=v;else i.c[k]=v;i.c.upd=nowStr();clearTimeout(UI.cst);UI.cst=setTimeout(save,800);const pv=$('#cs-pv');if(pv)pv.textContent=welcomeMsg(i);const t=$('#cs-title');if(t&&k==='name')t.textContent=(v||'새 학생')+' 상담 일지'}
 function consultMsg(i){
   const c=i.c||{},hon=c.hon||'어머님',nm=i.name||'학생',L=[];
   const sec=(t,rows)=>{rows=rows.filter(r=>r[1]&&String(r[1]).trim());if(!rows.length)return;L.push('',t);rows.forEach(([k,v])=>L.push(k?`- ${k}: ${String(v).trim()}`:String(v).trim()))};
@@ -2629,17 +2654,19 @@ function consultView(i){
   const fld=([k,l,ph,half,type])=>{const v=esc(cv(i,k));const on=`oninput="consultSet('${i.id}','${k}',this.value)"`;
     return `<div class="${half?'half':''}"><label class="lb">${l}</label>${type==='area'?`<textarea class="inp" rows="4" placeholder="${esc(ph)}" ${on}>${v}</textarea>`:type==='date'?`<input class="inp" type="date" value="${v}" ${on} onchange="consultSet('${i.id}','${k}',this.value)">`:`<textarea class="inp auto" rows="${['name','school','grade','parent','how'].includes(k)?1:2}" placeholder="${esc(ph)}" ${on}>${v}</textarea>`}</div>`};
   return `<button class="backlink" onclick="save();UI.cs=null;render();scrollTo(0,0)">← 상담 문의 목록</button>
-  <div class="ph"><div><h2 class="jua" id="cs-title">${esc(i.name||'새 학생')} 상담 일지</h2><p>적는 대로 자동 저장되고, 오른쪽에 어머님께 보낼 카톡이 바로 만들어져요</p></div>
+  <div class="ph"><div><h2 class="jua" id="cs-title">${esc(i.name||'새 학생')} 상담 일지</h2><p>적는 대로 자동 저장돼요. 상담 기록은 선생님들만 보고, 오른쪽에 단톡방용 등록 안내 카톡이 만들어져요</p></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">${i.status==='reg'?'<span class="chip c-ok" style="align-self:center">등록 완료</span>':`<button class="btn btn-ghost" onclick="save();inqReg('${i.id}')">👤 학생으로 등록</button>`}</div></div>
   <div class="csplit"><div class="card csform">${CSF.map(([t,fs])=>`<h3 class="sec">${t}</h3><div class="csgrid">${fs.map(fld).join('')}</div>`).join('')}</div>
-  <div class="cspv-wrap"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 class="sec" style="margin:0">💬 카톡 미리보기</h3>
+  <div class="cspv-wrap"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 class="sec" style="margin:0">🎉 단톡방 등록 안내 카톡</h3>
     <div class="chips-sel">${['어머님','아버님','학부모님'].map(h=>`<button class="${c.hon===h?'on':''}" onclick="consultSet('${i.id}','hon','${h}');[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">${h}</button>`).join('')}</div></div>
-    <pre id="cs-pv" class="rpv" style="max-height:none;margin-top:10px">${esc(consultMsg(i))}</pre>
-    <button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:10px" onclick="consultCopy('${i.id}')">📋 카톡용으로 복사</button>
-    <p class="muted" style="font-size:12px;margin:8px 0 0">복사한 뒤 카톡에서 어머님 대화방에 붙여넣기 하면 돼요. 빈 칸은 메시지에서 자동으로 빠져요.</p></div></div></div>`;
+    ${wcfg().addr?'':`<div class="onebox" style="margin-top:10px">📍 학원 주소가 아직 없어요. <b>공통 안내 수정</b>에서 한 번만 적어두세요.</div>`}
+    <pre id="cs-pv" class="rpv" style="max-height:none;margin-top:10px">${esc(welcomeMsg(i))}</pre>
+    <button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:10px" onclick="consultCopy('${i.id}')">📋 단톡방용으로 복사</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:6px" onclick="wcfgEdit('${i.id}')">✏️ 학원 공통 안내 수정 (위치 · 사이트 · 고단끝)</button>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">🔒 위의 상담 기록(공부 방법 · 상담 내용 · 특이사항)은 메시지에 들어가지 않아요. 빈 칸은 자동으로 빠져요.</p></div></div></div>`;
 }
-function consultCopy(id){const i=inq(id);if(!i.name){toast('학생 이름을 먼저 적어주세요');return}i.c.sentAt=nowStr();if(i.status==='new')i.status='done';save();copyText(consultMsg(i))}
-function consultToStu(iid,sid){const i=inq(iid);if(!i||!i.c)return;const c=i.c,n=cnoteW(sid);
+function consultCopy(id){const i=inq(id);if(!i.name){toast('학생 이름을 먼저 적어주세요');return}i.c.sentAt=nowStr();if(i.status==='new')i.status='done';save();copyText(welcomeMsg(i))}
+function consultToStu(iid,sid){const i=inq(iid);if(!i)return;i.sid=sid;if(!i.c)return;const c=i.c,n=cnoteW(sid);
   const map={grade:c.score,habit:[c.study,c.prev?'이전 학원: '+c.prev:''].filter(Boolean).join(' / '),parentWish:[c.wish,c.etc].filter(Boolean).join(' / '),goalUni:c.goal};
   for(const k in map)if(map[k]&&!n[k])n[k]=map[k];
   const txt=[c.diag&&'진단: '+c.diag,c.plan&&'수업 방향: '+c.plan,c.sched&&'일정: '+c.sched,c.next&&'다음 단계: '+c.next].filter(Boolean).join('\n');
@@ -2647,7 +2674,7 @@ function consultToStu(iid,sid){const i=inq(iid);if(!i||!i.c)return;const c=i.c,n
 function inq(id){return DB.I.find(i=>i.id===id)}
 function inqSet(id,k){const i=inq(id);if(!i)return;i.status=k;i.upd=nowStr();save();render()}
 function inqMemo(id){const i=inq(id);modal(`<h3 class="jua">상담 메모 · ${esc(i.name||'')}</h3><textarea class="inp" id="iq-m" rows="6" placeholder="예) 11/18 어머니와 통화. 금요일 4시 방문 상담 예약.">${esc(i.memo||'')}</textarea><div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="inq('${id}').memo=$('#iq-m').value.trim();save();closeModal();render();toast('저장했어요')">저장</button></div>`)}
-function inqReg(id){const i=inq(id);i.status='reg';i.upd=nowStr();save();UI.iq='reg';UI.cs=null;render();UI.regInq=id;editStu(null,{name:i.name||'',school:i.school||'',grade:i.grade||'',parent:i.parent||''})}
+function inqReg(id){const i=inq(id);i.status='reg';i.upd=nowStr();save();UI.iq='reg';UI.cs=null;render();UI.regInq=id;editStu(null,{name:i.name||'',school:i.school||'',grade:i.grade||'',parent:i.parent||'',phone:(i.c&&i.c.phone)||'',code:(i.c&&last4(i.c.phone||''))?codeYear()+last4(i.c.phone):'',reg:(i.c&&i.c.first)||TODAY})}
 function inqDel(id,b){if(!b.dataset.c){b.dataset.c=1;b.textContent='정말 삭제?';return}DB.I=DB.I.filter(i=>i.id!==id);save();render()}
 function editCInfo(sid){
   const n=cnote(sid);

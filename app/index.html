@@ -1516,7 +1516,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118011649';
+const APP_VER='20261118011953';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1657,7 +1657,7 @@ const SUN_END='2026-11-19',SUN_MSG=`9번째 나의 제자들아!
 평가 받지 못하고 억울 할 수도 있는 세상을
 보여줘서 어른으로서 부끄럽다
 환경탓하는 것만큼 못난게 없다고 생각했는데
-이번만큼은 진짜 시원하게 욕박고 싶다
+이번만큼은 환경탓하자 근데 너희가 하면 부정타니까 쌤이 대신해줄게
 
 개같은교육부야 3대가 망하고 평생 가위 눌리며
 밤잠 설치다 가진 재산 다 날리고 걷는 발걸음 마다 압정이 가득하고 자식들에게 외면 받으며 얻을 수 있는

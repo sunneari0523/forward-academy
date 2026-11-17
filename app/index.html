@@ -356,6 +356,23 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .csform .sec{margin:16px 0 4px}.csform .sec:first-child{margin-top:0}
 .csgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.csgrid>div{grid-column:1/-1}.csgrid>div.half{grid-column:auto}
 .csgrid textarea.auto{resize:vertical;min-height:0}
+.mwrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;align-items:stretch;height:calc(100vh - 170px);min-height:420px}
+.mlistbox{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px;overflow:auto}
+.mroom{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:12px;position:relative;margin-bottom:2px}
+.mroom b{display:block;font-size:14.5px;color:var(--ink)}.mroom small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px}
+.mroom:hover{background:var(--bg)}.mroom.on{background:var(--navy-soft);box-shadow:inset 3px 0 0 var(--navy)}
+.mroom i{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:#E07A7A;color:#fff;font-style:normal;font-size:11px;font-weight:800;border-radius:10px;padding:1px 7px}
+.mchat{background:#fff;border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.mhead{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}.mhead b{font-size:15.5px}
+.mback{display:none;font-size:24px;line-height:1;padding:0 6px;color:var(--ink)}
+.mbody{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.mline{display:flex;flex-direction:column;align-items:flex-start}.mline.me{align-items:flex-end}.mline .msg{max-width:80%}
+.mwho{font-size:12px;color:var(--muted);margin:2px 4px}
+.mday{align-self:center;font-size:11.5px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:10px;padding:2px 10px;margin:6px 0}
+.mcomp{border-top:1px solid var(--line);padding:8px 10px}.mcomp .in{display:flex;gap:8px;align-items:flex-end}
+.mcomp textarea{flex:1;resize:none;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;max-height:110px;outline:none;font-size:15px;font-family:inherit}
+.mcomp .pv{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}.mcomp .pv img{width:64px;height:64px;border-radius:10px;object-fit:cover}.mcomp .pv .x{border:0;background:none;color:var(--muted)}
+@media(max-width:700px){.mwrap{display:block;height:auto}.mwrap.open .mlistbox{display:none}.mwrap:not(.open) .mchat{display:none}.mchat{height:calc(100vh - 230px);min-height:380px}.mback{display:block}}
 .cspv-wrap{position:sticky;top:12px}
 @media(max-width:900px){.csplit{grid-template-columns:1fr}.cspv-wrap{position:static}}
 .chartbox{margin-top:12px;padding:10px 6px 4px;border:1px solid var(--line);border-radius:14px;background:#fff}
@@ -531,8 +548,8 @@ table.tb{width:100%;border-collapse:collapse;font-size:14px}
   .st{grid-template-columns:1fr}
   .side{position:fixed;bottom:0;top:auto;left:0;right:0;height:auto;flex-direction:row;padding:4px 4px calc(4px + env(safe-area-inset-bottom));z-index:40}
   .side img,.side .me,.side .out{display:none}
-  .side nav{display:grid;grid-template-columns:repeat(7,1fr);width:100%}
-  .side nav button{flex-direction:column;gap:2px;font-size:10.5px;padding:7px 2px;margin:0}
+  .side nav{display:grid;grid-template-columns:repeat(8,1fr);width:100%}
+  .side nav button{flex-direction:column;gap:2px;font-size:9.5px;letter-spacing:-.3px;padding:7px 1px;margin:0}
   .side nav button .n{position:absolute;top:2px;right:8px;margin:0;padding:0 5px;font-size:10px}
   .main{padding:18px 14px 100px}
   .m-top{display:flex!important}
@@ -595,8 +612,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -727,7 +744,7 @@ function seed(){
   S.forEach(s=>P[s.id]={xp:({s1:80,s2:40,s3:20,s5:60,s6:30})[s.id]||10,lv:s.id==='s1'?2:1,last:TODAY,streak:({s1:12,s2:5,s3:3,s5:7,s6:4})[s.id]||0});
   P.s4.last=addD(TODAY,-4);P.s7.last=addD(TODAY,-7);P.s3.last=addD(TODAY,-1);
   const TPL=['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'];
-  return {v:3,T,C,S,tasks,E,R,Q,N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[{id:'i1',status:'new',at:TODAY+' 10:12',name:'김하늘',parent:'010-1234-5678',school:'경북예고',grade:'중3 (예비고1)',msg:'예비고1 내신 대비 수업 문의드려요. 실기 때문에 평일 저녁만 가능해요.'}],P,TPL,evDone:0};
+  return {v:3,T,C,S,tasks,E,R,Q,N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],M:[{id:'m1',room:'all',by:'t1',to:[],text:'오늘 사대부고 반 보강 7시로 옮겼어요!',at:TODAY+' 13:20'}],I:[{id:'i1',status:'new',at:TODAY+' 10:12',name:'김하늘',parent:'010-1234-5678',school:'경북예고',grade:'중3 (예비고1)',msg:'예비고1 내신 대비 수업 문의드려요. 실기 때문에 평일 저녁만 가능해요.'}],P,TPL,evDone:0};
 }
 
 let DB, ME=null;
@@ -1082,6 +1099,40 @@ async function doLogin(){
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
+/* ----- 쌤톡 (선생님끼리 메신저) ----- */
+function staffList(){return DB.T.filter(t=>t.role==='owner'||t.role==='teacher')}
+function roomOf(a,b){return 'dm:'+[a,b].sort().join('|')}
+function roomMsgs(room){return (DB.M||[]).filter(m=>m.room===room).sort((a,b)=>(a.at||'')<(b.at||'')?-1:(a.at||'')>(b.at||'')?1:0)}
+function myRooms(){const me=ME.id;return [{id:'all',name:'👥 전체방',sub:'모든 선생님'}].concat(staffList().filter(t=>t.id!==me).map(t=>({id:roomOf(me,t.id),name:t.name+(t.role==='owner'?' 원장':' 선생님'),sub:'1:1',tid:t.id})))}
+function seenKey(room){return 'fw_seen_'+ME.id+'_'+room}
+function lastSeen(room){try{return localStorage.getItem(seenKey(room))||''}catch(e){return ''}}
+function markSeen(room){const ms=roomMsgs(room),l=ms[ms.length-1];if(l)try{localStorage.setItem(seenKey(room),l.at+'|'+l.id)}catch(e){}}
+function roomUnread(room){const ls=lastSeen(room);return roomMsgs(room).filter(m=>m.by!==ME.id&&(m.at+'|'+m.id)>ls).length}
+function msgUnread(){if(!ME||ME.role==='student')return 0;DB.M=DB.M||[];return myRooms().reduce((n,r)=>n+(UI.tv==='msg'&&UI.mr===r.id?0:roomUnread(r.id)),0)}
+function tMsg(){
+  DB.M=DB.M||[];const rooms=myRooms();if(UI.mr&&!rooms.some(r=>r.id===UI.mr))UI.mr=null;
+  if(!UI.mr&&matchMedia('(min-width:701px)').matches)UI.mr='all';
+  const room=rooms.find(r=>r.id===UI.mr);if(room)markSeen(room.id);
+  const list=rooms.map(r=>{const ms=roomMsgs(r.id),l=ms[ms.length-1],u=roomUnread(r.id);return `<button class="mroom ${UI.mr===r.id?'on':''}" onclick="UI.mr='${r.id}';render();msgScroll()"><b>${esc(r.name)}</b><small>${l?esc((l.by===ME.id?'나: ':'')+(l.text||'📷 사진').slice(0,24)):esc(r.sub)}</small>${u?`<i>${u}</i>`:''}</button>`}).join('');
+  let right='<div class="empty" style="margin-top:40px">왼쪽에서 대화방을 골라주세요 💌</div>';
+  if(room){const ms=roomMsgs(room.id);let lastDay='';
+    right=`<div class="mhead"><button class="mback" onclick="UI.mr=null;render()">‹</button><b>${esc(room.name)}</b><span class="muted" style="font-size:12.5px">${room.id==='all'?staffList().length+'명':'1:1 대화 · 둘만 볼 수 있어요'}</span></div>
+    <div class="mbody" id="mbody">${ms.length?ms.map(m=>{const d=(m.at||'').slice(0,10),day=d!==lastDay?`<div class="mday">${lbl(d)}</div>`:'';lastDay=d;const me=m.by===ME.id;
+      return `${day}<div class="mline ${me?'me':''}">${!me&&room.id==='all'?`<span class="mwho">${esc((tch(m.by)||{}).name||'')}</span>`:''}<div class="msg ${me?'me':'you'}">${m.img?`<img data-v src="${m.img}">`:''}${esc(m.text||'')}<small>${esc((m.at||'').slice(11,16))}</small></div></div>`}).join(''):'<div class="empty">첫 메시지를 보내보세요 👋</div>'}</div>
+    <div class="mcomp">${UI.mimg?`<div class="pv"><img src="${UI.mimg}"><button class="x" onclick="UI.mimg='';render();msgScroll()">✕</button></div>`:''}<div class="in"><button class="iconbtn" title="사진" onclick="pickFiles(m=>{UI.mimg=m[0];render();msgScroll()})">📷</button><textarea id="mtext" rows="1" placeholder="메시지 입력" oninput="UI.mdraft=this.value" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&matchMedia('(min-width:701px)').matches){event.preventDefault();sendStaffMsg()}">${esc(UI.mdraft||'')}</textarea><button class="iconbtn send" onclick="sendStaffMsg()">➤</button></div></div>`}
+  setTimeout(()=>{const b=$('#mbody');if(b)b.scrollTop=b.scrollHeight},0);
+  return `<div class="ph"><div><h2 class="jua">💌 쌤톡</h2><p>선생님들끼리 주고받는 메신저예요 · 학생은 볼 수 없어요</p></div></div>
+  <div class="mwrap ${room?'open':''}"><aside class="mlistbox">${list}</aside><section class="mchat">${right}</section></div>`;
+}
+function msgScroll(){setTimeout(()=>{const b=$('#mbody');if(b)b.scrollTop=b.scrollHeight;const t=$('#mtext');if(t&&matchMedia('(min-width:701px)').matches)t.focus()},30)}
+function sendStaffMsg(){
+  const t=(($('#mtext')||{}).value||'').trim(),img=UI.mimg||'';if(!t&&!img)return;
+  const room=UI.mr;if(!room)return;const to=room==='all'?[]:room.slice(3).split('|').filter(x=>x!==ME.id);
+  DB.M=DB.M||[];DB.M.push({id:'m'+uid(),room,by:ME.id,to,text:t,img,at:nowStr()});UI.mdraft='';UI.mimg='';save();
+  const name=(tch(ME.id)||{}).name||'';notify(room==='all'?staffList().map(x=>x.id):to,room==='all'?'💌 쌤톡 전체방':'💌 '+name+' 선생님',(room==='all'?name+': ':'')+(t||'📷 사진').slice(0,80));
+  render();msgScroll();
+}
+setInterval(()=>{if(typeof ONLINE!=='undefined'&&ONLINE&&TOKEN&&ME&&ME.role!=='student'&&UI.tv==='msg'&&document.visibilityState==='visible')refresh()},6000);
 /* ----- 알림(웹 푸시) ----- */
 const FN_URL=SB_URL?SB_URL+'/functions/v1/notify':'';
 async function fnCall(op,o){const r=await fetch(FN_URL,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(Object.assign({op},o||{}))});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j}
@@ -1257,10 +1308,10 @@ function pendingHW(){const ss=myStudents().map(s=>s.id);return DB.tasks.filter(t
 function pendingQ(){const ss=myStudents().map(s=>s.id);return DB.Q.filter(q=>ss.includes(q.sid)&&q.msgs[q.msgs.length-1].f==='s')}
 function staffView(){
   const me=tch(ME.id); UI.tv=UI.tv||'home';
-  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['qa','💬','질문',pendingQ().length],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length]];
+  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['qa','💬','질문',pendingQ().length],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()]];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
-  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq}[UI.tv]();
+  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</nav>

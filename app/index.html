@@ -685,7 +685,10 @@ setInterval(refresh,20000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 window.addEventListener('beforeunload',e=>{if(netErr){e.preventDefault();e.returnValue=''}});
 function forceLogout(){TOKEN=null;ME=null;store.del(SKEY);DB=emptyDB();SNAP={};LG.err='다시 로그인해 주세요';render()}
-function loadingView(t){$('#app').innerHTML=`<div class="login"><div class="login-box" style="text-align:center"><img class="logo" src="logo.png" alt="포워드 영어학원"><p class="sub" style="margin-top:18px">${esc(t||'불러오는 중…')}</p></div></div>`}
+function loadingView(t){$('#app').innerHTML=`<div class="login" id="bootbox"><div class="login-box" style="text-align:center"><img class="logo" src="logo.png" alt="포워드 영어학원"><p class="sub" style="margin-top:18px">${esc(t||'불러오는 중…')}</p><div id="bootmsg"></div></div></div>`;
+  clearTimeout(window.__bootT);window.__bootT=setTimeout(()=>bootTrouble('오래 걸리고 있어요. 인터넷 연결을 확인하고 다시 시도해 주세요.'),15000)}
+function bootTrouble(msg){const m=$('#bootmsg');if(!m||!$('#bootbox'))return;m.innerHTML=`<p style="color:#B0607A;font-size:13.5px;margin:10px 0">${esc(msg)}</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-navy" onclick="location.reload()">↻ 새로고침</button><button class="btn btn-ghost" onclick="try{localStorage.removeItem('forward-session')}catch(e){};location.reload()">다시 로그인</button></div>`}
+window.addEventListener('error',e=>{if($('#bootbox'))bootTrouble('화면을 여는 중 문제가 생겼어요: '+(e.message||'')+' — 이 화면을 캡처해서 알려주세요')});
 
 function fakePhoto(title,hue){
   const lines=[0,1,2,3,4,5,6,7].map(i=>`<line x1="40" x2="${260-((i*37)%70)}" y1="${110+i*28}" y2="${110+i*28}" stroke="#7a8a92" stroke-width="3" stroke-linecap="round" opacity=".55"/>`).join('');
@@ -926,6 +929,7 @@ function rangePick(){
 function vSaveR(){try{localStorage.setItem('fw-vrange',JSON.stringify([VS.from,VS.to,VS.book]))}catch(e){}}
 function vocabView(){
   if(!wInit())return `<div class="empty">단어 목록을 불러오는 중이에요… 잠시 뒤 다시 눌러주세요.</div>`;
+  if(((VS.view==='quiz'||VS.view==='qres')&&!VS.q)||(VS.view==='paper'&&!VS.paper)||(VS.view==='card'&&!VS.c))VS.view='home';
   const v=VS.view;
   if(v==='quiz')return vQuiz();
   if(v==='qres')return vQRes();
@@ -1132,7 +1136,7 @@ async function doLogin(){
       const j=await rpc('fw_login',{p_role:LG.role,p_name:n,p_secret:c});
       if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
       TOKEN=j.token;FOLDER=await sha(TOKEN);ME={role:j.role,id:j.id,token:j.token};store.set(SKEY,JSON.stringify(ME));LG.err='';
-      loadingView();await pullNow(true);UI={};afterLoad();
+      loadingView();await pullNow(true);UI={};try{afterLoad()}catch(e){bootTrouble('화면을 여는 중 문제가 생겼어요: '+e.message+' — 이 화면을 캡처해서 알려주세요')}
     }catch(e){LG.err=e.message;loginView()}
     return;
   }
@@ -1141,7 +1145,7 @@ async function doLogin(){
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117190405';
+const APP_VER='20261117190939';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -2478,11 +2482,11 @@ function visitCard(){
 }
 function afterLoad(){
   const got=processEvents();
-  navRestoreOnLoad();render();setTimeout(()=>{pushResync();if(!(got&&ME&&ME.role==='student'))pushPrompt()},1200);trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
+  clearTimeout(window.__bootT);try{navRestoreOnLoad();render()}catch(e){console.error(e);UI={};VS.view='home';render()}setTimeout(()=>{pushResync();if(!(got&&ME&&ME.role==='student'))pushPrompt()},1200);trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
   if(got&&ME&&ME.role==='student'){setTimeout(()=>petCelebrate(got.r,'🍤',`단어 시험 ${got.e.score}/${got.e.n} 통과! 간식 맛있다냥 🍤`),300);toast('단어 시험 통과! 플래너가 체크되고 콩떡이에게 간식을 줬어요 🍤')}
 }
 load();
-if(ONLINE&&TOKEN){loadingView();sha(TOKEN).then(f=>{FOLDER=f;return pullNow(true)}).then(()=>{if(TOKEN)afterLoad()})}
+if(ONLINE&&TOKEN){loadingView();sha(TOKEN).then(f=>{FOLDER=f;return pullNow(true)}).then(()=>{if(TOKEN)afterLoad()}).catch(e=>bootTrouble('화면을 여는 중 문제가 생겼어요: '+(e&&e.message||e)+' — 이 화면을 캡처해서 알려주세요'))}
 else if(ONLINE){render()}
 else{const got=processEvents();
 navRestoreOnLoad();render();

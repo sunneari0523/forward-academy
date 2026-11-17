@@ -1814,7 +1814,7 @@ function savePlan(){
   if(!UI.ad.days.length){toast('날짜를 골라주세요');return}
   let n=0;UI.ad.days.forEach(d=>UI.ps.forEach(sid=>{DB.tasks.push({id:uid(),sid,date:d,title,kind:UI.ad.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY});n++}));
   if($('#adtpl').checked&&!DB.TPL.includes(title))DB.TPL.unshift(title);
-  save();notify(UI.ps,'📚 새 숙제',title);closeModal();render();toast(`숙제 ${n}개를 내줬어요 ✅`);
+  save();notify(UI.ps,'📚 선생님이 숙제를 등록했어요!',title+' · '+UI.ad.days.map(d=>lbl(d)).join(', '));closeModal();render();toast(`숙제 ${n}개를 내줬어요 ✅`);
 }
 function delGroup(i){
   const {d,title,kind}=UI.pg[i];
@@ -1830,7 +1830,7 @@ function copyWeek(){
   if(!src.length){toast('지난주에 낸 숙제가 없어요');return}
   const seen=new Set();let n=0;
   src.forEach(t=>{const nd=addD(t.date,7),k=t.sid+nd+t.title;if(seen.has(k)||DB.tasks.some(x=>x.sid===t.sid&&x.date===nd&&x.title===t.title))return;seen.add(k);DB.tasks.push({id:uid(),sid:t.sid,date:nd,title:t.title,kind:t.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY});n++});
-  save();render();toast(n?`지난주 숙제 ${n}개를 이번 주로 복사했어요`:'이미 똑같이 들어가 있어요');
+  save();if(n)notify([...new Set(src.map(t=>t.sid))],'📚 선생님이 숙제를 등록했어요!','이번 주 숙제가 올라왔어요. 플래너를 확인해 주세요');render();toast(n?`지난주 숙제 ${n}개를 이번 주로 복사했어요`:'이미 똑같이 들어가 있어요');
 }
 
 /* ----- 숙제 확인 ----- */

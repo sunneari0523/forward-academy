@@ -386,6 +386,11 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .xbtools{position:absolute;top:-34px;right:0;display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.12)}.xbtools button{width:30px;height:28px;border-radius:6px;background:var(--bg);font-size:13px}
 .xin{position:absolute;border:2px solid var(--navy);background:rgba(255,255,255,.92);border-radius:4px;font-size:max(13px,1.6vw);padding:0 4px;color:#1d3d8f;font-weight:700;outline:none;box-sizing:border-box}.xin:focus{background:#fff;box-shadow:0 0 0 3px rgba(214,143,165,.35)}
 .xshow{position:absolute;border:2px solid var(--navy);background:rgba(255,255,255,.93);border-radius:4px;font-size:max(12px,1.5vw);padding:1px 4px 1px 20px;color:#1d3d8f;font-weight:700;box-sizing:border-box;cursor:default;white-space:pre-wrap}.xshow b{position:absolute;left:2px;top:1px;font-size:10px;color:var(--navy)}.xshow.o{border-color:#5f9a6e;background:rgba(227,241,230,.95)}.xshow.x{border-color:#d06060;background:rgba(249,227,227,.95);text-decoration:line-through}
+.xbox.mc{border-style:dotted;background:rgba(214,143,165,.08)}.xbox.mc>b{white-space:nowrap}
+.xopt{position:absolute;border-radius:50%;border:2px solid transparent;cursor:pointer;box-sizing:border-box}.xbox .xopt:hover{border-color:var(--navy)}.xopt.key{border-color:#e0a800;background:rgba(255,215,0,.25)}.xopt.key::after{content:'★';position:absolute;right:-12px;top:-12px;font-size:12px;color:#e0a800}
+.xmc{position:absolute;box-sizing:border-box;border-radius:6px}.xmc>b{position:absolute;left:-22px;top:0;font-size:11px;background:var(--navy);color:#fff;border-radius:6px;padding:1px 5px}.xmc .xopt{border-color:rgba(214,143,165,.55)}.xmc .xopt.pick{border:3px solid #1d3d8f;background:rgba(29,61,143,.18)}.xmc .xopt.key{border-color:#e0a800}
+.xmc.o{outline:2px solid #5f9a6e;outline-offset:3px}.xmc.x{outline:2px solid #d06060;outline-offset:3px}
+.xcbtn{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-size:20px}.xcbtn.on{border-color:#1d3d8f;background:rgba(29,61,143,.12);color:#1d3d8f}
 .xl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}.xl>b{width:26px;height:26px;border-radius:8px;background:var(--navy-soft);display:flex;align-items:center;justify-content:center;font-size:13px}.xl .inp{flex:1;margin:0}
 .xbars{display:flex;flex-direction:column;gap:8px;margin:10px 0}.xbr{display:grid;grid-template-columns:86px 1fr 44px 40px;gap:8px;align-items:center;font-size:13.5px}.xb{height:12px;background:var(--line);border-radius:7px;overflow:hidden}.xb i{display:block;height:100%}.xbr small{color:var(--muted)}
 .xsum{background:var(--bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px}.xw{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
@@ -1194,20 +1199,23 @@ function sXView(x){const done=x.status==='done'||x.status==='graded',g=x.status=
   return `<button class="backlink" onclick="UI.xt=null;render()">← 성적으로</button>
   <div class="xhead"><div class="xc-i">⚔️</div><div><h2 class="jua" style="margin:0">${esc(x.title)}</h2><p class="muted" style="margin:2px 0 0;font-size:13px">${esc(tLabel(tch(x.tid)||{name:''}))}의 1:1 도전장 · ${(x.items||[]).length}문제</p></div>${g?`<div class="xbig ${sc.p>=80?'win':''}">${sc.p}<small>점</small></div>`:''}</div>
   ${g&&x.cm?`<div class="card" style="background:var(--navy-soft)"><b>💬 선생님 한마디</b><div style="white-space:pre-wrap;margin-top:4px">${esc(x.cm)}</div></div>`:''}
-  ${x.mode==='file'?xFileView(x,done?'done':'answer')+(done?'':`<div class="card"><b style="color:var(--ink)">✏️ 답 모아 보기</b><p class="muted" style="font-size:12.5px;margin:2px 0 8px">시험지 칸에 바로 써도 되고, 여기에 써도 똑같이 들어가요</p>${x.items.map((it,k)=>`<div class="xl"><b>${k+1}</b><input class="inp" id="xl-${k}" value="${esc(it.ans||'')}" oninput="xGet('${x.id}').items[${k}].ans=this.value;UI.xdirty=1;const o=document.querySelectorAll('.xin')[${k}];if(o)o.value=this.value"></div>`).join('')}</div>`)+(g?`<div class="card">${x.items.map((it,k)=>`<div class="xl"><b>${k+1}</b><span style="flex:1">${esc(it.ans||'(빈칸)')}</span>${it.ok?'⭕':'❌'}${it.note?`<small class="xq-n" style="flex-basis:100%">✏️ ${esc(it.note)}</small>`:''}</div>`).join('')}</div>`:''):''}
+  ${x.mode==='file'?xFileView(x,done?'done':'answer')+(done?'':`<div class="card"><b style="color:var(--ink)">✏️ 답 모아 보기</b><p class="muted" style="font-size:12.5px;margin:2px 0 8px">시험지 칸에 바로 써도 되고, 여기에 써도 똑같이 들어가요</p>${x.items.map((it,k)=>it.kind==='mc'?`<div class="xl"><b>${k+1}</b>${[1,2,3,4,5].slice(0,it.opts.length).map(v=>`<button class="xcbtn ${+it.ans===v?'on':''}" onclick="xPickMC('${x.id}',${k},${v})">${'①②③④⑤'[v-1]}</button>`).join('')}</div>`:`<div class="xl"><b>${k+1}</b><input class="inp" id="xl-${k}" value="${esc(it.ans||'')}" oninput="xGet('${x.id}').items[${k}].ans=this.value;UI.xdirty=1;const o=document.querySelectorAll('.xin')[${k}];if(o)o.value=this.value"></div>`).join('')}</div>`)+(g?`<div class="card">${x.items.map((it,k)=>`<div class="xl"><b>${k+1}</b><span style="flex:1">${esc(xAnsTxt(it))}</span>${it.ok?'⭕':'❌'}${it.note?`<small class="xq-n" style="flex-basis:100%">✏️ ${esc(it.note)}</small>`:''}</div>`).join('')}</div>`:''):''}
   ${x.mode==='file'?'':(x.items||[]).map((it,k)=>`<div class="card xq"><div class="xq-h"><b>${k+1}번</b>${g?(it.ok?'<span class="xo">⭕</span>':'<span class="xx">❌</span>'):''}</div>
     <div class="xq-q">${esc(it.q||'')}</div>${it.img?`<img data-v src="${it.img}" class="xq-img">`:''}
     ${done?`<div class="xq-a"><small>내 답</small>${esc(it.ans||'(빈칸)')}${it.aimg?`<img data-v src="${it.aimg}" class="xq-img">`:''}</div>${g&&it.note?`<div class="xq-n">✏️ ${esc(it.note)}</div>`:''}`
       :`<textarea class="inp" rows="2" placeholder="답을 적어요" oninput="xGet('${x.id}').items[${k}].ans=this.value;UI.xdirty=1">${esc(it.ans||'')}</textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="pickFiles(m=>{xGet('${x.id}').items[${k}].aimg=m[0];render()})">📷 손글씨 사진${it.aimg?' ✓':''}</button>`}</div>`).join('')}
   ${done?(g?'':'<div class="empty">제출 완료! 선생님이 채점하면 알려줄게요 ⏳</div>'):`${xEnd(x)<Infinity?'<div class="xtimer" id="xtimer"></div>':''}<button class="btn btn-navy" style="width:100%;padding:15px;font-size:17px" onclick="xSubmit('${x.id}')">⚔️ 제출하기</button><p class="muted" style="font-size:12px;text-align:center">도전장은 거절할 수 없어요 😼 다 풀고 제출해 주세요</p>`}`}
+function xAnsTxt(it){return it.kind==='mc'?(it.ans?'①②③④⑤'[it.ans-1]:'(안 고름)'):(it.ans||'(빈칸)')}
+function xPickMC(id,k,v){const it=xGet(id).items[k];it.ans=+it.ans===v?'':v;UI.xdirty=1;render()}
 function xStart(id){const x=xGet(id);x.start=nowStr();x.startMs=Date.now();save();render();scrollTo(0,0)}
 const XTM={t:null,id:null};
 function xTimerArm(id){XTM.id=id;if(!XTM.t)XTM.t=setInterval(xTimerTick,1000);xTimerTick()}
 function xTimerTick(){const x=xGet(XTM.id);if(!x||x.status!=='sent'||UI.xt!==x.id){clearInterval(XTM.t);XTM.t=null;return}
   const left=xEnd(x)-xNowMs(),el=$('#xtimer');if(el)el.innerHTML=`⏱️ 남은 시간 <b>${xLeft(left)}</b>`;if(el)el.classList.toggle('hurry',left<60000);
   if(left<=0){clearInterval(XTM.t);XTM.t=null;UI.xsc=1;xSubmit(x.id,true)}}
-function xSubmit(id,auto){const x=xGet(id);if(auto){x.status='done';x.sub=nowStr();x.auto=1;save();notify([x.tid],'⚔️ '+stu(x.sid).name+' 도전장 제출(시간 종료)',x.title);render();toast('⏰ 시간이 끝나서 적은 답으로 제출했어요');return}
-  if(xExpired(x)){toast('유효 시간이 지났어요');render();return}const empty=x.items.filter(i=>!(i.ans||'').trim()&&!i.aimg).length;
+function xAutoMC(x){x.items.forEach(it=>{if(it.kind==='mc'&&(it.key===0||it.key))it.ok=+it.ans===it.key+1})}
+function xSubmit(id,auto){const x=xGet(id);xAutoMC(x);if(auto){x.status='done';x.sub=nowStr();x.auto=1;save();notify([x.tid],'⚔️ '+stu(x.sid).name+' 도전장 제출(시간 종료)',x.title);render();toast('⏰ 시간이 끝나서 적은 답으로 제출했어요');return}
+  if(xExpired(x)){toast('유효 시간이 지났어요');render();return}const empty=x.items.filter(i=>!String(i.ans||'').trim()&&!i.aimg).length;
   if(empty&&!UI.xsc){UI.xsc=1;toast(`빈 답이 ${empty}개 있어요. 그래도 내려면 한 번 더 눌러주세요`);setTimeout(()=>UI.xsc=0,3000);return}
   x.status='done';x.sub=nowStr();UI.xdirty=0;save();notify([x.tid],'⚔️ '+stu(x.sid).name+' 도전장 제출',x.title);render();scrollTo(0,0);toast('제출했어요! 결과는 알림으로 알려줄게요 ⚔️')}
 /* --- 선생님 --- */
@@ -1244,7 +1252,7 @@ function xEditor(){const e=UI.xe,rq=e.req?xGet(e.req):null;
   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-soft" onclick="UI.xe.items.push({type:'',q:'',img:''});render()">+ 문제 추가</button><button class="btn btn-navy" style="margin-left:auto" onclick="xSend()">⚔️ 도전장 보내기</button></div>`}`}
 function xeStu(){const e=UI.xe;return myStudents().slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,e.q)).map(s=>`<button class="s ${e.sids.includes(s.id)?'on':''}" onclick="const i=UI.xe.sids.indexOf('${s.id}');if(i>=0)UI.xe.sids.splice(i,1);else UI.xe.sids.push('${s.id}');$('#xe-s').innerHTML=xeStu();render()">${e.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('')}
 function xSend(){const e=UI.xe,file=e.mode==='file',items=file?e.boxes:e.items.filter(i=>i.q.trim()||i.img);if(file&&!e.pages.length){toast('시험지 파일을 올려주세요');return}if(file&&!e.boxes.length){toast('답 칸을 하나 이상 찍어주세요');return}if(!e.title.trim()){toast('제목을 적어주세요');return}if(!file&&!items.length){toast('문제를 하나 이상 적어주세요');return}if(!e.sids.length){toast('받는 학생을 골라주세요');return}
-  const mk=()=>file?items.map(b=>({id:uid(),type:'',q:'',p:b.p,x:b.x,y:b.y,w:b.w,h:b.h,ans:'',ok:null,note:''})):items.map(i=>({id:uid(),type:'',q:i.q.trim(),img:i.img||'',ans:'',ok:null,note:''})),at=nowStr();
+  const mk=()=>file?items.map(b=>Object.assign({id:uid(),type:'',q:'',p:b.p,x:b.x,y:b.y,w:b.w,h:b.h,ans:'',ok:null,note:''},b.kind==='mc'?{kind:'mc',opts:b.opts,key:(b.key===0||b.key)?b.key:null}:{})):items.map(i=>({id:uid(),type:'',q:i.q.trim(),img:i.img||'',ans:'',ok:null,note:''})),at=nowStr();
   const fx=file?{mode:'file',pages:e.pages.slice()}:{mode:'text'};
   if(e.due&&xMs(e.due)<=xNowMs()){toast('유효 시간이 이미 지났어요. 다시 골라주세요');return}
   const tm=Object.assign({due:e.due||'',lim:e.lim||0,start:''},fx);
@@ -1257,7 +1265,7 @@ function xGrade(id){const x=xGet(id);if(!x){UI.xg=null;return tExam()}const sc=x
   ${x.mode==='file'?xFileView(x,'grade')+`<p class="muted" style="font-size:12.5px">시험지 위 답을 누르면 ⭕/❌가 바뀌어요. 아래에서도 채점할 수 있어요.</p>`:''}
   ${(x.items||[]).map((it,k)=>`<div class="card xq"><div class="xq-h"><b>${k+1}번</b><span style="margin-left:auto;display:flex;gap:6px"><button class="xbtn ${it.ok===true?'on o':''}" onclick="xMark('${id}',${k},true)">⭕</button><button class="xbtn ${it.ok===false?'on x':''}" onclick="xMark('${id}',${k},false)">❌</button></span></div>
     ${it.q?`<div class="xq-q">${esc(it.q)}</div>`:''}${it.img?`<img data-v src="${it.img}" class="xq-img">`:''}
-    <div class="xq-a"><small>학생 답</small>${esc(it.ans||'(빈칸)')}${it.aimg?`<img data-v src="${it.aimg}" class="xq-img">`:''}</div>
+    <div class="xq-a"><small>학생 답${it.kind==='mc'&&(it.key===0||it.key)?' · 정답 '+'①②③④⑤'[it.key]:''}</small>${esc(xAnsTxt(it))}${it.aimg?`<img data-v src="${it.aimg}" class="xq-img">`:''}</div>
     <input class="inp" style="margin-top:6px" placeholder="한 줄 피드백 (선택) 예) 수동태 be p.p. 확인!" value="${esc(it.note||'')}" oninput="xGet('${id}').items[${k}].note=this.value"></div>`).join('')}
   <div class="card"><label class="lb" style="margin-top:0">💬 선생님 한마디 (선택)</label><textarea class="inp" id="xg-cm" rows="2" placeholder="예) 어법은 완벽! 빈칸 추론만 조금 더 연습하자 💪">${esc(x.cm||'')}</textarea>
   <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="xReport('${x.sid}')">📊 ${esc(s.name)} 도전 리포트</button><button class="btn btn-navy" style="margin-left:auto" onclick="xFinish('${id}')">${x.status==='graded'?'다시 저장':'채점 완료 · 결과 보내기'}</button></div></div>`}
@@ -1279,11 +1287,37 @@ function xPageClick(ev,p){const e=UI.xe;if(ev.target.closest('.xbox'))return;con
 function xBoxesSorted(boxes){return boxes.map((b,i)=>Object.assign({},b,{i}))}
 function xFileEditor(e){
   return `<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn btn-navy btn-sm" onclick="xPickFile()">📄 시험지 파일 올리기</button><span class="muted" style="font-size:12.5px">사진(JPG·PNG)이나 PDF · 최대 10쪽</span>${e.pages.length?`<button class="btn btn-soft btn-sm" style="margin-left:auto" onclick="if(!UI.xe.boxes.length||confirm('지금 칸을 지우고 다시 자동으로 찾을까요?'))xAutoBoxes(0)">✨ 답 칸 자동 찾기</button><button class="btn btn-ghost btn-sm" onclick="if(confirm('파일과 답 칸을 모두 지울까요?')){UI.xe.pages=[];UI.xe.boxes=[];render()}">파일 지우기</button>`:''}</div>
-  ${e.pages.length?`<p style="font-size:13.5px;margin:10px 0 0;background:var(--navy-soft);border-radius:10px;padding:8px 10px">✨ 밑줄·빈 네모는 <b>자동으로 답 칸</b>이 돼요. 빠진 곳은 <b>눌러서 추가</b>하고, 잘못된 칸은 <b>칸을 눌러 🗑</b>로 지워요. 번호는 위에서부터 자동으로 매겨져요. · 지금 <b>${e.boxes.length}칸</b></p>
+  ${e.pages.length?`<p style="font-size:13.5px;margin:10px 0 0;background:var(--navy-soft);border-radius:10px;padding:8px 10px">✨ 밑줄·빈 네모·빈 표 칸은 <b>자동으로 답 칸</b>, ①~⑤는 <b>객관식</b>이 돼요. 객관식은 <b>정답 번호를 눌러 ★표시</b>해두면 자동 채점돼요. 빠진 곳은 <b>눌러서 추가</b>하고, 잘못된 칸은 <b>칸을 눌러 🗑</b>로 지워요. 번호는 위에서부터 자동으로 매겨져요. · 지금 <b>${e.boxes.length}칸</b></p>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px"><span class="muted" style="font-size:12.5px">새 칸 크기</span>${[['짧게',10,3.2],['보통',16,3.2],['길게',30,3.2],['서술형',60,8]].map(([l,w,h])=>`<button class="btn btn-ghost btn-sm ${(e.bw||16)===w&&(e.bh||3.2)===h?'on':''}" style="${(e.bw||16)===w&&(e.bh||3.2)===h?'background:var(--navy-soft);border-color:var(--navy)':''}" onclick="UI.xe.bw=${w};UI.xe.bh=${h};render()">${l}</button>`).join('')}</div>`:''}</div>
-  ${e.pages.map((src,p)=>`<div class="xpage edit" onclick="xPageClick(event,${p})"><img src="${src}" draggable="false">${e.boxes.map((b,i)=>b.p!==p?'':`<div class="xbox ${e.sel===i?'sel':''}" style="left:${b.x}%;top:${b.y}%;width:${b.w}%;height:${b.h}%" onclick="event.stopPropagation();UI.xe.sel=${e.sel===i?-1:i};render()"><b>${i+1}</b>${e.sel===i?`<div class="xbtools" onclick="event.stopPropagation()"><button onclick="xBoxSz(${i},-2,0)">◀</button><button onclick="xBoxSz(${i},2,0)">▶</button><button onclick="xBoxSz(${i},0,-1)">▲</button><button onclick="xBoxSz(${i},0,1)">▼</button><button onclick="xBoxMv(${i})">↔</button><button onclick="UI.xe.boxes.splice(${i},1);UI.xe.sel=-1;render()">🗑</button></div>`:''}</div>`).join('')}</div>`).join('')}`}
+  ${e.pages.map((src,p)=>`<div class="xpage edit" onclick="xPageClick(event,${p})"><img src="${src}" draggable="false">${e.boxes.map((b,i)=>b.p!==p?'':`<div class="xbox ${b.kind==='mc'?'mc':''} ${e.sel===i?'sel':''}" style="left:${b.x}%;top:${b.y}%;width:${b.w}%;height:${b.h}%" onclick="event.stopPropagation();UI.xe.sel=${e.sel===i?-1:i};render()"><b>${i+1}${b.kind==='mc'?' 객관식':''}</b>${b.kind==='mc'?b.opts.map((o,j)=>`<span class="xopt ${b.key===j?'key':''}" style="${xOptPos(b,o)}" title="정답으로 표시" onclick="event.stopPropagation();const B=UI.xe.boxes[${i}];B.key=B.key===${j}?null:${j};render()"></span>`).join(''):''}${e.sel===i&&b.kind==='mc'?`<div class="xbtools" onclick="event.stopPropagation()"><button onclick="UI.xe.boxes.splice(${i},1);UI.xe.sel=-1;render()">🗑</button></div>`:''}${e.sel===i&&b.kind!=='mc'?`<div class="xbtools" onclick="event.stopPropagation()"><button onclick="xBoxSz(${i},-2,0)">◀</button><button onclick="xBoxSz(${i},2,0)">▶</button><button onclick="xBoxSz(${i},0,-1)">▲</button><button onclick="xBoxSz(${i},0,1)">▼</button><button onclick="xBoxMv(${i})">↔</button><button onclick="UI.xe.boxes.splice(${i},1);UI.xe.sel=-1;render()">🗑</button></div>`:''}</div>`).join('')}</div>`).join('')}`}
+function xOptPos(b,o){return `left:${(o.x-b.x)/b.w*100}%;top:${(o.y-b.y)/b.h*100}%;width:${o.w/b.w*100}%;height:${o.h/b.h*100}%`}
 function xBoxSz(i,dw,dh){const b=UI.xe.boxes[i];b.w=Math.max(4,Math.min(100-b.x,b.w+dw));b.h=Math.max(2,Math.min(100-b.y,b.h+dh));render()}
 function xBoxMv(i){UI.xe.moving=i;toast('옮길 자리를 눌러주세요');const done=ev=>{const pg=ev.target.closest('.xpage');if(!pg)return;ev.stopPropagation();ev.preventDefault();const r=pg.getBoundingClientRect(),b=UI.xe.boxes[i],p=[...document.querySelectorAll('.xpage')].indexOf(pg);b.p=p;b.x=Math.max(0,Math.min(100-b.w,(ev.clientX-r.left)/r.width*100-b.w/2));b.y=Math.max(0,Math.min(100-b.h,(ev.clientY-r.top)/r.height*100-b.h/2));document.removeEventListener('click',done,true);render()};setTimeout(()=>document.addEventListener('click',done,true),50)}
+/* 객관식 ①~⑤ 찾기: 안에 숫자가 있는 작은 동그라미가 줄지어 있으면 한 문제 */
+function xDetectMC(dark,W,H){
+  const lab=new Int32Array(W*H),comps=[];let id=0;const st=[];
+  for(let i=0;i<W*H;i++){if(!dark[i]||lab[i])continue;id++;let x0=W,y0=H,x1=0,y1=0,n=0;st.push(i);lab[i]=id;
+    while(st.length){const k=st.pop(),x=k%W,y=(k-x)/W;n++;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+      if(n>4000)continue;
+      for(const nb of [k-1,k+1,k-W,k+W]){if(nb<0||nb>=W*H||lab[nb]||!dark[nb])continue;if((nb===k-1&&x===0)||(nb===k+1&&x===W-1))continue;lab[nb]=id;st.push(nb)}}
+    comps.push({id,x0,y0,x1,y1,n})}
+  const rings=comps.filter(c=>{const w=c.x1-c.x0+1,h=c.y1-c.y0+1;if(w<9||w>45||h<9||h>45||Math.abs(w-h)>Math.max(w,h)*.22)return false;const f=c.n/(w*h);if(f<.12||f>.55)return false;
+    // 가운데가 비어 있고(링), 안에 숫자(다른 덩어리)가 있어야 함
+    const cx0=c.x0+Math.round(w*.32),cx1=c.x1-Math.round(w*.32),cy0=c.y0+Math.round(h*.32),cy1=c.y1-Math.round(h*.32);let own=0,other=0;
+    for(let y=cy0;y<=cy1;y++)for(let x=cx0;x<=cx1;x++){const l=lab[y*W+x];if(l===c.id)own++;else if(l)other++}
+    return own<=2&&other>=2});
+  // 줄 맞춰 4~5개 모이면 객관식 한 문제
+  const used=new Set(),groups=[];const sz=r=>r.x1-r.x0;
+  rings.sort((a,b)=>a.y0-b.y0||a.x0-b.x0);
+  rings.forEach(r=>{if(used.has(r))return;
+    const col=rings.filter(q=>!used.has(q)&&Math.abs(q.x0-r.x0)<=sz(r)*.6&&q.y0>=r.y0).sort((a,b)=>a.y0-b.y0);const g1=[r];
+    for(const q of col){if(q===r)continue;const last=g1[g1.length-1],dy=q.y0-last.y0;if(dy>sz(r)*.8&&dy<sz(r)*5&&g1.length<5)g1.push(q)}
+    const row=rings.filter(q=>!used.has(q)&&Math.abs(q.y0-r.y0)<=sz(r)*.6&&q.x0>=r.x0).sort((a,b)=>a.x0-b.x0);const g2=row.slice(0,5);
+    const g=g1.length>=4?g1:g2.length>=4?g2:null;if(!g)return;g.forEach(q=>used.add(q));groups.push(g)});
+  return groups.map(g=>{const pad=3,opts=g.map(q=>({x:(q.x0-pad)/W*100,y:(q.y0-pad)/H*100,w:(q.x1-q.x0+pad*2)/W*100,h:(q.y1-q.y0+pad*2)/H*100}));
+    const x0=Math.min(...opts.map(o=>o.x)),y0=Math.min(...opts.map(o=>o.y)),x1=Math.max(...opts.map(o=>o.x+o.w)),y1=Math.max(...opts.map(o=>o.y+o.h));
+    return {kind:'mc',x:x0,y:y0,w:x1-x0,h:y1-y0,opts}});
+}
 /* 시험지에서 답 칸(밑줄·빈 네모) 자동 찾기 */
 function xLoadImg(src){return new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=rej;im.src=src})}
 async function xDetectPage(src){
@@ -1294,22 +1328,41 @@ async function xDetectPage(src){
   // 이어진 줄 묶기
   const lines=[];runs.forEach(r=>{const L=lines.find(l=>l.y1>=r.y-1&&Math.min(l.x1,r.x1)-Math.max(l.x0,r.x0)>(r.x1-r.x0)*.7);if(L){L.y1=r.y;L.x0=Math.min(L.x0,r.x0);L.x1=Math.max(L.x1,r.x1)}else lines.push({y0:r.y,y1:r.y,x0:r.x0,x1:r.x1})});
   const dens=(x0,x1,y0,y1)=>{x0=Math.max(0,x0);x1=Math.min(W-1,x1);y0=Math.max(0,y0);y1=Math.min(H-1,y1);let n=0,t=0;for(let y=y0;y<=y1;y+=1)for(let x=x0;x<=x1;x+=2){t++;n+=dark[y*W+x]}return t?n/t:1};
+  const lum=i=>d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+  const blank=(x0,x1,y0,y1)=>{x0=Math.max(0,Math.round(x0));x1=Math.min(W-1,Math.round(x1));y0=Math.max(0,Math.round(y0));y1=Math.min(H-1,Math.round(y1));if(x1<=x0||y1<=y0)return false;let n=0,t=0,sum=0;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x+=2){const v=lum(y*W+x);t++;sum+=v;if(v<200)n++}return n/t<.003&&sum/t>=244};
   const L=lines.filter(l=>l.y1-l.y0<=5&&(l.x1-l.x0)<W*.85);
   const used=new Set(),boxes=[];
   // 빈 네모: 위·아래 선 짝
   L.forEach((a,i)=>{if(used.has(i))return;for(let j=0;j<L.length;j++){if(j===i||used.has(j))continue;const b=L[j];if(b.y0<=a.y1)continue;const dy=b.y0-a.y1,ov=Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0),wa=a.x1-a.x0;
-    if(dy>H*.012&&dy<H*.14&&ov>wa*.9&&Math.abs((b.x1-b.x0)-wa)<wa*.1&&dens(a.x0+4,a.x1-4,a.y1+3,b.y0-3)<.04){used.add(i);used.add(j);boxes.push({x0:a.x0,x1:a.x1,y0:a.y0,y1:b.y1});break}}});
+    if(dy>H*.012&&dy<H*.14&&ov>wa*.9&&Math.abs((b.x1-b.x0)-wa)<wa*.1&&blank(a.x0+4,a.x1-4,a.y1+3,b.y0-3)){used.add(i);used.add(j);boxes.push({x0:a.x0,x1:a.x1,y0:a.y0,y1:b.y1});break}}});
   // 밑줄: 위쪽이 비어 있는 선
   const lh=Math.round(H*.03);
   L.forEach((a,i)=>{if(used.has(i))return;if(dens(a.x0,a.x1,a.y0-lh,a.y0-3)>.06)return;boxes.push({x0:a.x0,x1:a.x1,y0:a.y0-lh,y1:a.y1})});
-  return boxes.map(b=>({x:b.x0/W*100,y:Math.max(0,b.y0/H*100),w:Math.max(4,(b.x1-b.x0)/W*100),h:Math.max(2,(b.y1-b.y0)/H*100)})).sort((a,b)=>Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y);
+  // 표: 연한 선까지 찾아서 빈 칸을 답 칸으로
+  const ink=new Uint8Array(W*H);for(let i=0;i<W*H;i++){const r=d[i*4],gg=d[i*4+1],b=d[i*4+2];ink[i]=(r*.3+gg*.59+b*.11)<236?1:0}
+  const hl=[];for(let y=0;y<H;y++){let best=0,bx0=0,x=0;while(x<W){if(!ink[y*W+x]){x++;continue}const x0=x;let gap=0,last=x;while(x<W&&gap<=3){if(ink[y*W+x]){last=x;gap=0}else gap++;x++}if(last-x0>best){best=last-x0;bx0=x0}}if(best>=W*.2){const pr=hl[hl.length-1];if(pr&&y-pr.y1<=2){pr.y1=y}else hl.push({y0:y,y1:y,x0:bx0,x1:bx0+best})}}
+  const vl=[];for(let x=0;x<W;x++){let y=0;while(y<H){if(!ink[y*W+x]){y++;continue}const y0=y;let gap=0,last=y;while(y<H&&gap<=3){if(ink[y*W+x]){last=y;gap=0}else gap++;y++}if(last-y0>=H*.04)vl.push({x,y0,y1:last})}}
+  const vls=[];vl.forEach(v=>{const pr=vls.find(q=>Math.abs(q.x-v.x)<=2&&Math.min(q.y1,v.y1)-Math.max(q.y0,v.y0)>0);if(pr){pr.y0=Math.min(pr.y0,v.y0);pr.y1=Math.max(pr.y1,v.y1)}else vls.push(Object.assign({},v))});
+  const tbl=[];
+  for(let i=0;i+1<hl.length;i++){const a=hl[i],b=hl[i+1],y0=a.y1,y1=b.y0,dy=y1-y0;if(dy<H*.012||dy>H*.2)continue;
+    const xs=vls.filter(v=>v.y0<=y0+3&&v.y1>=y1-3&&v.x>=Math.min(a.x0,b.x0)-3&&v.x<=Math.max(a.x1,b.x1)+3).map(v=>v.x).sort((p,q)=>p-q);
+    for(let k=0;k+1<xs.length;k++){const cx0=xs[k],cx1=xs[k+1];if(cx1-cx0<W*.04)continue;const pad=4;
+      if(blank(cx0+pad,cx1-pad,y0+pad,y1-pad))tbl.push({x0:cx0+3,x1:cx1-3,y0:y0+3,y1:y1-3})}}
+  const ovl=(p,q)=>{const ix=Math.min(p.x1,q.x1)-Math.max(p.x0,q.x0),iy=Math.min(p.y1,q.y1)-Math.max(p.y0,q.y0);return ix>0&&iy>0&&ix*iy>.3*Math.min((p.x1-p.x0)*(p.y1-p.y0),(q.x1-q.x0)*(q.y1-q.y0))};
+  const onBorder=b=>hl.some(h=>h.y0-3<=b.y1&&h.y1+3>=b.y1&&h.x0<=b.x0+2&&h.x1>=b.x1-2&&(h.x1-h.x0)>(b.x1-b.x0)*1.6);
+  const all=tbl.concat(boxes.filter(b=>!tbl.some(t=>ovl(t,b))&&!onBorder(b)));
+  const rm=new Uint8Array(W*H);for(let i=0;i<W*H;i++)rm[i]=lum(i)<190?1:0;const mcs=xDetectMC(rm,W,H);
+  // 표 칸은 왼쪽 열부터 위→아래 순서 (단어 시험지 번호 순서)
+  const inT=b=>tbl.includes(b);
+  return all.map(b=>({x:b.x0/W*100,y:Math.max(0,b.y0/H*100),w:Math.max(4,(b.x1-b.x0)/W*100),h:Math.max(2,(b.y1-b.y0)/H*100),t:inT(b)})).concat(mcs).sort((a,b)=>a.t&&b.t?(Math.abs(a.x-b.x)<2?a.y-b.y:a.x-b.x):(Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y));
 }
 async function xAutoBoxes(fromPage){const e=UI.xe;if(!e||!e.pages.length)return;toast('답 칸을 찾는 중…');let n=0;
   try{for(let p=fromPage||0;p<e.pages.length;p++){const bs=await xDetectPage(e.pages[p]);e.boxes=e.boxes.filter(b=>b.p!==p).concat(bs.map(b=>Object.assign({p},b)));n+=bs.length}
-    e.boxes.sort((a,b)=>a.p-b.p||(Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y));e.sel=-1;render();toast(n?`답 칸 ${n}개를 찾았어요 ✨ 빠진 곳은 눌러서 추가, 잘못된 칸은 눌러서 지워요`:'자동으로 찾은 칸이 없어요. 답 자리를 직접 눌러주세요')}catch(err){toast('자동 찾기에 실패했어요. 직접 눌러서 만들어주세요')}}
+    e.boxes=e.boxes.map((b,i)=>[b,i]).sort((x,y)=>x[0].p-y[0].p||x[1]-y[1]).map(z=>z[0]);e.sel=-1;render();toast(n?`답 칸 ${n}개를 찾았어요 ✨ 빠진 곳은 눌러서 추가, 잘못된 칸은 눌러서 지워요`:'자동으로 찾은 칸이 없어요. 답 자리를 직접 눌러주세요')}catch(err){toast('자동 찾기에 실패했어요. 직접 눌러서 만들어주세요')}}
 /* 학생·채점 화면에서 파일 + 답 칸 보여주기 */
 function xFileView(x,mode){ // mode: 'answer' | 'done' | 'grade'
   return (x.pages||[]).map((src,p)=>`<div class="xpage"><img data-v src="${src}">${x.items.map((it,k)=>it.p!==p?'':
+    it.kind==='mc'?`<div class="xmc ${mode!=='answer'&&it.ok===true?'o':mode!=='answer'&&it.ok===false?'x':''}" style="left:${it.x}%;top:${it.y}%;width:${it.w}%;height:${it.h}%"><b>${k+1}</b>${it.opts.map((o,j)=>`<span class="xopt ${+it.ans===j+1?'pick':''} ${mode==='grade'&&it.key===j?'key':''}" style="${xOptPos(it,o)}" ${mode==='answer'?`onclick="xPickMC('${x.id}',${k},${j+1})"`:''}></span>`).join('')}</div>`:
     mode==='answer'?`<input class="xin" style="left:${it.x}%;top:${it.y}%;width:${it.w}%;height:${it.h}%" value="${esc(it.ans||'')}" placeholder="${k+1}" oninput="xGet('${x.id}').items[${k}].ans=this.value;UI.xdirty=1;const l=document.getElementById('xl-${k}');if(l)l.value=this.value">`
     :`<div class="xshow ${it.ok===true?'o':it.ok===false?'x':''}" style="left:${it.x}%;top:${it.y}%;width:${it.w}%;min-height:${it.h}%" ${mode==='grade'?`onclick="xMark('${x.id}',${k},xGet('${x.id}').items[${k}].ok===true?false:true)"`:''}><b>${k+1}</b>${esc(it.ans||'')}</div>`).join('')}</div>`).join('')}
 /* --- 유형별 리포트 --- */
@@ -1337,7 +1390,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117192520';
+const APP_VER='20261117193048';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}

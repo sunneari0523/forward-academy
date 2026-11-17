@@ -1458,7 +1458,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117195831';
+const APP_VER='20261117200928';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1872,7 +1872,7 @@ function editSess(id,day,start,room){
   modal(`<h3 class="jua">${id?(c.week?(c.kind==='extra'?'보충 수정':'이 주 변경 수정'):'반 수정'):'반 개설 · 보충'}</h3>${kindSel}
   ${isReg?`<div class="onebox">이 주(${lbl(wd[0])} ~ ${lbl(wd[6])})만 바꾸기 ${over?`<span class="chip c-redo" style="margin-left:6px">${over.kind==='cancel'?'휴강 처리됨':'시간 변경됨'}</span>`:''}<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${over?`<button class="btn btn-ghost btn-sm" onclick="DB.C=DB.C.filter(x=>x.id!=='${over.id}');save();closeModal();render();toast('원래 시간표로 되돌렸어요')">↩ 원래대로 되돌리기</button>`:`<button class="btn btn-soft btn-sm" onclick="moveSess('${id}')">🔁 이 주만 시간·강의실 변경</button><button class="btn btn-warn btn-sm" onclick="cancelSess('${id}')">🚫 이 주만 휴강</button>`}</div></div><p class="muted" style="font-size:12.5px;margin-top:10px">아래를 바꾸면 <b>매주 정규 시간표</b>가 바뀌어요.</p>`:''}
   <label class="lb">반 이름</label><input class="inp" id="ss-n" value="${esc(c.name)}" placeholder="예) 사대부고3 / FORM 1">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label class="lb">담당 선생님</label><select class="inp" id="ss-t">${DB.T.filter(t=>isOwner()||t.id===ME.id||t.id===c.tid).map(t=>`<option value="${t.id}" ${t.id===c.tid?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label class="lb">담당 선생님</label><select class="inp" id="ss-t">${DB.T.map(t=>`<option value="${t.id}" ${t.id===c.tid?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div>
   <div><label class="lb">강의실</label><select class="inp" id="ss-r">${ROOMS.map(([k,n])=>`<option value="${k}" ${k===c.room?'selected':''}>${n}</option>`).join('')}</select></div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div><label class="lb">요일</label><select class="inp" id="ss-d">${TDAYS.map(d=>`<option value="${d}" ${d===c.day?'selected':''}>${WD[d]}${c.week||!id?' '+dateOf(d).replace(/\(.\)/,''):''}</option>`).join('')}</select></div>
   <div><label class="lb">시작</label><select class="inp" id="ss-s">${times.map(t=>`<option ${t===c.start?'selected':''}>${t}</option>`).join('')}</select></div>
@@ -2673,7 +2673,7 @@ function last4(ph){const d=String(ph||'').replace(/\D/g,'');return d.length>=4?d
 function genCode(ph){const y=codeYear(),l=last4(ph);if(l)return y+l;let c;do{c=y+String(Math.floor(1000+Math.random()*9000))}while(DB.S.some(s=>s.code===c));return c}
 function dayPick(id,days){return `<div class="daypick" id="${id}">${[1,2,3,4,5,6,0].map(d=>`<button type="button" data-d="${d}" class="${days.includes(d)?'on':''}" onclick="this.classList.toggle('on')">${WD[d]}</button>`).join('')}</div>`}
 function readDays(id){return [...document.querySelectorAll('#'+id+' button.on')].map(b=>+b.dataset.d)}
-function tchOpts(sel){return DB.T.filter(t=>isOwner()||t.id===ME.id||t.id===sel).map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${esc(t.name)}${t.role==='owner'?' (원장)':''}</option>`).join('')}
+function tchOpts(sel){return DB.T.map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${esc(t.name)}${t.role==='owner'?' (원장)':''}</option>`).join('')}
 function editStu(id,pre){
   if(!pre)UI.regInq=null;
   const s=id?stu(id):Object.assign({name:'',school:'',grade:'',tid:ME.id,days:[],parent:'',phone:'',code:'',reg:TODAY,time:''},pre||{});
@@ -2698,7 +2698,7 @@ function saveStu(id){
   let nid=id;
   if(id){const s=stu(id);delete s.cid;Object.assign(s,o)}else{nid='s'+uid();DB.S.push(Object.assign({id:nid},o));if(UI.regInq){consultToStu(UI.regInq,nid);UI.regInq=null}}
   save();closeModal();
-  if(!id){UI.tv='people';UI.pv=nid;render();scrollTo(0,0);toast(`${name} 학생 등록 완료 · 코드 ${code} · 상담 내용을 남겨 보세요`)}
+  if(!id){const vis=myStudents().some(x=>x.id===nid);UI.tv='people';UI.pv=vis?nid:null;render();scrollTo(0,0);toast(vis?`${name} 학생 등록 완료 · 코드 ${code} · 상담 내용을 남겨 보세요`:`${name} 학생 등록 완료 · 코드 ${code} · ${(tch(o.tid)||{name:''}).name} 선생님 담당으로 넣었어요`)}
   else{render();toast('저장했어요')}
 }
 function addRec(id){const t=$('#es-rt').value.trim(),v=$('#es-rv').value.trim();if(!t||!v)return;DB.R.push({id:uid(),sid:id,title:t,value:v,date:TODAY});save();editStu(id);toast('성적을 기록했어요')}

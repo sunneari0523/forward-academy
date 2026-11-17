@@ -367,6 +367,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .mback{display:none;font-size:24px;line-height:1;padding:0 6px;color:var(--ink)}
 .mbody{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
 .mline{display:flex;flex-direction:column;align-items:flex-start}.mline.me{align-items:flex-end}.mline .msg{max-width:80%}
+.mdiv{font-size:11.5px;color:var(--muted);font-weight:700;margin:10px 12px 4px}
 .mwho{font-size:12px;color:var(--muted);margin:2px 4px}
 .mday{align-self:center;font-size:11.5px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:10px;padding:2px 10px;margin:6px 0}
 .mcomp{border-top:1px solid var(--line);padding:8px 10px}.mcomp .in{display:flex;gap:8px;align-items:flex-end}
@@ -612,8 +613,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1099,6 +1100,43 @@ async function doLogin(){
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
+/* ----- 학생 쪽지 (선생님 → 학생) ----- */
+function kSeenKey(){return 'fw_kseen_'+ME.id}
+function kSeen(){try{return JSON.parse(localStorage.getItem(kSeenKey())||'[]')}catch(e){return []}}
+function kMark(id){try{const a=kSeen();if(!a.includes(id)){a.push(id);localStorage.setItem(kSeenKey(),JSON.stringify(a.slice(-300)))}}catch(e){}}
+function sNotes(s){
+  const ks=(DB.K||[]).filter(k=>k.sid===s.id).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);if(!ks.length)return '';
+  const seen=kSeen(),nw=ks.filter(k=>!seen.includes(k.id));
+  return `<div class="task" style="border-color:${nw.length?'var(--navy)':'var(--line)'}"><b>✉️ 선생님 쪽지 ${nw.length?`<span class="chip c-redo">새 쪽지 ${nw.length}</span>`:''}</b>
+  ${ks.slice(0,4).map(k=>{const n=!seen.includes(k.id);return `<div class="list-row" style="cursor:pointer" onclick="openNote('${k.id}')"><span style="font-size:18px">${n?'💌':'✉️'}</span><div style="flex:1;min-width:0"><b style="color:var(--ink);font-size:14px;${n?'':'font-weight:600'}">${esc((k.text||'').split('\n')[0].slice(0,30))}</b><div class="muted" style="font-size:12px">${esc((tch(k.by)||{}).name||'')} 선생님 · ${esc((k.at||'').slice(5,16).replace('-','/'))}</div></div><span class="btn btn-soft btn-sm">${n?'열기':'보기'}</span></div>`}).join('')}</div>`;
+}
+function openNote(id){const k=(DB.K||[]).find(x=>x.id===id);if(!k)return;kMark(id);
+  modal(`<h3 class="jua">✉️ ${esc((tch(k.by)||{}).name||'')} 선생님 쪽지</h3><p class="muted" style="font-size:12.5px">${esc(k.at||'')}</p>
+  <div class="inq-msg" style="font-size:15.5px;line-height:1.7">${esc(k.text||'')}</div>${k.img?`<img data-v src="${k.img}" style="max-width:100%;border-radius:12px;margin-top:10px">`:''}
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal();render()">닫기</button><button class="btn btn-navy" onclick="closeModal();newQ('쪽지 답장','${k.by}')">💬 답장하기</button></div>`)}
+function kCompose(sids){
+  UI.kd={sids:(sids||[]).slice(),q:'',img:''};
+  modal(`<h3 class="jua">✉️ 학생에게 쪽지 보내기</h3><p class="muted" style="font-size:13px">고른 학생만 자기 화면에서 볼 수 있어요. 알림을 켜둔 학생은 폰으로도 알림이 가요.</p>
+  <label class="lb">받는 학생 <span class="muted" id="kd-cnt">${UI.kd.sids.length}명</span> <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="UI.kd.sids=[...new Set(UI.kd.sids.concat(myStudents().map(s=>s.id)))];kdList()">내 학생 전체</button> <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="UI.kd.sids=[];kdList()">비우기</button></label>
+  <input class="inp" placeholder="🔍 이름 · 학교 · 학년으로 찾기" oninput="UI.kd.q=this.value.trim();kdList()" style="margin-bottom:8px">
+  <div class="chips-sel" id="kd-list" style="max-height:170px;overflow:auto"></div>
+  <label class="lb">내용</label><textarea class="inp" id="kd-t" rows="5" placeholder="예) 이번 주 금요일 보강은 7시예요! 워크북 꼭 챙겨오세요 📚" oninput="UI.mdirty=true"></textarea>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="pickFiles(m=>{UI.kd.img=m[0];$('#kd-pv').innerHTML='<img src=&quot;'+m[0]+'&quot; style=&quot;width:64px;height:64px;object-fit:cover;border-radius:10px&quot;>'})">📷 사진 첨부</button><span id="kd-pv"></span></div>
+  <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="kSend()">보내기</button></div>`);kdList();
+}
+function kdList(){const box=$('#kd-list');if(!box)return;const L=myStudents().slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,UI.kd.q));
+  box.innerHTML=L.map(s=>`<button class="s ${UI.kd.sids.includes(s.id)?'on':''}" onclick="const i=UI.kd.sids.indexOf('${s.id}');if(i>=0)UI.kd.sids.splice(i,1);else UI.kd.sids.push('${s.id}');kdList()">${UI.kd.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('')||'<span class="muted">학생이 없어요</span>';
+  const c=$('#kd-cnt');if(c)c.textContent=UI.kd.sids.length+'명'}
+function kSend(){const t=$('#kd-t').value.trim();if(!t&&!UI.kd.img){toast('내용을 적어주세요');return}if(!UI.kd.sids.length){toast('받는 학생을 골라주세요');return}
+  DB.K=DB.K||[];const bid='k'+uid(),at=nowStr();UI.kd.sids.forEach(sid=>DB.K.push({id:bid+'_'+sid,bid,sid,by:ME.id,text:t,img:UI.kd.img||'',at}));
+  save();notify(UI.kd.sids,'✉️ '+((tch(ME.id)||{}).name||'')+' 선생님 쪽지',(t||'📷 사진').slice(0,80));closeModal();render();toast(`${UI.kd.sids.length}명에게 쪽지를 보냈어요 ✉️`)}
+function kSentView(){
+  const g={};(DB.K||[]).filter(k=>k.by===ME.id||isOwner()).forEach(k=>{(g[k.bid]=g[k.bid]||[]).push(k)});
+  const L=Object.values(g).sort((a,b)=>(a[0].at||'')<(b[0].at||'')?1:-1).slice(0,30);
+  return `<div class="mhead"><button class="mback" onclick="UI.mr=null;render()">‹</button><b>✉️ 학생 쪽지</b><button class="btn btn-navy btn-sm" style="margin-left:auto" onclick="kCompose()">+ 쪽지 쓰기</button></div>
+  <div class="mbody">${L.length?L.map(ks=>{const k=ks[0];return `<div class="card" style="padding:12px 14px;margin:0"><div class="muted" style="font-size:12px">${esc((k.at||'').slice(5,16).replace('-','/'))} · ${esc((tch(k.by)||{}).name||'')} → ${ks.map(x=>esc((stu(x.sid)||{}).name||'')).join(', ')}</div><div style="white-space:pre-wrap;margin-top:4px;font-size:14.5px">${esc(k.text||'')}</div>${k.img?`<img data-v src="${k.img}" style="width:80px;height:80px;object-fit:cover;border-radius:10px;margin-top:6px">`:''}<div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="kDel('${k.bid}',this)">삭제</button></div></div>`}).join(''):'<div class="empty">아직 보낸 쪽지가 없어요<br><button class="btn btn-navy" style="margin-top:12px" onclick="kCompose()">✉️ 첫 쪽지 보내기</button></div>'}</div>`;
+}
+function kDel(bid,b){if(!b.dataset.c){b.dataset.c=1;b.textContent='학생 화면에서도 지워져요. 정말 삭제?';return}DB.K=DB.K.filter(k=>k.bid!==bid);save();render()}
 /* ----- 쌤톡 (선생님끼리 메신저) ----- */
 function staffList(){return DB.T.filter(t=>t.role==='owner'||t.role==='teacher')}
 function roomOf(a,b){return 'dm:'+[a,b].sort().join('|')}
@@ -1110,18 +1148,19 @@ function markSeen(room){const ms=roomMsgs(room),l=ms[ms.length-1];if(l)try{local
 function roomUnread(room){const ls=lastSeen(room);return roomMsgs(room).filter(m=>m.by!==ME.id&&(m.at+'|'+m.id)>ls).length}
 function msgUnread(){if(!ME||ME.role==='student')return 0;DB.M=DB.M||[];return myRooms().reduce((n,r)=>n+(UI.tv==='msg'&&UI.mr===r.id?0:roomUnread(r.id)),0)}
 function tMsg(){
-  DB.M=DB.M||[];const rooms=myRooms();if(UI.mr&&!rooms.some(r=>r.id===UI.mr))UI.mr=null;
+  DB.M=DB.M||[];DB.K=DB.K||[];const rooms=myRooms();if(UI.mr&&UI.mr!=='kk'&&!rooms.some(r=>r.id===UI.mr))UI.mr=null;
   if(!UI.mr&&matchMedia('(min-width:701px)').matches)UI.mr='all';
-  const room=rooms.find(r=>r.id===UI.mr);if(room)markSeen(room.id);
-  const list=rooms.map(r=>{const ms=roomMsgs(r.id),l=ms[ms.length-1],u=roomUnread(r.id);return `<button class="mroom ${UI.mr===r.id?'on':''}" onclick="UI.mr='${r.id}';render();msgScroll()"><b>${esc(r.name)}</b><small>${l?esc((l.by===ME.id?'나: ':'')+(l.text||'📷 사진').slice(0,24)):esc(r.sub)}</small>${u?`<i>${u}</i>`:''}</button>`}).join('');
+  const room=UI.mr==='kk'?{id:'kk'}:rooms.find(r=>r.id===UI.mr);if(room&&room.id!=='kk')markSeen(room.id);
+  const list=rooms.map(r=>{const ms=roomMsgs(r.id),l=ms[ms.length-1],u=roomUnread(r.id);return `<button class="mroom ${UI.mr===r.id?'on':''}" onclick="UI.mr='${r.id}';render();msgScroll()"><b>${esc(r.name)}</b><small>${l?esc((l.by===ME.id?'나: ':'')+(l.text||'📷 사진').slice(0,24)):esc(r.sub)}</small>${u?`<i>${u}</i>`:''}</button>`}).join('')+`<div class="mdiv">학생</div><button class="mroom ${UI.mr==='kk'?'on':''}" onclick="UI.mr='kk';render()"><b>✉️ 학생 쪽지</b><small>학생에게 공지·전달사항 보내기</small></button>`;
   let right='<div class="empty" style="margin-top:40px">왼쪽에서 대화방을 골라주세요 💌</div>';
-  if(room){const ms=roomMsgs(room.id);let lastDay='';
+  if(room&&room.id==='kk')right=kSentView();
+  else if(room){const ms=roomMsgs(room.id);let lastDay='';
     right=`<div class="mhead"><button class="mback" onclick="UI.mr=null;render()">‹</button><b>${esc(room.name)}</b><span class="muted" style="font-size:12.5px">${room.id==='all'?staffList().length+'명':'1:1 대화 · 둘만 볼 수 있어요'}</span></div>
     <div class="mbody" id="mbody">${ms.length?ms.map(m=>{const d=(m.at||'').slice(0,10),day=d!==lastDay?`<div class="mday">${lbl(d)}</div>`:'';lastDay=d;const me=m.by===ME.id;
       return `${day}<div class="mline ${me?'me':''}">${!me&&room.id==='all'?`<span class="mwho">${esc((tch(m.by)||{}).name||'')}</span>`:''}<div class="msg ${me?'me':'you'}">${m.img?`<img data-v src="${m.img}">`:''}${esc(m.text||'')}<small>${esc((m.at||'').slice(11,16))}</small></div></div>`}).join(''):'<div class="empty">첫 메시지를 보내보세요 👋</div>'}</div>
     <div class="mcomp">${UI.mimg?`<div class="pv"><img src="${UI.mimg}"><button class="x" onclick="UI.mimg='';render();msgScroll()">✕</button></div>`:''}<div class="in"><button class="iconbtn" title="사진" onclick="pickFiles(m=>{UI.mimg=m[0];render();msgScroll()})">📷</button><textarea id="mtext" rows="1" placeholder="메시지 입력" oninput="UI.mdraft=this.value" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&matchMedia('(min-width:701px)').matches){event.preventDefault();sendStaffMsg()}">${esc(UI.mdraft||'')}</textarea><button class="iconbtn send" onclick="sendStaffMsg()">➤</button></div></div>`}
   setTimeout(()=>{const b=$('#mbody');if(b)b.scrollTop=b.scrollHeight},0);
-  return `<div class="ph"><div><h2 class="jua">💌 쌤톡</h2><p>선생님들끼리 주고받는 메신저예요 · 학생은 볼 수 없어요</p></div></div>
+  return `<div class="ph"><div><h2 class="jua">💌 쌤톡</h2><p>선생님들끼리 주고받는 메신저예요 · 학생은 볼 수 없어요</p></div><button class="btn btn-navy" onclick="kCompose()">✉️ 학생에게 쪽지</button></div>
   <div class="mwrap ${room?'open':''}"><aside class="mlistbox">${list}</aside><section class="mchat">${right}</section></div>`;
 }
 function msgScroll(){setTimeout(()=>{const b=$('#mbody');if(b)b.scrollTop=b.scrollHeight;const t=$('#mtext');if(t&&matchMedia('(min-width:701px)').matches)t.focus()},30)}
@@ -1192,7 +1231,7 @@ function sToday(s){
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,-7)}';render()">‹ 지난주</button><b style="color:var(--ink)">${pd(ws).getMonth()+1}월 ${pd(ws).getDate()}일 주</b><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,7)}';render()">다음주 ›</button></div>
   <div class="week">${strip}</div>
   ${overdue.length&&UI.day===TODAY?`<div class="task" style="border-color:var(--peach);background:var(--peach-soft)"><b style="color:var(--red)">⏰ 밀린 숙제 ${overdue.length}개</b><div class="meta" style="color:var(--red)">${overdue.slice(0,3).map(t=>esc(lbl(t.date)+' '+t.title)).join(' · ')}</div><div class="acts"><button class="btn btn-warn btn-sm" onclick="UI.day='${overdue[0].date}';render()">밀린 숙제 보러 가기</button></div></div>`:''}
-  ${sVideos(s)}
+  ${sNotes(s)}${sVideos(s)}
   ${prStudentCard(s,ws)}
   <div class="sec-t"><h3 class="jua">${UI.day===TODAY?'오늘 할 일':lbl(UI.day)+' 할 일'}</h3><span class="muted" style="font-size:13.5px;font-weight:700">${done} / ${list.length} 완료</span></div>
   ${list.length?list.map(taskCard).join(''):`<div class="empty"><div class="e">🌿</div>이 날은 숙제가 없어요</div>`}`;
@@ -1283,10 +1322,10 @@ function sendMsg(){
   UI.cimg=[];save();if(f==='s')notify([q.tid,q.by],'💬 질문 답장',(stu(q.sid)||{}).name+' · '+q.title);else notify([q.sid],'💬 선생님 답변','"'+q.title+'" 질문에 답이 왔어요');render();setTimeout(()=>{const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight;window.scrollTo(0,document.body.scrollHeight)},30);
 }
 function askAbout(tid){const t=DB.tasks.find(x=>x.id===tid);newQ(t.title)}
-function newQ(title){
+function newQ(title,tid){
   const s=stu(ME.id);
-  UI.nq={imgs:[]};
-  modal(`<h3 class="jua">질문하기</h3><p class="muted" style="font-size:14px">${esc((tch(sTid(s))||{name:''}).name)} 선생님께 바로 전달돼요</p>
+  UI.nq={imgs:[],tid:tid||''};
+  modal(`<h3 class="jua">질문하기</h3><p class="muted" style="font-size:14px">${esc((tch(UI.nq.tid||sTid(s))||{name:''}).name)} 선생님께 바로 전달돼요</p>
     <label class="lb">무엇에 대한 질문이에요?</label><input class="inp" id="nqt" value="${esc(title)}" placeholder="예) 워크북 12번">
     <label class="lb">궁금한 내용</label><textarea class="inp" id="nqb" rows="3" placeholder="어디가 어떻게 이해가 안 되는지 적어주세요"></textarea>
     <label class="drop" style="margin-top:12px" onclick="pickFiles(m=>{UI.nq.imgs=m.slice(0,2);$('#nqpv').innerHTML=UI.nq.imgs.map(i=>'<img src=&quot;'+i+'&quot;>').join('')})">📷 문제 사진 첨부하기</label><div class="uppv" id="nqpv"></div>
@@ -1297,7 +1336,7 @@ function sendQ(){
   if(!body&&!UI.nq.imgs.length){toast('질문 내용이나 사진을 넣어주세요');return}
   const at=nowStr(), msgs=[{f:'s',text:body,img:UI.nq.imgs[0]||'',at}];
   if(UI.nq.imgs[1])msgs.push({f:'s',text:'',img:UI.nq.imgs[1],at});
-  const q={id:uid(),sid:s.id,tid:sTid(s),title,msgs,uS:0,uT:1,last:at};
+  const q={id:uid(),sid:s.id,tid:UI.nq.tid||sTid(s),title,msgs,uS:0,uT:1,last:at};
   DB.Q.push(q);save();notify([q.tid,ownerId()],'💬 새 질문',s.name+' · '+title);closeModal();UI.st='qa';UI.q=q.id;render();toast('질문을 보냈어요! 답이 오면 알려줄게요');
 }
 
@@ -1808,7 +1847,7 @@ function tStuPlan(sid){
   const subs=DB.tasks.filter(t=>t.sid===sid&&t.status==='sub').sort((a,b)=>a.date<b.date?-1:1);
   return `<button class="backlink" onclick="UI.ws=null;render();scrollTo(0,0)">← 학생 목록으로</button>
   <div class="ph"><div><h2 class="jua">${esc(s.name)} ${riskBadge(sid)}</h2><p>${esc(s.school)} ${esc(s.grade)} · ${esc(sLabel(s))} · <b style="color:${nc&&diffD(TODAY,nc)<=1?'var(--red)':'inherit'}">${classLabel(nc)}</b> · 콩떡이 ${MOODICON[mood(petDays(sid))]} Lv.${pet(sid).lv}</p>${riskWhy(sid)}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='people';UI.pv='${sid}';render();scrollTo(0,0)">📋 상담 일지</button><button class="btn btn-navy" onclick="addPlan('${TODAY>=days[0]&&TODAY<=days[6]?TODAY:days[0]}')">+ 숙제 내주기</button></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='people';UI.pv='${sid}';render();scrollTo(0,0)">📋 상담 일지</button><button class="btn btn-ghost" onclick="kCompose(['${sid}'])">✉️ 쪽지</button><button class="btn btn-navy" onclick="addPlan('${TODAY>=days[0]&&TODAY<=days[6]?TODAY:days[0]}')">+ 숙제 내주기</button></div></div>
   <div class="tiles">
     <div class="tile" onclick="UI.lf='all';render()"><small>누적 숙제</small><b>${st.total}</b><span class="muted" style="font-size:13px">오늘까지 낸 숙제</span></div>
     <div class="tile" onclick="UI.lf='ok';render()"><small>제출률</small><b style="color:${(st.rate||0)>=80?'var(--sage)':(st.rate||0)>=50?'#946A0A':'var(--red)'}">${st.rate===null?'-':st.rate+'%'}</b><span class="muted" style="font-size:13px">제출 ${st.done} / ${st.total} · 최근 2주 ${st.rate2===null?'-':st.rate2+'%'}</span></div>

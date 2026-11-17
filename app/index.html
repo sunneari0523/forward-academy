@@ -374,6 +374,16 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .mbody{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
 .mline{display:flex;flex-direction:column;align-items:flex-start}.mline.me{align-items:flex-end}.mline .msg{max-width:80%}
 .pp-steps{background:var(--navy-soft);border-radius:14px;padding:12px 14px;margin:10px 0 4px;font-size:14.5px}.pp-steps ol{margin:6px 0 0;padding-left:20px;line-height:1.9}
+.kiosk{position:fixed;inset:0;z-index:500;background:linear-gradient(160deg,#FDF8F9,#FCEEF2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.k-top{display:flex;flex-direction:column;align-items:center;gap:4px}.k-top img{height:46px}.k-clock{font-size:40px;font-weight:800;color:var(--ink);letter-spacing:2px}
+.k-msg{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;background:#fff;border-radius:22px;padding:16px 26px;width:min(520px,92vw);box-shadow:0 8px 28px rgba(180,90,120,.12)}.k-msg b{font-size:24px;color:var(--ink)}.k-msg span{font-size:17px;color:var(--muted)}.k-msg small{font-size:15px;color:var(--muted)}
+.k-msg.in{border:3px solid #8FB39A}.k-msg.out{border:3px solid var(--navy)}.k-msg.err{border:3px solid #E07A7A}.k-emoji{font-size:44px}
+.k-pick{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}.k-pick button{padding:12px 18px;border-radius:14px;border:2px solid var(--line);background:#fff;font-size:19px;font-weight:800;display:flex;flex-direction:column}.k-pick small{font-size:12px;color:var(--muted);font-weight:400}
+.k-dots{display:flex;gap:12px}.k-dots i{width:54px;height:62px;border-radius:14px;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:30px;font-weight:800;color:var(--ink)}.k-dots i.on{border-color:var(--navy)}
+.k-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(360px,88vw)}.k-pad button{height:clamp(56px,9vh,78px);border-radius:18px;background:#fff;border:1.5px solid var(--line);font-size:30px;font-weight:800;color:var(--ink);box-shadow:0 3px 0 var(--line)}.k-pad button:active{transform:translateY(2px);box-shadow:none}.k-pad button.f{font-size:18px;background:var(--navy-soft)}
+.k-foot{display:flex;gap:16px;align-items:center;color:var(--muted);font-size:14px}.k-foot button{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:13px}
+.attline{background:#fff;border:1.5px solid #CFE3D5;border-radius:14px;padding:10px 14px;margin-bottom:12px;font-size:14.5px;color:var(--ink)}
+.stable.att td,.stable.att th{padding:9px 10px}
 .xchal{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#FCEEF2,#FFF6E0);border:2px solid var(--navy);border-radius:18px;padding:14px;margin-bottom:12px;cursor:pointer}.xchal b{display:block;font-size:15.5px;color:var(--ink)}.xchal small{color:var(--muted);font-size:12.5px}
 .xc-i{font-size:30px;width:48px;height:48px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .xhead{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.xbig{margin-left:auto;font-size:36px;font-weight:800;color:var(--navy)}.xbig small{font-size:15px}.xbig.win{color:#3F7A50}
@@ -649,8 +659,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1167,6 +1177,53 @@ async function doLogin(){
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
+/* ----- 🏫 등·하원 출결 ----- */
+function atRows(){return DB.AT||(DB.AT=[])}
+function atGet(sid,date){return atRows().find(a=>a.sid===sid&&a.date===date)}
+function hm(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function hmMin(t){if(!t)return 0;const [h,m]=t.split(':').map(Number);return h*60+m}
+function atMins(a,now){return (a&&a.v||[]).reduce((s,v)=>s+Math.max(0,(v.out?hmMin(v.out):(now?hmMin(hm()):hmMin(v.in)))-hmMin(v.in)),0)}
+function atIn(a){const v=a&&a.v||[];return v.length&&!v[v.length-1].out}
+function fmtMin(m){m=Math.round(m);return m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`:`${m}분`}
+function atToggle(sid,who){const date=TODAY;let a=atGet(sid,date);if(!a){a={id:sid+'_'+date,sid,date,v:[]};atRows().push(a)}
+  const t=hm(),s=stu(sid);let kind;if(atIn(a)){a.v[a.v.length-1].out=t;kind='out'}else{a.v.push({in:t});kind='in'}a.by=who||ME.id;a.upd=nowStr();save();
+  return {kind,t,name:s.name,a}}
+/* 키오스크 */
+function kioskOpen(){const pin=prompt('키오스크를 닫을 때 쓸 비밀번호 4자리를 정해주세요 (선생님만 알게)','');if(pin===null)return;if(!/^\d{4}$/.test(pin)){toast('숫자 4자리로 정해주세요');return}
+  try{sessionStorage.setItem('fw_kpin',pin)}catch(e){}UI.kiosk={d:'',msg:null};render();try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(e){}}
+function kioskView(){const k=UI.kiosk,m=k.msg;const n=atRows().filter(a=>a.date===TODAY&&atIn(a)).length;
+  return `<div class="kiosk"><div class="k-top"><img src="logo.png" alt=""><div class="k-clock" id="kclock">${hm()}</div></div>
+  ${m?`<div class="k-msg ${m.kind}">${m.pick?`<b>누구인가요?</b><div class="k-pick">${m.pick.map(s=>`<button onclick="kioskDo('${s.id}')">${esc(s.name)}<small>${esc(s.school||'')} ${esc(s.grade||'')}</small></button>`).join('')}</div>`:m.kind==='err'?`<b>${esc(m.text)}</b>`:`<div class="k-emoji">${m.kind==='in'?'👋':'🏠'}</div><b>${esc(m.name)}</b><span>${m.kind==='in'?'등원 완료!':'하원 완료!'} · ${m.t}</span>${m.kind==='out'?`<small>오늘 학원에 ${fmtMin(m.mins)} 있었어요. 수고했어요 👏</small>`:'<small>오늘도 화이팅 💪</small>'}`}</div>`
+  :`<div class="k-msg"><b>휴대폰 뒷번호 4자리를 눌러주세요</b><span>등원·하원 모두 똑같이 찍으면 돼요</span></div>`}
+  <div class="k-dots">${[0,1,2,3].map(i=>`<i class="${k.d.length>i?'on':''}">${k.d[i]||''}</i>`).join('')}</div>
+  <div class="k-pad">${[1,2,3,4,5,6,7,8,9,'지움',0,'확인'].map(v=>`<button class="${typeof v==='string'?'f':''}" onclick="kioskKey('${v}')">${v}</button>`).join('')}</div>
+  <div class="k-foot"><span>지금 학원에 ${n}명</span><button onclick="kioskClose()">닫기</button></div></div>`}
+function kioskKey(v){const k=UI.kiosk;if(k.msg&&!k.msg.pick){k.msg=null}if(v==='지움'){k.d=k.d.slice(0,-1)}else if(v==='확인'){kioskGo();return}else if(k.d.length<4){k.d+=v;if(k.d.length===4){render();setTimeout(kioskGo,150);return}}render()}
+function kioskGo(){const k=UI.kiosk,d=k.d;if(d.length<4)return;const L=DB.S.filter(s=>{const p=String(s.phone||'').replace(/\D/g,''),c=String(s.code||'');return p.endsWith(d)||c.endsWith(d)});
+  k.d='';if(!L.length){k.msg={kind:'err',text:'등록된 번호가 없어요. 다시 눌러주세요'};render();kioskTimer();return}
+  if(L.length>1){k.msg={kind:'pick',pick:L};render();return}kioskDo(L[0].id)}
+function kioskDo(sid){const r=atToggle(sid,'kiosk');UI.kiosk.msg={kind:r.kind,name:r.name,t:r.t,mins:atMins(r.a)};render();kioskTimer();
+  const s=stu(sid);notify([sTid(s)],r.kind==='in'?'🏫 '+s.name+' 등원':'🏠 '+s.name+' 하원',r.t+(r.kind==='out'?' · '+fmtMin(atMins(r.a)):''))}
+function kioskTimer(){clearTimeout(UI.kt2);UI.kt2=setTimeout(()=>{if(UI.kiosk){UI.kiosk.msg=null;render()}},3500)}
+function kioskClose(){const p=prompt('닫기 비밀번호 4자리');let ok=false;try{ok=p===sessionStorage.getItem('fw_kpin')}catch(e){}if(!ok){if(p!==null)toast('비밀번호가 달라요');return}UI.kiosk=null;try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}render()}
+setInterval(()=>{const c=document.getElementById('kclock');if(c)c.textContent=hm()},10000);
+/* 선생님 출결 화면 */
+function tAtt(){UI.ad2=UI.ad2||TODAY;UI.am=UI.am||'day';const d=UI.ad2,ss=myStudents().slice().sort((a,b)=>a.name<b.name?-1:1);
+  const head=`<div class="ph"><div><h2 class="jua">🏫 출결</h2><p>학생이 키오스크에서 휴대폰 뒷번호를 찍으면 등원·하원이 기록돼요</p></div><button class="btn btn-navy" onclick="kioskOpen()">🖥️ 출결 키오스크 열기</button></div>
+  <div class="chips-sel" style="margin-bottom:12px">${[['day','📅 날짜별'],['month','📊 월별 통계']].map(([k,l])=>`<button class="${UI.am===k?'on':''}" onclick="UI.am='${k}';render()">${l}</button>`).join('')}</div>`;
+  if(UI.am==='month'){const ym=(UI.aym||TODAY.slice(0,7));const days=new Set();atRows().forEach(a=>{if(a.date.slice(0,7)===ym)days.add(a.date)});
+    const rows=ss.map(s=>{const L=atRows().filter(a=>a.sid===s.id&&a.date.slice(0,7)===ym&&(a.v||[]).length);const tot=L.reduce((x,a)=>x+atMins(a),0);return {s,n:L.length,tot,avg:L.length?tot/L.length:0,last:L.map(a=>a.date).sort().pop()}}).sort((a,b)=>b.tot-a.tot);
+    return head+`<div class="card"><div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px"><button class="btn btn-ghost btn-sm" onclick="UI.aym=ymAdd('${ym}',-1);render()">‹</button><b style="font-size:17px">${ym.slice(0,4)}년 ${+ym.slice(5)}월</b><button class="btn btn-ghost btn-sm" ${ym>=TODAY.slice(0,7)?'disabled':''} onclick="UI.aym=ymAdd('${ym}',1);render()">›</button></div>
+    <table class="stable att"><thead><tr><th>학생</th><th>등원</th><th>총 시간</th><th>평균</th><th>마지막</th></tr></thead><tbody>${rows.map(r=>`<tr onclick="UI.am='stu';UI.as='${r.s.id}';render()" style="cursor:pointer"><td><b>${esc(r.s.name)}</b> <span class="muted" style="font-size:12px">${esc(r.s.grade||'')}</span></td><td>${r.n}회</td><td>${r.tot?fmtMin(r.tot):'-'}</td><td>${r.n?fmtMin(r.avg):'-'}</td><td class="muted">${r.last?r.last.slice(5).replace('-','/'):'-'}</td></tr>`).join('')}</tbody></table></div>`}
+  if(UI.am==='stu'&&stu(UI.as)){const s=stu(UI.as),L=atRows().filter(a=>a.sid===s.id&&(a.v||[]).length).sort((a,b)=>a.date<b.date?1:-1);
+    return head+`<button class="backlink" onclick="UI.am='month';render()">← 월별 통계</button><div class="card"><b style="font-size:17px">${esc(s.name)}</b> <span class="muted">최근 출결</span>
+    ${L.slice(0,40).map(a=>`<div class="list-row"><b style="min-width:80px">${lbl(a.date)}</b><span style="flex:1">${a.v.map(v=>`${v.in} → ${v.out||'<span style="color:var(--navy)">학원에 있음</span>'}`).join(' · ')}</span><b>${fmtMin(atMins(a,a.date===TODAY))}</b></div>`).join('')||'<p class="muted">기록이 없어요</p>'}</div>`}
+  const list=ss.map(s=>{const a=atGet(s.id,d),inn=atIn(a),v=a&&a.v||[];return {s,a,inn,v,st:inn?1:v.length?2:0}}).sort((x,y)=>(x.st===1?-1:0)-(y.st===1?-1:0)||(x.st===0)-(y.st===0));
+  const nIn=list.filter(x=>x.st===1).length,nOut=list.filter(x=>x.st===2).length;
+  return head+`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><input class="inp" type="date" value="${d}" style="max-width:170px;margin:0" onchange="UI.ad2=this.value||TODAY;render()"><span class="chip c-ok">🏫 학원에 ${nIn}명</span><span class="chip">🏠 하원 ${nOut}명</span><span class="chip c-todo">⏳ 아직 ${list.length-nIn-nOut}명</span></div>
+  ${list.map(x=>`<div class="list-row"><b style="min-width:72px">${esc(x.s.name)}</b><span class="muted" style="font-size:12px;min-width:60px">${esc(x.s.grade||'')}</span><span style="flex:1;font-size:13.5px">${x.v.length?x.v.map(v=>`${v.in} 등원${v.out?' → '+v.out+' 하원':''}`).join(' · '):'<span class="muted">기록 없음</span>'}</span>${x.v.length?`<b style="font-size:13px">${fmtMin(atMins(x.a,d===TODAY))}</b>`:''}${x.st===1?'<span class="chip c-ok">학원에 있음</span>':x.st===2?'<span class="chip">하원</span>':''}${d===TODAY?`<button class="btn btn-ghost btn-sm" onclick="const r=atToggle('${x.s.id}');render();toast(r.name+' '+(r.kind==='in'?'등원':'하원')+' '+r.t)">${x.st===1?'하원 처리':'등원 처리'}</button>`:''}</div>`).join('')}</div>`}
+/* 학생 화면 한 줄 */
+function sAttLine(s){const a=atGet(s.id,TODAY);if(!a||!(a.v||[]).length)return '';const l=a.v[a.v.length-1];return `<div class="attline">${atIn(a)?`🏫 <b>${l.in}</b>에 등원했어요 · 학원에 ${fmtMin(atMins(a,true))}째`:`🏠 오늘 ${a.v[0].in} 등원 → ${l.out} 하원 · <b>${fmtMin(atMins(a))}</b> 공부했어요`}</div>`}
 /* ----- ⚔️ 1:1 도전장 테스트 ----- */
 const XTYPES=['어휘','어법','구문·해석','빈칸','순서·삽입','주제·요지','서술형·영작','본문 암기','기타'];
 function xNowMs(){return Date.now()}
@@ -1401,7 +1458,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117193949';
+const APP_VER='20261117195831';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1580,7 +1637,7 @@ function sToday(s){
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,-7)}';render()">‹ 지난주</button><b style="color:var(--ink)">${pd(ws).getMonth()+1}월 ${pd(ws).getDate()}일 주</b><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,7)}';render()">다음주 ›</button></div>
   <div class="week">${strip}</div>
   ${overdue.length&&UI.day===TODAY?`<div class="task" style="border-color:var(--peach);background:var(--peach-soft)"><b style="color:var(--red)">⏰ 밀린 숙제 ${overdue.length}개</b><div class="meta" style="color:var(--red)">${overdue.slice(0,3).map(t=>esc(lbl(t.date)+' '+t.title)).join(' · ')}</div><div class="acts"><button class="btn btn-warn btn-sm" onclick="UI.day='${overdue[0].date}';render()">밀린 숙제 보러 가기</button></div></div>`:''}
-  ${sXBanner(s)}${sNoteBanner(s)}${sVideos(s)}
+  ${sAttLine(s)}${sXBanner(s)}${sNoteBanner(s)}${sVideos(s)}
   ${prStudentCard(s,ws)}
   <div class="sec-t"><h3 class="jua">${UI.day===TODAY?'오늘 할 일':lbl(UI.day)+' 할 일'}</h3><span class="muted" style="font-size:13.5px;font-weight:700">${done} / ${list.length} 완료</span></div>
   ${list.length?list.map(taskCard).join(''):`<div class="empty"><div class="e">🌿</div>이 날은 숙제가 없어요</div>`}`;
@@ -1698,10 +1755,11 @@ function pendingQ(){const ss=myStudents().map(s=>s.id);return DB.Q.filter(q=>ss.
 function staffView(){
   const me=tch(ME.id); UI.tv=UI.tv||'home';
   if(UI.tv==='qa')UI.tv='msg';
-  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
+  if(UI.kiosk){$('#app').innerHTML=kioskView();return}
+  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['att','🏫','출결',0],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
-  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg}[UI.tv]();
+  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
@@ -1726,6 +1784,7 @@ function tHome(){
     <button onclick="UI.tv='plan';UI.ws=null;UI.pmode=null;UI.hf='today';render()"><small>✏️ 오늘 단어 시험</small><b>${vdone.length}<span>/${vtoday.length} 통과</span></b></button>
     <button onclick="UI.tv='exam';UI.exam=null;render()"><small>📝 채점할 시험</small><b style="color:${toGrade.length?'var(--red)':'var(--ink)'}">${toGrade.length}</b></button>
     <button onclick="UI.tv='msg';UI.mr=null;render()"><small>💌 안 읽은 톡·쪽지</small><b style="color:${msgUnread()+kUnreadStaff()?'var(--red)':'var(--ink)'}">${msgUnread()+kUnreadStaff()}</b></button>
+    <button onclick="UI.tv='att';UI.am='day';UI.ad2=TODAY;render()"><small>🏫 지금 학원에</small><b>${atRows().filter(a=>a.date===TODAY&&atIn(a)&&myStudents().some(s=>s.id===a.sid)).length}<span>명</span></b></button>
     <button onclick="UI.tv='people';UI.pv=null;UI.pf='risk';render()"><small>⚠️ 주의 학생</small><b style="color:${alerts.length?'var(--red)':'var(--ink)'}">${alerts.length}</b></button>
   </div>
   <div class="grid2" style="margin-top:14px">

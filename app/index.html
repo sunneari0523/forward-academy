@@ -316,6 +316,8 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .vlist .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px}.vlist .x:hover{color:var(--red)}
 .vcard{background:#fff;border:1.5px solid var(--line);border-radius:22px;padding:34px 18px;text-align:center;min-height:230px;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
 .vcard.f{border-color:var(--sage)}.vcard .m{font-size:20px;font-weight:700;color:var(--sage-d);margin-top:14px}.vcard .hint{color:var(--muted);font-size:13px;margin-top:16px}
+.qt{display:flex}#verbar{position:fixed;top:0;left:0;right:0;z-index:300;background:var(--navy);color:#fff;text-align:center;padding:10px;font-size:14px;cursor:pointer}
+.qt{display:flex;align-items:center;gap:10px;margin:-4px 0 12px}.qt-bar{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden}.qt-bar i{display:block;height:100%;width:100%;background:var(--navy)}.qt b{min-width:20px;text-align:right;font-size:16px;color:var(--navy)}
 .pt-wrap{max-width:720px;margin:0 auto}.pt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:800;color:var(--muted)}
 .pt-stage{background:#fff;border:2px solid var(--line);border-radius:24px;min-height:min(62vh,460px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
 .pt-num{font-size:22px;font-weight:800;color:var(--navy)}.pt-word{font-size:clamp(44px,12vw,96px);font-weight:800;color:var(--ink);line-height:1.1;word-break:break-word}.pt-word.write{font-size:clamp(34px,9vw,64px);color:var(--sage-d,#5f8a6c)}
@@ -979,14 +981,21 @@ function vQuiz(){
   const q=VS.q,x=WMAP[q.ids[q.i]],n=q.ids.length;
   return `<div class="vqtop"><button class="backlink" onclick="if(confirmLeave())vGo('${q.kind==='test'?'test':'learn'}')">✕ 그만하기</button><span class="muted">${q.i+1} / ${n}</span></div>
   <div class="prog" style="margin-bottom:14px"><i style="width:${q.i/n*100}%"></i></div>
+  ${qTimed(q)?(q.ans===null?(qtArm(q),`<div class="qt"><div class="qt-bar"><i id="qt-bar"></i></div><b id="qt-s">4</b></div>`):(q.to?'<div class="qt"><b style="color:var(--red,#d06060)">⏰ 시간 초과!</b></div>':'')):''}
   <div class="vq"><div class="u">${esc(bkOf(x.b).name)} · ${uL(x.u,x.b)}</div><div class="w">${esc(x.w)}</div><button class="say" onclick="vSay('${esc(x.w).replace(/'/g,"\\'")}')">🔊</button></div>
   <div class="vopts">${q.ch.map((c,i)=>{let cl='';if(q.ans!==null){if(c.id===x.id)cl='right';else if(i===q.ans)cl='wrong'}return `<button class="${cl}" ${q.ans!==null?'disabled':''} onclick="vAns(${i})">${esc(c.m)}</button>`}).join('')}</div>
   ${q.kind==='split'&&q.ans===null?`<button class="btn btn-ghost" style="width:100%;margin-top:10px" onclick="vAns(-1)">🤔 모르겠어요</button>`:''}
   ${q.ans!==null&&!q.ok?`<div class="vfb">${x.a?`<div class="assoc"><span>${x.a[0]}</span>${esc(x.a[1])}</div>`:''}<button class="btn btn-navy" style="width:100%;margin-top:10px" onclick="vNext()">다음 →</button></div>`:''}`;
 }
+const QSEC=4;function qTimed(q){return q.kind!=='split'}
+const QT={t:null,key:'',end:0};
+function qtArm(q){const key=q.title+'|'+q.i;if(QT.key!==key){QT.key=key;QT.end=Date.now()+QSEC*1000}if(!QT.t)QT.t=setInterval(qtTick,100);setTimeout(qtTick,0)}
+function qtTick(){const q=VS.q;if(!q||VS.view!=='quiz'||q.ans!==null||!qTimed(q)){clearInterval(QT.t);QT.t=null;return}
+  const left=Math.max(0,QT.end-Date.now()),b=$('#qt-bar'),sEl=$('#qt-s');if(b)b.style.width=(left/(QSEC*1000)*100)+'%';if(sEl)sEl.textContent=Math.ceil(left/1000);
+  if(left<=0){clearInterval(QT.t);QT.t=null;q.to=true;vAns(-1)}}
 let vLeaveArm=0;function confirmLeave(){if(Date.now()-vLeaveArm<2500)return true;vLeaveArm=Date.now();toast('한 번 더 누르면 그만해요 (기록은 저장 안 돼요)');return false}
-function vAns(i){const q=VS.q;if(q.ans!==null)return;const x=WMAP[q.ids[q.i]];q.ans=i;q.ok=i>=0&&q.ch[i].id===x.id;(q.ok?q.right:q.wrong).push(x.id);vSay(x.w);render();if(q.ok)setTimeout(()=>{if(VS.q===q&&q.ans!==null)vNext()},650)}
-function vNext(){const q=VS.q;q.i++;q.ans=null;q.ok=false;if(q.i>=q.ids.length){vFinish();return}q.ch=vChoices(WMAP[q.ids[q.i]]);render()}
+function vAns(i){const q=VS.q;if(q.ans!==null)return;if(i>=0)q.to=false;const x=WMAP[q.ids[q.i]];q.ans=i;q.ok=i>=0&&q.ch[i].id===x.id;(q.ok?q.right:q.wrong).push(x.id);vSay(x.w);render();if(q.ok)setTimeout(()=>{if(VS.q===q&&q.ans!==null)vNext()},650)}
+function vNext(){const q=VS.q;q.i++;q.ans=null;q.ok=false;q.to=false;if(q.i>=q.ids.length){vFinish();return}q.ch=vChoices(WMAP[q.ids[q.i]]);render()}
 function vFinish(){
   const q=VS.q,n=q.ids.length,sc=q.right.length,pct=Math.round(sc/n*100);
   q.added=wbAdd(q.wrong)||0;
@@ -1132,7 +1141,13 @@ async function doLogin(){
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const NAV_M1=['home','plan','qa','msg'];
+const APP_VER='20261117190405';
+function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
+  const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
+  if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
+  UI.verSeen=1;if(!$('#verbar')){const d=document.createElement('div');d.id='verbar';d.innerHTML='✨ 새 버전이 나왔어요 · <b>눌러서 새로고침</b>';d.onclick=()=>location.reload();document.body.appendChild(d)}}).catch(()=>{})}
+setInterval(verCheck,180000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verCheck()});setTimeout(verCheck,5000);
+const NAV_M1=['home','plan','msg','people'];
 function moreSheet(){const sec=UI.navSec||[];modal(`<h3 class="jua">메뉴</h3><div class="moregrid">${sec.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="closeModal();UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</div><div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>`)}
 function tLabel(t){return t.role==='owner'?(/원장/.test(t.name)?t.name:t.name+' 원장'):t.name+' 선생님'}
 function kTid(k){return k.tid||k.by}
@@ -1282,15 +1297,16 @@ function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
 function studentView(){
   const s=stu(ME.id); UI.st=UI.st||'today';
-  const nav=[['today','📅','오늘'],['voca','✏️','단어'],['score','📊','성적'],['note','✉️','쪽지'],['qa','💬','질문']];
+  const nav=[['today','📅','오늘'],['voca','✏️','단어'],['score','📊','성적'],['note','✉️','쪽지']];
   let body='';
   if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else if(UI.st==='note')body=sNoteTab(s);else body=sQA(s);
-  const chatting=UI.st==='qa'&&UI.q;
+  if(UI.st==='qa'){UI.st='note';UI.q=null}
+  const chatting=false;
   if(UI.st==='note'&&ONLINE&&!UI.kpoll){UI.kpoll=setInterval(()=>{if(UI.st==='note'&&ME&&ME.role==='student'&&document.visibilityState==='visible')refresh()},8000)}
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
     <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
-    ${chatting?'':`<div class="bnav"><div class="in" style="--n:5">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
+    ${chatting?'':`<div class="bnav"><div class="in" style="--n:4">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
 const KIND={hw:['📸','var(--navy-soft)'],voca:['✏️','#EFE8FB']};
 const STAT={todo:['할 일','c-todo'],sub:['확인 중','c-sub'],ok:['완료','c-ok'],redo:['다시 제출','c-redo']};
@@ -1355,7 +1371,7 @@ function sScore(s){
     <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px"><b class="jua" style="font-size:44px;color:var(--ink)">${sc.pct}점</b><span class="muted">${sc.c} / ${sc.n} 정답</span></div>
     <div class="qgrid">${e.key.map((k,i)=>`<div class="${qok(e,a,i)?'o':'x'}">${isSubj(e,i)?'서'+(i-nObj(e)+1):i+1+'번'}<br>${qok(e,a,i)?'⭕':'❌ '+(isSubj(e,i)?'':k)}</div>`).join('')}</div>
     <p class="muted" style="font-size:12.5px;margin-top:10px">❌ 옆 숫자는 정답 번호예요. 틀린 문제는 💬 질문으로 바로 물어보세요.</p>
-    <button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="newQ('${esc(e.title)} 질문')">💬 이 시험 질문하기</button></div>`}
+    <button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="newQ('${esc(e.title)} 질문')">✉️ 이 시험 선생님께 묻기</button></div>`}
   const mx=ex.slice(-6);
   return `<div class="card"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
     ${mx.length?`<div class="chart">${mx.map(e=>{const p=examScore(e,s.id).pct;return `<div class="col"><b>${p}</b><i style="height:${Math.max(6,p)}%;background:${p>=80?'var(--sage)':p>=60?'var(--butter)':'var(--peach)'}"></i></div>`}).join('')}</div><div class="chart-l">${mx.map(e=>`<span>${esc(e.title)}</span>`).join('')}</div>`:'<div class="empty">아직 시험 기록이 없어요</div>'}</div>
@@ -1366,7 +1382,7 @@ function sScore(s){
 function sQA(s){
   if(UI.q) return chatView(UI.q,'s');
   const qs=DB.Q.filter(q=>q.sid===s.id).sort((a,b)=>a.last<b.last?1:-1);
-  return `<button class="btn btn-navy" style="width:100%;padding:15px;margin-bottom:14px" onclick="newQ('')">✍️ 새 질문하기</button>
+  return `<button class="btn btn-navy" style="width:100%;padding:15px;margin-bottom:14px" onclick="newQ('')">✍️ 선생님께 쪽지 보내기</button>
   ${qs.length?qs.map(q=>threadRow(q,'s')).join(''):`<div class="empty"><div class="e">💬</div>모르는 게 생기면 사진 찍어서 바로 물어보세요!</div>`}`;
 }
 function threadRow(q,side){
@@ -1395,7 +1411,7 @@ function sendMsg(){
   UI.cimg=[];save();if(f==='s')notify([q.tid,q.by],'💬 질문 답장',(stu(q.sid)||{}).name+' · '+q.title);else notify([q.sid],'💬 선생님 답변','"'+q.title+'" 질문에 답이 왔어요');render();setTimeout(()=>{const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight;window.scrollTo(0,document.body.scrollHeight)},30);
 }
 function askAbout(tid){const t=DB.tasks.find(x=>x.id===tid);newQ(t.title)}
-function newQ(title,tid){
+function newQ(title,tid){const s0=stu(ME.id);UI.st='note';UI.q=null;UI.kt=tid||sTid(s0);UI.mdraft=title?title+' — ':'';UI.mimg='';render();scrollTo(0,0);msgScroll();return;
   const s=stu(ME.id);
   UI.nq={imgs:[],tid:tid||''};
   modal(`<h3 class="jua">질문하기</h3><p class="muted" style="font-size:14px">${esc((tch(UI.nq.tid||sTid(s))||{name:''}).name)} 선생님께 바로 전달돼요</p>
@@ -1420,7 +1436,8 @@ function pendingHW(){const ss=myStudents().map(s=>s.id);return DB.tasks.filter(t
 function pendingQ(){const ss=myStudents().map(s=>s.id);return DB.Q.filter(q=>ss.includes(q.sid)&&q.msgs[q.msgs.length-1].f==='s')}
 function staffView(){
   const me=tch(ME.id); UI.tv=UI.tv||'home';
-  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['qa','💬','질문',pendingQ().length],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
+  if(UI.tv==='qa')UI.tv='msg';
+  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg}[UI.tv]();
@@ -1447,7 +1464,7 @@ function tHome(){
     <button onclick="UI.tv='plan';UI.ws=null;UI.pmode='review';render()"><small>📸 확인할 숙제</small><b style="color:${hw.length?'#946A0A':'var(--ink)'}">${hw.length}</b></button>
     <button onclick="UI.tv='plan';UI.ws=null;UI.pmode=null;UI.hf='today';render()"><small>✏️ 오늘 단어 시험</small><b>${vdone.length}<span>/${vtoday.length} 통과</span></b></button>
     <button onclick="UI.tv='exam';UI.exam=null;render()"><small>📝 채점할 시험</small><b style="color:${toGrade.length?'var(--red)':'var(--ink)'}">${toGrade.length}</b></button>
-    <button onclick="UI.tv='qa';render()"><small>💬 질문</small><b style="color:${qs.length?'var(--red)':'var(--ink)'}">${qs.length}</b></button>
+    <button onclick="UI.tv='msg';UI.mr=null;render()"><small>💌 안 읽은 톡·쪽지</small><b style="color:${msgUnread()+kUnreadStaff()?'var(--red)':'var(--ink)'}">${msgUnread()+kUnreadStaff()}</b></button>
     <button onclick="UI.tv='people';UI.pv=null;UI.pf='risk';render()"><small>⚠️ 주의 학생</small><b style="color:${alerts.length?'var(--red)':'var(--ink)'}">${alerts.length}</b></button>
   </div>
   <div class="grid2" style="margin-top:14px">

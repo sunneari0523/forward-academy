@@ -1516,7 +1516,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118011542';
+const APP_VER='20261118011559';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1674,7 +1674,8 @@ const SUN_END='2026-11-19',SUN_MSG=`9번째 나의 제자들아!
 이와중에 우리 대박나보자
 할 수 있다 내 수명 10퍼 너희 수능날에 쓸게
 부처랑 예수도 이정도 했으면 좀 봐줄듯`;
-function sunWho(){if(!ME||TODAY>SUN_END)return false;if(ME.role!=='student')return true;const s=stu(ME.id);return !!s&&/고\s*3/.test(s.grade||'')}
+const SUN_OPEN=Date.parse('2026-11-18T09:00:00+09:00');
+function sunWho(){if(!ME||TODAY>SUN_END||Date.now()<SUN_OPEN)return false;if(ME.role!=='student')return true;const s=stu(ME.id);return !!s&&/고\s*3/.test(s.grade||'')}
 function sunSeen(){try{if(localStorage.getItem('fw_sun_'+ME.id))return true}catch(e){}return ME.role==='student'?!!(DB.P[ME.id]&&DB.P[ME.id].sun):!!(tch(ME.id)||{}).sun}
 function sunMark(){try{localStorage.setItem('fw_sun_'+ME.id,'1')}catch(e){}if(ME.role==='student')pet(ME.id).sun=1;else{const t=tch(ME.id);if(t)t.sun=1}save()}
 function sunDone(){closeModal()}

@@ -383,7 +383,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .xtimer{position:sticky;top:8px;z-index:5;text-align:center;background:var(--navy-soft);border-radius:12px;padding:10px;margin:4px 0 12px;font-size:15px}.xtimer.hurry{background:#F9E3E3;color:#B04040}
 .xpage{position:relative;margin:0 0 12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;user-select:none}.xpage img{display:block;width:100%;height:auto;pointer-events:none}.xpage.edit{cursor:crosshair}
 .xbox{position:absolute;border:2px solid var(--navy);background:rgba(214,143,165,.18);border-radius:4px;cursor:pointer}.xbox b{position:absolute;left:-2px;top:-20px;background:var(--navy);color:#fff;font-size:11px;border-radius:6px;padding:1px 6px}.xbox.sel{border-style:dashed;background:rgba(214,143,165,.32)}
-.xbtools{position:absolute;top:100%;left:0;margin-top:4px;display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.12)}.xbtools button{width:30px;height:28px;border-radius:6px;background:var(--bg);font-size:13px}
+.xbtools{position:absolute;top:-34px;right:0;display:flex;gap:3px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.12)}.xbtools button{width:30px;height:28px;border-radius:6px;background:var(--bg);font-size:13px}
 .xin{position:absolute;border:2px solid var(--navy);background:rgba(255,255,255,.92);border-radius:4px;font-size:max(13px,1.6vw);padding:0 4px;color:#1d3d8f;font-weight:700;outline:none;box-sizing:border-box}.xin:focus{background:#fff;box-shadow:0 0 0 3px rgba(214,143,165,.35)}
 .xshow{position:absolute;border:2px solid var(--navy);background:rgba(255,255,255,.93);border-radius:4px;font-size:max(12px,1.5vw);padding:1px 4px 1px 20px;color:#1d3d8f;font-weight:700;box-sizing:border-box;cursor:default;white-space:pre-wrap}.xshow b{position:absolute;left:2px;top:1px;font-size:10px;color:var(--navy)}.xshow.o{border-color:#5f9a6e;background:rgba(227,241,230,.95)}.xshow.x{border-color:#d06060;background:rgba(249,227,227,.95);text-decoration:line-through}
 .xl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}.xl>b{width:26px;height:26px;border-radius:8px;background:var(--navy-soft);display:flex;align-items:center;justify-content:center;font-size:13px}.xl .inp{flex:1;margin:0}
@@ -1273,17 +1273,40 @@ async function xPdfToImgs(file){const lib=await xLoadPdfJs();const doc=await lib
   return out}
 function xPickFile(){const f=document.createElement('input');f.type='file';f.accept='image/*,application/pdf';f.multiple=true;f.onchange=async()=>{const files=[...f.files];if(!files.length)return;toast('파일을 불러오는 중…');
   try{const pages=[];for(const file of files){if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))pages.push(...await xPdfToImgs(file));else pages.push(await xImgToData(file,1400))}
-    UI.xe.pages=(UI.xe.pages||[]).concat(pages).slice(0,10);render();toast(`${pages.length}쪽을 올렸어요. 답 칸을 찍어주세요 👆`)}catch(e){toast('파일을 못 열었어요: '+e.message)}};f.click()}
+    const from=(UI.xe.pages||[]).length;UI.xe.pages=(UI.xe.pages||[]).concat(pages).slice(0,10);render();xAutoBoxes(from)}catch(e){toast('파일을 못 열었어요: '+e.message)}};f.click()}
 function xPageClick(ev,p){const e=UI.xe;if(ev.target.closest('.xbox'))return;const r=ev.currentTarget.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*100,y=(ev.clientY-r.top)/r.height*100;
-  const w=e.bw||16,h=e.bh||3.2;e.boxes.push({p,x:Math.max(0,Math.min(100-w,x-w/2)),y:Math.max(0,Math.min(100-h,y-h/2)),w,h});e.sel=e.boxes.length-1;render()}
+  const w=e.bw||16,h=e.bh||3.2;if(e.sel>=0){e.sel=-1;render();return}e.boxes.push({p,x:Math.max(0,Math.min(100-w,x-w/2)),y:Math.max(0,Math.min(100-h,y-h/2)),w,h});e.boxes.sort((a,b)=>a.p-b.p||(Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y));render()}
 function xBoxesSorted(boxes){return boxes.map((b,i)=>Object.assign({},b,{i}))}
 function xFileEditor(e){
-  return `<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn btn-navy btn-sm" onclick="xPickFile()">📄 시험지 파일 올리기</button><span class="muted" style="font-size:12.5px">사진(JPG·PNG)이나 PDF · 최대 10쪽</span>${e.pages.length?`<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="if(confirm('파일과 답 칸을 모두 지울까요?')){UI.xe.pages=[];UI.xe.boxes=[];render()}">파일 지우기</button>`:''}</div>
-  ${e.pages.length?`<p style="font-size:13.5px;margin:10px 0 0;background:var(--navy-soft);border-radius:10px;padding:8px 10px">👆 <b>학생이 답을 적을 자리를 눌러요.</b> 누른 순서대로 1, 2, 3… 번호가 붙어요. 칸을 누르면 크기 조절·삭제를 할 수 있어요. · 지금 <b>${e.boxes.length}칸</b></p>
+  return `<div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn btn-navy btn-sm" onclick="xPickFile()">📄 시험지 파일 올리기</button><span class="muted" style="font-size:12.5px">사진(JPG·PNG)이나 PDF · 최대 10쪽</span>${e.pages.length?`<button class="btn btn-soft btn-sm" style="margin-left:auto" onclick="if(!UI.xe.boxes.length||confirm('지금 칸을 지우고 다시 자동으로 찾을까요?'))xAutoBoxes(0)">✨ 답 칸 자동 찾기</button><button class="btn btn-ghost btn-sm" onclick="if(confirm('파일과 답 칸을 모두 지울까요?')){UI.xe.pages=[];UI.xe.boxes=[];render()}">파일 지우기</button>`:''}</div>
+  ${e.pages.length?`<p style="font-size:13.5px;margin:10px 0 0;background:var(--navy-soft);border-radius:10px;padding:8px 10px">✨ 밑줄·빈 네모는 <b>자동으로 답 칸</b>이 돼요. 빠진 곳은 <b>눌러서 추가</b>하고, 잘못된 칸은 <b>칸을 눌러 🗑</b>로 지워요. 번호는 위에서부터 자동으로 매겨져요. · 지금 <b>${e.boxes.length}칸</b></p>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px"><span class="muted" style="font-size:12.5px">새 칸 크기</span>${[['짧게',10,3.2],['보통',16,3.2],['길게',30,3.2],['서술형',60,8]].map(([l,w,h])=>`<button class="btn btn-ghost btn-sm ${(e.bw||16)===w&&(e.bh||3.2)===h?'on':''}" style="${(e.bw||16)===w&&(e.bh||3.2)===h?'background:var(--navy-soft);border-color:var(--navy)':''}" onclick="UI.xe.bw=${w};UI.xe.bh=${h};render()">${l}</button>`).join('')}</div>`:''}</div>
   ${e.pages.map((src,p)=>`<div class="xpage edit" onclick="xPageClick(event,${p})"><img src="${src}" draggable="false">${e.boxes.map((b,i)=>b.p!==p?'':`<div class="xbox ${e.sel===i?'sel':''}" style="left:${b.x}%;top:${b.y}%;width:${b.w}%;height:${b.h}%" onclick="event.stopPropagation();UI.xe.sel=${e.sel===i?-1:i};render()"><b>${i+1}</b>${e.sel===i?`<div class="xbtools" onclick="event.stopPropagation()"><button onclick="xBoxSz(${i},-2,0)">◀</button><button onclick="xBoxSz(${i},2,0)">▶</button><button onclick="xBoxSz(${i},0,-1)">▲</button><button onclick="xBoxSz(${i},0,1)">▼</button><button onclick="xBoxMv(${i})">↔</button><button onclick="UI.xe.boxes.splice(${i},1);UI.xe.sel=-1;render()">🗑</button></div>`:''}</div>`).join('')}</div>`).join('')}`}
 function xBoxSz(i,dw,dh){const b=UI.xe.boxes[i];b.w=Math.max(4,Math.min(100-b.x,b.w+dw));b.h=Math.max(2,Math.min(100-b.y,b.h+dh));render()}
 function xBoxMv(i){UI.xe.moving=i;toast('옮길 자리를 눌러주세요');const done=ev=>{const pg=ev.target.closest('.xpage');if(!pg)return;ev.stopPropagation();ev.preventDefault();const r=pg.getBoundingClientRect(),b=UI.xe.boxes[i],p=[...document.querySelectorAll('.xpage')].indexOf(pg);b.p=p;b.x=Math.max(0,Math.min(100-b.w,(ev.clientX-r.left)/r.width*100-b.w/2));b.y=Math.max(0,Math.min(100-b.h,(ev.clientY-r.top)/r.height*100-b.h/2));document.removeEventListener('click',done,true);render()};setTimeout(()=>document.addEventListener('click',done,true),50)}
+/* 시험지에서 답 칸(밑줄·빈 네모) 자동 찾기 */
+function xLoadImg(src){return new Promise((res,rej)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=rej;im.src=src})}
+async function xDetectPage(src){
+  const im=await xLoadImg(src),W=1000,H=Math.round(im.height*W/im.width),c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,H);g.drawImage(im,0,0,W,H);
+  const d=g.getImageData(0,0,W,H).data,dark=new Uint8Array(W*H);for(let i=0;i<W*H;i++){const r=d[i*4],gg=d[i*4+1],b=d[i*4+2];dark[i]=(r*.3+gg*.59+b*.11)<150?1:0}
+  const minLen=Math.round(W*.04),runs=[];
+  for(let y=0;y<H;y++){let x=0;while(x<W){if(!dark[y*W+x]){x++;continue}let x0=x,gap=0,last=x;while(x<W&&gap<=2){if(dark[y*W+x]){last=x;gap=0}else gap++;x++}if(last-x0+1>=minLen)runs.push({y,x0,x1:last})}}
+  // 이어진 줄 묶기
+  const lines=[];runs.forEach(r=>{const L=lines.find(l=>l.y1>=r.y-1&&Math.min(l.x1,r.x1)-Math.max(l.x0,r.x0)>(r.x1-r.x0)*.7);if(L){L.y1=r.y;L.x0=Math.min(L.x0,r.x0);L.x1=Math.max(L.x1,r.x1)}else lines.push({y0:r.y,y1:r.y,x0:r.x0,x1:r.x1})});
+  const dens=(x0,x1,y0,y1)=>{x0=Math.max(0,x0);x1=Math.min(W-1,x1);y0=Math.max(0,y0);y1=Math.min(H-1,y1);let n=0,t=0;for(let y=y0;y<=y1;y+=1)for(let x=x0;x<=x1;x+=2){t++;n+=dark[y*W+x]}return t?n/t:1};
+  const L=lines.filter(l=>l.y1-l.y0<=5&&(l.x1-l.x0)<W*.85);
+  const used=new Set(),boxes=[];
+  // 빈 네모: 위·아래 선 짝
+  L.forEach((a,i)=>{if(used.has(i))return;for(let j=0;j<L.length;j++){if(j===i||used.has(j))continue;const b=L[j];if(b.y0<=a.y1)continue;const dy=b.y0-a.y1,ov=Math.min(a.x1,b.x1)-Math.max(a.x0,b.x0),wa=a.x1-a.x0;
+    if(dy>H*.012&&dy<H*.14&&ov>wa*.9&&Math.abs((b.x1-b.x0)-wa)<wa*.1&&dens(a.x0+4,a.x1-4,a.y1+3,b.y0-3)<.04){used.add(i);used.add(j);boxes.push({x0:a.x0,x1:a.x1,y0:a.y0,y1:b.y1});break}}});
+  // 밑줄: 위쪽이 비어 있는 선
+  const lh=Math.round(H*.03);
+  L.forEach((a,i)=>{if(used.has(i))return;if(dens(a.x0,a.x1,a.y0-lh,a.y0-3)>.06)return;boxes.push({x0:a.x0,x1:a.x1,y0:a.y0-lh,y1:a.y1})});
+  return boxes.map(b=>({x:b.x0/W*100,y:Math.max(0,b.y0/H*100),w:Math.max(4,(b.x1-b.x0)/W*100),h:Math.max(2,(b.y1-b.y0)/H*100)})).sort((a,b)=>Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y);
+}
+async function xAutoBoxes(fromPage){const e=UI.xe;if(!e||!e.pages.length)return;toast('답 칸을 찾는 중…');let n=0;
+  try{for(let p=fromPage||0;p<e.pages.length;p++){const bs=await xDetectPage(e.pages[p]);e.boxes=e.boxes.filter(b=>b.p!==p).concat(bs.map(b=>Object.assign({p},b)));n+=bs.length}
+    e.boxes.sort((a,b)=>a.p-b.p||(Math.abs(a.y-b.y)<1.2?a.x-b.x:a.y-b.y));e.sel=-1;render();toast(n?`답 칸 ${n}개를 찾았어요 ✨ 빠진 곳은 눌러서 추가, 잘못된 칸은 눌러서 지워요`:'자동으로 찾은 칸이 없어요. 답 자리를 직접 눌러주세요')}catch(err){toast('자동 찾기에 실패했어요. 직접 눌러서 만들어주세요')}}
 /* 학생·채점 화면에서 파일 + 답 칸 보여주기 */
 function xFileView(x,mode){ // mode: 'answer' | 'done' | 'grade'
   return (x.pages||[]).map((src,p)=>`<div class="xpage"><img data-v src="${src}">${x.items.map((it,k)=>it.p!==p?'':
@@ -1314,7 +1337,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117192213';
+const APP_VER='20261117192520';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}

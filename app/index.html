@@ -374,6 +374,16 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .mbody{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
 .mline{display:flex;flex-direction:column;align-items:flex-start}.mline.me{align-items:flex-end}.mline .msg{max-width:80%}
 .pp-steps{background:var(--navy-soft);border-radius:14px;padding:12px 14px;margin:10px 0 4px;font-size:14.5px}.pp-steps ol{margin:6px 0 0;padding-left:20px;line-height:1.9}
+.xchal{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#FCEEF2,#FFF6E0);border:2px solid var(--navy);border-radius:18px;padding:14px;margin-bottom:12px;cursor:pointer}.xchal b{display:block;font-size:15.5px;color:var(--ink)}.xchal small{color:var(--muted);font-size:12.5px}
+.xc-i{font-size:30px;width:48px;height:48px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.xhead{display:flex;align-items:center;gap:12px;margin:6px 0 14px}.xbig{margin-left:auto;font-size:36px;font-weight:800;color:var(--navy)}.xbig small{font-size:15px}.xbig.win{color:#3F7A50}
+.xq{margin-bottom:10px}.xq-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}.xq-q{white-space:pre-wrap;font-size:15px;line-height:1.6;color:var(--ink)}.xq-img{max-width:100%;border-radius:10px;margin-top:8px;display:block}
+.xq-a{background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:8px;white-space:pre-wrap}.xq-a small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}.xq-n{margin-top:6px;font-size:13.5px;color:#946A0A}
+.xo,.xx{margin-left:auto;font-size:20px}.xbtn{width:44px;height:40px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:18px;opacity:.55}.xbtn.on{opacity:1}.xbtn.on.o{border-color:#8FB39A;background:#E3F1E6}.xbtn.on.x{border-color:#E07A7A;background:#F9E3E3}
+.xtimer{position:sticky;top:8px;z-index:5;text-align:center;background:var(--navy-soft);border-radius:12px;padding:10px;margin:4px 0 12px;font-size:15px}.xtimer.hurry{background:#F9E3E3;color:#B04040}
+.xbars{display:flex;flex-direction:column;gap:8px;margin:10px 0}.xbr{display:grid;grid-template-columns:86px 1fr 44px 40px;gap:8px;align-items:center;font-size:13.5px}.xb{height:12px;background:var(--line);border-radius:7px;overflow:hidden}.xb i{display:block;height:100%}.xbr small{color:var(--muted)}
+.xsum{background:var(--bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px}.xw{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.xsec{margin-bottom:14px;border:2px solid var(--navy-soft)}
 .mmore{display:none}
 .moregrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.moregrid button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 8px;border:1px solid var(--line);border-radius:16px;background:#fff;font-weight:700;font-size:15px;color:var(--ink)}.moregrid button.on{background:var(--navy-soft);border-color:var(--navy)}.moregrid .i{font-size:28px}.moregrid .n{position:absolute;top:8px;right:10px;background:var(--peach);color:#fff;font-size:11.5px;border-radius:9px;padding:1px 7px}
 .vp{font-size:11px;font-weight:800;border-radius:8px;padding:1px 6px;margin-left:2px}.vp.ok{background:#E3F1E6;color:#3F7A50}.vp.mid{background:#FFF3D6;color:#946A0A}.vp.no{background:#F6E6EA;color:#B0607A}.vpw{white-space:nowrap;margin-right:6px}
@@ -626,8 +636,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -822,8 +832,8 @@ $('#modal').addEventListener('input',()=>{UI.mdirty=true});
 function showLeave(){let o=document.getElementById('leavebox');if(!o){o=document.createElement('div');o.id='leavebox';document.body.appendChild(o)}
   o.innerHTML=`<div class="lbx"><b>작성 중인 내용이 저장되지 않았어요</b><p>저장하지 않고 나갈까요?</p><div class="btns"><button class="btn btn-ghost" onclick="hideLeave()">계속 쓰기</button><button class="btn btn-warn" onclick="hideLeave();closeModal()">저장 안 하고 나가기</button></div></div>`;o.style.display='flex'}
 function hideLeave(){const o=document.getElementById('leavebox');if(o)o.style.display='none'}
-function navSnap(){return {tv:UI.tv||null,st:UI.st||null,ws:UI.ws||null,pv:UI.pv||null,pmode:UI.pmode||null,exam:UI.exam||null,q:UI.q||null,vv:VS.view||'home',mr:UI.mr||null,cs:UI.cs||null,kt:UI.kt||null,iq:UI.iq||null,pw:UI.pw||null}}
-function navApply(o){UI.tv=o.tv||UI.tv;UI.st=o.st||UI.st;UI.ws=o.ws;UI.pv=o.pv;UI.pmode=o.pmode;UI.exam=o.exam;UI.q=o.q;VS.view=o.vv||'home';UI.mr=o.mr||null;UI.cs=o.cs||null;UI.kt=o.kt||null;if(o.iq)UI.iq=o.iq;if(o.pw)UI.pw=o.pw}
+function navSnap(){return {tv:UI.tv||null,st:UI.st||null,ws:UI.ws||null,pv:UI.pv||null,pmode:UI.pmode||null,exam:UI.exam||null,q:UI.q||null,vv:VS.view||'home',mr:UI.mr||null,cs:UI.cs||null,kt:UI.kt||null,xt:UI.xt||null,xg:UI.xg||null,iq:UI.iq||null,pw:UI.pw||null}}
+function navApply(o){UI.tv=o.tv||UI.tv;UI.st=o.st||UI.st;UI.ws=o.ws;UI.pv=o.pv;UI.pmode=o.pmode;UI.exam=o.exam;UI.q=o.q;VS.view=o.vv||'home';UI.mr=o.mr||null;UI.cs=o.cs||null;UI.kt=o.kt||null;UI.xt=o.xt||null;UI.xg=o.xg||null;if(o.iq)UI.iq=o.iq;if(o.pw)UI.pw=o.pw}
 function navRestoreOnLoad(){try{const st=history.state&&history.state.nav;if(!st||!ME)return;const o=JSON.parse(st);if(ME.role==='student'?!o.st:!o.tv)return;navApply(o);NAV.last=st;NAV.restoring=true}catch(e){}}
 function navTrack(){
   if(!ME)return;const k=JSON.stringify(navSnap());
@@ -1074,7 +1084,7 @@ function vPaper(){
   <p style="font-size:15px;line-height:1.8;margin:0 0 6px">단어가 <b>4초</b> 동안 크게 나오고, 사라지면 <b>3초</b> 안에<br>종이에 <b>번호와 뜻</b>을 적어요. 총 <b>${n}문제</b> (약 ${Math.ceil(n*7/60)}분)</p>
   <p class="muted" style="font-size:12.5px;margin:0 0 16px">끝나면 정답을 보고 스스로 채점해서 맞은 개수를 입력해요</p>
   <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-navy" style="font-size:17px;padding:14px 28px" onclick="ptStart()">▶ 시작하기</button><button class="btn btn-ghost" onclick="VS.paper.ids=shuf(VS.paper.ids);toast('순서를 섞었어요')">🔀 순서 섞기</button></div></div>`;
-  if(p.phase==='run'){setTimeout(ptDraw,0);return `<div class="pt-wrap"><div class="pt-top"><span id="pt-prog">${p.i+1} / ${n}</span><span><button class="btn btn-ghost btn-sm" onclick="PT.paused=!PT.paused;this.textContent=PT.paused?'▶ 계속':'⏸ 잠깐 멈춤'">${PT.paused?'▶ 계속':'⏸ 잠깐 멈춤'}</button> <button class="btn btn-ghost btn-sm" onclick="if(this.dataset.c){ptClear();VS.paper.phase='ready';render()}else{this.dataset.c=1;this.textContent='정말 그만할까요?'}">그만하기</button></span></div><div class="pt-stage" id="pt-stage"></div></div>`}
+  if(p.phase==='run'){setTimeout(ptDraw,0);return `<div class="pt-wrap"><div class="pt-top"><span id="pt-prog">${p.i+1} / ${n}</span><span><button class="btn btn-ghost btn-sm" onclick="if(this.dataset.c){ptClear();VS.paper.phase='ready';render()}else{this.dataset.c=1;this.textContent='정말 그만할까요?'}">그만하기</button></span></div><div class="pt-stage" id="pt-stage"></div></div>`}
   return `${vBack('test')}<h2 class="jua vh">✅ 채점하기 · ${esc(p.title)}</h2>
   <p class="muted" style="margin-bottom:10px">종이에 적은 답과 비교해서 맞은 개수를 세어 주세요. 틀린 단어는 눌러서 나만의 단어장에 넣을 수 있어요.</p>
   <div class="vlist" style="margin-bottom:12px">${list.map((x,k)=>`<div style="cursor:pointer" onclick="const n=wbAdd(['${x.id}']);toast(n?'${esc(x.w).replace(/'/g,'')} → 단어장에 넣었어요':'이미 단어장에 있어요')"><b>${k+1}. ${esc(x.w)}</b><span>${esc(x.m)}</span><small>+ 단어장</small></div>`).join('')}</div>
@@ -1144,8 +1154,130 @@ async function doLogin(){
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
+/* ----- ⚔️ 1:1 도전장 테스트 ----- */
+const XTYPES=['어휘','어법','구문·해석','빈칸','순서·삽입','주제·요지','서술형·영작','본문 암기','기타'];
+function xNowMs(){return Date.now()}
+function xMs(str){if(!str)return 0;const [d,t]=str.split(' ');const [y,m,dd]=d.split('-').map(Number),[h,mi]=(t||'00:00').split(':').map(Number);return new Date(y,m-1,dd,h,mi).getTime()}
+function xFmt(str){if(!str)return '';const ms=xMs(str);return lbl(str.slice(0,10))+' '+str.slice(11,16)}
+function xLeft(ms){const s=Math.max(0,Math.round(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return h?`${h}시간 ${m}분`:m?`${m}분 ${String(ss).padStart(2,'0')}초`:`${ss}초`}
+function xExpired(x){return x.status==='sent'&&x.due&&xNowMs()>xMs(x.due)&&!(x.start&&x.lim&&xNowMs()<(x.startMs||xMs(x.start))+x.lim*60000)}
+function xEnd(x){const a=x.due?xMs(x.due):Infinity,b=(x.start&&x.lim)?(x.startMs||xMs(x.start))+x.lim*60000:Infinity;return Math.min(a,b)}
+function xRows(){return DB.X||(DB.X=[])}
+function xGet(id){return xRows().find(x=>x.id===id)}
+function xScore(x){const it=(x.items||[]).filter(i=>i.ok===true||i.ok===false);const r=it.filter(i=>i.ok).length;return {r,n:(x.items||[]).length,g:it.length,p:it.length?Math.round(r/it.length*100):0}}
+function xStatusChip(x){if(xExpired(x))return '<span class="chip c-redo">⏰ 기한 지남</span>';return {req:'<span class="chip c-sub">📮 도전 신청</span>',sent:'<span class="chip c-todo">⚔️ 도전 중</span>',done:'<span class="chip c-redo">✍️ 채점 대기</span>',graded:`<span class="chip c-ok">✅ ${xScore(x).p}점</span>`,no:'<span class="chip">다음 기회에</span>'}[x.status]||''}
+/* --- 학생 --- */
+function sXBanner(s){const L=xRows().filter(x=>x.sid===s.id&&x.status==='sent'&&!xExpired(x));if(!L.length)return '';
+  return L.map(x=>`<div class="xchal" onclick="UI.st='score';UI.xt='${x.id}';render();scrollTo(0,0)"><div class="xc-i">⚔️</div><div style="flex:1"><b>${esc(tLabel(tch(x.tid)||{name:'선생님'}))}의 도전장 도착!</b><small>${esc(x.title)} · ${(x.items||[]).length}문제${x.due?` · ⏰ ${esc(xFmt(x.due))}까지`:''}${x.lim?` · 풀이 ${x.lim}분`:''} · 거절 불가 😼</small></div><span class="btn btn-navy btn-sm">도전하기</span></div>`).join('')}
+function sXList(s){const L=xRows().filter(x=>x.sid===s.id).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--ink);font-size:16px">⚔️ 1:1 도전장</b><button class="btn btn-navy btn-sm" onclick="xReq()">📮 선생님께 도전 신청</button></div>
+  ${L.length?L.slice(0,12).map(x=>`<div class="list-row" style="cursor:pointer" onclick="UI.xt='${x.id}';render();scrollTo(0,0)"><div style="flex:1;min-width:0"><b style="color:var(--ink);font-size:14px">${esc(x.title||'도전 신청')}</b><div class="muted" style="font-size:12px">${esc(tLabel(tch(x.tid)||{name:''}))} · ${esc((x.at||'').slice(5,10).replace('-','/'))}</div></div>${xStatusChip(x)}</div>`).join(''):'<p class="muted" style="font-size:13px;margin:8px 0 0">자신 있는 범위가 있으면 선생님께 먼저 도전해 보세요! 💪</p>'}
+  ${xRows().some(x=>x.sid===s.id&&x.status==='graded')?`<button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="xReport('${s.id}')">📊 나의 유형별 리포트</button>`:''}</div>`}
+function xReq(){const s=stu(ME.id);modal(`<h3 class="jua">📮 선생님께 도전 신청</h3><p class="muted" style="font-size:13px">수업 전이나 학원에 못 올 때 1:1 테스트를 받을 수 있어요. 선생님이 받아주면 문제가 도착해요!</p>
+  <label class="lb">어떤 걸로 도전할까요?</label><textarea class="inp" id="xr-m" rows="3" placeholder="예) 올림포스 3강 본문 어법 자신 있어요! / 이번 주 단어 30개"></textarea>
+  <label class="lb">언제쯤 볼 수 있어요? <span class="muted" style="font-weight:400">(선택)</span></label><input class="inp" id="xr-w" placeholder="예) 오늘 밤 9시 / 목요일 수업 전">
+  <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="xReqSend()">⚔️ 도전 신청</button></div>`)}
+function xReqSend(){const m=$('#xr-m').value.trim();if(!m){toast('어떤 걸로 도전할지 적어주세요');return}const s=stu(ME.id),tid=sTid(s)||ownerId();
+  xRows().push({id:'x'+uid(),sid:s.id,tid,from:'s',status:'req',req:m,when:$('#xr-w').value.trim(),title:'',items:[],at:nowStr()});save();
+  notify([tid,ownerId()],'📮 '+s.name+' 학생 도전 신청!',m.slice(0,60));closeModal();render();toast('도전 신청을 보냈어요! 선생님이 받아주면 알려줄게요 ⚔️')}
+function sXView(x){const done=x.status==='done'||x.status==='graded',g=x.status==='graded',sc=xScore(x);
+  if(x.status==='sent'&&xExpired(x))return `<button class="backlink" onclick="UI.xt=null;render()">← 성적으로</button><div class="card" style="text-align:center;padding:26px"><div style="font-size:40px">⏰</div><b style="font-size:17px">유효 시간이 지났어요</b><p class="muted">${esc(x.title)} · ${esc(xFmt(x.due))}까지였어요.<br>선생님께 쪽지로 말씀드려 보세요.</p></div>`;
+  if(x.status==='sent'&&x.lim&&!x.start)return `<button class="backlink" onclick="UI.xt=null;render()">← 성적으로</button><div class="card" style="text-align:center;padding:26px"><div style="font-size:44px">⚔️</div><h2 class="jua" style="margin:6px 0">${esc(x.title)}</h2><p style="font-size:15px;line-height:1.8">${(x.items||[]).length}문제 · <b>풀이 시간 ${x.lim}분</b>${x.due?`<br>⏰ ${esc(xFmt(x.due))}까지 제출`:''}</p><p class="muted" style="font-size:13px">시작하면 타이머가 돌아가고, 시간이 끝나면 적은 답으로 자동 제출돼요.</p><button class="btn btn-navy" style="font-size:17px;padding:14px 30px;margin-top:6px" onclick="xStart('${x.id}')">▶ 도전 시작</button></div>`;
+  if(x.status==='sent')setTimeout(()=>xTimerArm(x.id),0);
+  if(x.status==='req'||x.status==='no')return `<button class="backlink" onclick="UI.xt=null;render()">← 성적으로</button><div class="card"><b style="font-size:16px">📮 도전 신청</b><p style="white-space:pre-wrap">${esc(x.req||'')}</p>${x.status==='no'?`<p class="muted">선생님 답: ${esc(x.reply||'다음에 도전해요!')}</p>`:'<p class="muted">선생님이 확인하면 문제가 도착해요 ⏳</p>'}</div>`;
+  return `<button class="backlink" onclick="UI.xt=null;render()">← 성적으로</button>
+  <div class="xhead"><div class="xc-i">⚔️</div><div><h2 class="jua" style="margin:0">${esc(x.title)}</h2><p class="muted" style="margin:2px 0 0;font-size:13px">${esc(tLabel(tch(x.tid)||{name:''}))}의 1:1 도전장 · ${(x.items||[]).length}문제</p></div>${g?`<div class="xbig ${sc.p>=80?'win':''}">${sc.p}<small>점</small></div>`:''}</div>
+  ${g&&x.cm?`<div class="card" style="background:var(--navy-soft)"><b>💬 선생님 한마디</b><div style="white-space:pre-wrap;margin-top:4px">${esc(x.cm)}</div></div>`:''}
+  ${(x.items||[]).map((it,k)=>`<div class="card xq"><div class="xq-h"><b>${k+1}번</b><span class="chip">${esc(it.type||'')}</span>${g?(it.ok?'<span class="xo">⭕</span>':'<span class="xx">❌</span>'):''}</div>
+    <div class="xq-q">${esc(it.q||'')}</div>${it.img?`<img data-v src="${it.img}" class="xq-img">`:''}
+    ${done?`<div class="xq-a"><small>내 답</small>${esc(it.ans||'(빈칸)')}${it.aimg?`<img data-v src="${it.aimg}" class="xq-img">`:''}</div>${g&&it.note?`<div class="xq-n">✏️ ${esc(it.note)}</div>`:''}`
+      :`<textarea class="inp" rows="2" placeholder="답을 적어요" oninput="xGet('${x.id}').items[${k}].ans=this.value;UI.xdirty=1">${esc(it.ans||'')}</textarea><button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="pickFiles(m=>{xGet('${x.id}').items[${k}].aimg=m[0];render()})">📷 손글씨 사진${it.aimg?' ✓':''}</button>`}</div>`).join('')}
+  ${done?(g?'':'<div class="empty">제출 완료! 선생님이 채점하면 알려줄게요 ⏳</div>'):`${xEnd(x)<Infinity?'<div class="xtimer" id="xtimer"></div>':''}<button class="btn btn-navy" style="width:100%;padding:15px;font-size:17px" onclick="xSubmit('${x.id}')">⚔️ 제출하기</button><p class="muted" style="font-size:12px;text-align:center">도전장은 거절할 수 없어요 😼 다 풀고 제출해 주세요</p>`}`}
+function xStart(id){const x=xGet(id);x.start=nowStr();x.startMs=Date.now();save();render();scrollTo(0,0)}
+const XTM={t:null,id:null};
+function xTimerArm(id){XTM.id=id;if(!XTM.t)XTM.t=setInterval(xTimerTick,1000);xTimerTick()}
+function xTimerTick(){const x=xGet(XTM.id);if(!x||x.status!=='sent'||UI.xt!==x.id){clearInterval(XTM.t);XTM.t=null;return}
+  const left=xEnd(x)-xNowMs(),el=$('#xtimer');if(el)el.innerHTML=`⏱️ 남은 시간 <b>${xLeft(left)}</b>`;if(el)el.classList.toggle('hurry',left<60000);
+  if(left<=0){clearInterval(XTM.t);XTM.t=null;UI.xsc=1;xSubmit(x.id,true)}}
+function xSubmit(id,auto){const x=xGet(id);if(auto){x.status='done';x.sub=nowStr();x.auto=1;save();notify([x.tid],'⚔️ '+stu(x.sid).name+' 도전장 제출(시간 종료)',x.title);render();toast('⏰ 시간이 끝나서 적은 답으로 제출했어요');return}
+  if(xExpired(x)){toast('유효 시간이 지났어요');render();return}const empty=x.items.filter(i=>!(i.ans||'').trim()&&!i.aimg).length;
+  if(empty&&!UI.xsc){UI.xsc=1;toast(`빈 답이 ${empty}개 있어요. 그래도 내려면 한 번 더 눌러주세요`);setTimeout(()=>UI.xsc=0,3000);return}
+  x.status='done';x.sub=nowStr();UI.xdirty=0;save();notify([x.tid],'⚔️ '+stu(x.sid).name+' 도전장 제출',x.title);render();scrollTo(0,0);toast('제출했어요! 결과는 알림으로 알려줄게요 ⚔️')}
+/* --- 선생님 --- */
+function tXSection(){const mine=myStudents().map(s=>s.id),L=xRows().filter(x=>isOwner()||x.tid===ME.id||mine.includes(x.sid));
+  const req=L.filter(x=>x.status==='req'),todo=L.filter(x=>x.status==='done'),ing=L.filter(x=>x.status==='sent'),fin=L.filter(x=>x.status==='graded').sort((a,b)=>(a.gat||'')<(b.gat||'')?1:-1);
+  const row=(x,btn)=>`<div class="list-row"><div style="flex:1;min-width:0"><b style="color:var(--ink);font-size:14px">${esc(stu(x.sid)?.name||'')} · ${esc(x.title||x.req||'')}</b><div class="muted" style="font-size:12px">${x.status==='req'?esc((x.when?x.when+' · ':'')+(x.at||'').slice(5,16)):x.status==='sent'?esc((x.due?'⏰ '+xFmt(x.due)+'까지':'기한 없음')+(x.lim?' · '+x.lim+'분':'')+(x.start?' · 푸는 중':'')):esc((x.sub||x.at||'').slice(5,16))+(x.auto?' · 시간 종료 자동 제출':'')}</div></div>${xStatusChip(x)}${btn}</div>`;
+  return `<div class="card xsec"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:16px;color:var(--ink)">⚔️ 1:1 도전장 테스트</b><button class="btn btn-navy btn-sm" onclick="xNew()">⚔️ 도전장 보내기</button></div>
+  ${req.map(x=>row(x,`<button class="btn btn-navy btn-sm" onclick="xNew([],'${x.id}')">받아주기</button><button class="btn btn-ghost btn-sm" onclick="xDecline('${x.id}')">다음에</button>`)).join('')}
+  ${todo.map(x=>row(x,`<button class="btn btn-navy btn-sm" onclick="UI.xg='${x.id}';render();scrollTo(0,0)">⭕❌ 채점</button>`)).join('')}
+  ${ing.map(x=>row(x,'')).join('')}
+  ${fin.slice(0,5).map(x=>row(x,`<button class="btn btn-ghost btn-sm" onclick="UI.xg='${x.id}';render();scrollTo(0,0)">보기</button>`)).join('')}
+  ${!L.length?'<p class="muted" style="font-size:13px;margin:8px 0 0">학생에게 도전장을 보내거나, 학생이 신청하면 여기에 떠요. 채점이 쌓이면 유형별 리포트가 만들어져요.</p>':''}</div>`}
+function xDecline(id){const x=xGet(id);const r=prompt('학생에게 남길 말 (선택)','다음 수업 때 같이 보자!');if(r===null)return;x.status='no';x.reply=r;save();notify([x.sid],'📮 도전 신청 답장',r||'다음에 도전해요!');render()}
+function xNew(sids,reqId){const rq=reqId?xGet(reqId):null;
+  UI.xe={req:reqId||null,sids:rq?[rq.sid]:(sids||[]).slice(),title:rq?(rq.req||'').split('\n')[0].slice(0,30):'',items:[{type:'어휘',q:'',img:''}],q:'',due:xDuePreset('today'),dp:'today',lim:0};
+  UI.tv='exam';UI.exam=null;UI.xg=null;render();scrollTo(0,0)}
+function xDuePreset(k){const d=new Date();if(k==='1h')d.setHours(d.getHours()+1);else if(k==='3h')d.setHours(d.getHours()+3);else if(k==='today')d.setHours(23,59,0,0);else if(k==='tom')(d.setDate(d.getDate()+1),d.setHours(23,59,0,0));else if(k==='3d')(d.setDate(d.getDate()+3),d.setHours(23,59,0,0));else return '';return dstr(d)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function xEditor(){const e=UI.xe,rq=e.req?xGet(e.req):null;
+  return `<button class="backlink" onclick="if(confirm('작성 중인 도전장을 닫을까요?')){UI.xe=null;render()}">← 채점·성적</button>
+  <div class="ph"><div><h2 class="jua">⚔️ ${rq?'도전 받아주기':'도전장 보내기'}</h2><p>문제마다 유형을 고르면, 채점 결과가 쌓여서 유형별 리포트가 만들어져요</p></div></div>
+  ${rq?`<div class="card" style="background:var(--navy-soft)"><b>📮 ${esc(stu(rq.sid)?.name||'')}의 신청</b><div style="white-space:pre-wrap;margin-top:4px">${esc(rq.req)}${rq.when?'\n⏰ '+esc(rq.when):''}</div></div>`:''}
+  <div class="card"><label class="lb" style="margin-top:0">제목</label><input class="inp" value="${esc(e.title)}" placeholder="예) 올림포스 3강 어법 도전" oninput="UI.xe.title=this.value">
+  <label class="lb">⏰ 유효 시간 <span class="muted" style="font-weight:400">이 시간까지 제출해야 해요</span></label>
+  <div class="chips-sel">${[['1h','1시간'],['3h','3시간'],['today','오늘 밤까지'],['tom','내일 밤까지'],['3d','3일'],['none','제한 없음']].map(([k,l])=>`<button class="${e.dp===k?'on':''}" onclick="UI.xe.dp='${k}';UI.xe.due=xDuePreset('${k}');render()">${l}</button>`).join('')}</div>
+  <input class="inp" type="datetime-local" style="margin-top:8px;max-width:260px" value="${e.due?e.due.replace(' ','T'):''}" onchange="UI.xe.due=this.value?this.value.replace('T',' ').slice(0,16):'';UI.xe.dp='custom';render()">
+  <label class="lb">⏱️ 풀이 제한 시간 <span class="muted" style="font-weight:400">시작 버튼을 누른 순간부터, 끝나면 자동 제출</span></label>
+  <div class="chips-sel">${[0,5,10,20,30,60].map(m=>`<button class="${e.lim===m?'on':''}" onclick="UI.xe.lim=${m};render()">${m?m+'분':'없음'}</button>`).join('')}</div>
+  ${rq?'':`<label class="lb">받는 학생 <span class="muted">${e.sids.length}명</span></label><input class="inp" placeholder="🔍 이름 · 학교 · 학년" value="${esc(e.q)}" oninput="UI.xe.q=this.value;$('#xe-s').innerHTML=xeStu()" style="margin-bottom:8px"><div class="chips-sel" id="xe-s" style="max-height:150px;overflow:auto">${xeStu()}</div>`}</div>
+  ${e.items.map((it,k)=>`<div class="card xq"><div class="xq-h"><b>${k+1}번</b>${e.items.length>1?`<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="UI.xe.items.splice(${k},1);render()">삭제</button>`:''}</div>
+    <div class="chips-sel" style="margin:6px 0">${XTYPES.map(t=>`<button class="${it.type===t?'on':''}" onclick="UI.xe.items[${k}].type='${t}';render()">${t}</button>`).join('')}</div>
+    <textarea class="inp" rows="3" placeholder="문제를 적어요 (지문·보기도 같이 붙여 넣어도 돼요)" oninput="UI.xe.items[${k}].q=this.value">${esc(it.q)}</textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px"><button class="btn btn-ghost btn-sm" onclick="pickFiles(m=>{UI.xe.items[${k}].img=m[0];render()})">📷 문제 사진${it.img?' 바꾸기':''}</button>${it.img?`<img src="${it.img}" style="width:54px;height:54px;object-fit:cover;border-radius:8px"><button class="btn btn-ghost btn-sm" onclick="UI.xe.items[${k}].img='';render()">✕</button>`:''}</div></div>`).join('')}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-soft" onclick="const l=UI.xe.items[UI.xe.items.length-1];UI.xe.items.push({type:l?l.type:'어휘',q:'',img:''});render()">+ 문제 추가</button><button class="btn btn-navy" style="margin-left:auto" onclick="xSend()">⚔️ 도전장 보내기</button></div>`}
+function xeStu(){const e=UI.xe;return myStudents().slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,e.q)).map(s=>`<button class="s ${e.sids.includes(s.id)?'on':''}" onclick="const i=UI.xe.sids.indexOf('${s.id}');if(i>=0)UI.xe.sids.splice(i,1);else UI.xe.sids.push('${s.id}');$('#xe-s').innerHTML=xeStu();render()">${e.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('')}
+function xSend(){const e=UI.xe,items=e.items.filter(i=>i.q.trim()||i.img);if(!e.title.trim()){toast('제목을 적어주세요');return}if(!items.length){toast('문제를 하나 이상 적어주세요');return}if(!e.sids.length){toast('받는 학생을 골라주세요');return}
+  const mk=()=>items.map(i=>({id:uid(),type:i.type,q:i.q.trim(),img:i.img||'',ans:'',ok:null,note:''})),at=nowStr();
+  if(e.due&&xMs(e.due)<=xNowMs()){toast('유효 시간이 이미 지났어요. 다시 골라주세요');return}
+  const tm={due:e.due||'',lim:e.lim||0,start:''};
+  if(e.req){const x=xGet(e.req);Object.assign(x,{title:e.title.trim(),items:mk(),status:'sent',tid:ME.id,acc:at},tm)}
+  else e.sids.forEach(sid=>xRows().push(Object.assign({id:'x'+uid(),sid,tid:ME.id,from:'t',status:'sent',title:e.title.trim(),items:mk(),at},tm)));
+  save();notify(e.sids,'⚔️ '+((tch(ME.id)||{}).name||'')+' 선생님의 도전장 도착!',e.title.trim()+(e.due?' · '+xFmt(e.due)+'까지':'')+' · 거절 불가 😼');const n=e.sids.length;UI.xe=null;render();toast(`${n}명에게 도전장을 보냈어요 ⚔️`)}
+function xGrade(id){const x=xGet(id);if(!x){UI.xg=null;return tExam()}const sc=xScore(x),s=stu(x.sid)||{};
+  return `<button class="backlink" onclick="UI.xg=null;render()">← 채점·성적</button>
+  <div class="xhead"><div class="xc-i">⚔️</div><div style="flex:1"><h2 class="jua" style="margin:0">${esc(s.name)} · ${esc(x.title)}</h2><p class="muted" style="margin:2px 0 0;font-size:13px">${esc((x.sub||'').slice(5,16))} 제출 · ${sc.g}/${sc.n} 채점</p></div><div class="xbig">${sc.p}<small>점</small></div></div>
+  ${(x.items||[]).map((it,k)=>`<div class="card xq"><div class="xq-h"><b>${k+1}번</b><span class="chip">${esc(it.type)}</span><span style="margin-left:auto;display:flex;gap:6px"><button class="xbtn ${it.ok===true?'on o':''}" onclick="xMark('${id}',${k},true)">⭕</button><button class="xbtn ${it.ok===false?'on x':''}" onclick="xMark('${id}',${k},false)">❌</button></span></div>
+    <div class="xq-q">${esc(it.q)}</div>${it.img?`<img data-v src="${it.img}" class="xq-img">`:''}
+    <div class="xq-a"><small>학생 답</small>${esc(it.ans||'(빈칸)')}${it.aimg?`<img data-v src="${it.aimg}" class="xq-img">`:''}</div>
+    <input class="inp" style="margin-top:6px" placeholder="한 줄 피드백 (선택) 예) 수동태 be p.p. 확인!" value="${esc(it.note||'')}" oninput="xGet('${id}').items[${k}].note=this.value"></div>`).join('')}
+  <div class="card"><label class="lb" style="margin-top:0">💬 선생님 한마디 (선택)</label><textarea class="inp" id="xg-cm" rows="2" placeholder="예) 어법은 완벽! 빈칸 추론만 조금 더 연습하자 💪">${esc(x.cm||'')}</textarea>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="xReport('${x.sid}')">📊 ${esc(s.name)} 유형별 리포트</button><button class="btn btn-navy" style="margin-left:auto" onclick="xFinish('${id}')">${x.status==='graded'?'다시 저장':'채점 완료 · 결과 보내기'}</button></div></div>`}
+function xMark(id,k,v){const x=xGet(id);x.items[k].ok=x.items[k].ok===v?null:v;render()}
+function xFinish(id){const x=xGet(id),un=x.items.filter(i=>i.ok!==true&&i.ok!==false).length;if(un){toast(`아직 ⭕❌를 안 한 문제가 ${un}개 있어요`);return}
+  const first=x.status!=='graded';x.cm=$('#xg-cm').value.trim();x.status='graded';x.gat=nowStr();save();const sc=xScore(x);
+  if(first)notify([x.sid],sc.p>=80?'🏆 도전 성공! '+sc.p+'점':'⚔️ 도전 결과 '+sc.p+'점',x.title);UI.xg=null;render();toast('채점 완료! 학생에게 결과를 보냈어요')}
+/* --- 유형별 리포트 --- */
+function xReportData(sid){const G=xRows().filter(x=>x.sid===sid&&x.status==='graded').sort((a,b)=>(a.gat||'')<(b.gat||'')?-1:1),T={};
+  G.forEach(x=>x.items.forEach(it=>{const t=it.type||'기타';T[t]=T[t]||{t,n:0,r:0,wrong:[]};T[t].n++;if(it.ok)T[t].r++;else T[t].wrong.push({q:it.q,note:it.note,x:x.title})}));
+  const types=Object.values(T).map(o=>Object.assign(o,{p:Math.round(o.r/o.n*100)})).sort((a,b)=>b.p-a.p||b.n-a.n);
+  const tot=types.reduce((a,o)=>a+o.n,0),ok=types.reduce((a,o)=>a+o.r,0);
+  return {G,types,tot,ok,p:tot?Math.round(ok/tot*100):0,good:types.filter(o=>o.p>=80),bad:types.filter(o=>o.p<60).sort((a,b)=>a.p-b.p),mid:types.filter(o=>o.p>=60&&o.p<80)}}
+function xReportMsg(sid){const s=stu(sid),d=xReportData(sid),L=[];
+  L.push(`[포워드 영어학원] ${s.name} 학생 1:1 테스트 리포트`,'',`📝 지금까지 ${d.G.length}회 · ${d.tot}문제 중 ${d.ok}문제 정답 (${d.p}%)`);
+  if(d.good.length)L.push('','💪 잘하는 유형',...d.good.map(o=>`- ${o.t}: ${o.r}/${o.n} (${o.p}%)`));
+  if(d.mid.length)L.push('','🙂 조금만 더',...d.mid.map(o=>`- ${o.t}: ${o.r}/${o.n} (${o.p}%)`));
+  if(d.bad.length)L.push('','🔥 집중 보완할 유형',...d.bad.map(o=>`- ${o.t}: ${o.r}/${o.n} (${o.p}%)`+(o.wrong.find(w=>w.note)?` → ${o.wrong.find(w=>w.note).note}`:'')));
+  const last=d.G.slice(-5).map(x=>`- ${x.title}: ${xScore(x).p}점`);if(last.length)L.push('','📈 최근 도전',...last);
+  L.push('','포워드 영어학원 053-716-0859');return L.join('\n')}
+function xReport(sid){const s=stu(sid),d=xReportData(sid);
+  if(!d.G.length){toast('아직 채점된 1:1 테스트가 없어요');return}
+  modal(`<h3 class="jua">📊 ${esc(s.name)} · 1:1 테스트 리포트</h3><p class="muted" style="font-size:13px">${d.G.length}회 · ${d.tot}문제 · 정답률 <b style="color:var(--navy)">${d.p}%</b></p>
+  <div class="xbars">${d.types.map(o=>`<div class="xbr"><span>${esc(o.t)}</span><div class="xb"><i style="width:${o.p}%;background:${o.p>=80?'#8FB39A':o.p>=60?'#E0B25A':'#E07A7A'}"></i></div><b>${o.p}%</b><small>${o.r}/${o.n}</small></div>`).join('')}</div>
+  <div class="xsum">${d.good.length?`<div><b>💪 잘하는 유형</b> ${d.good.map(o=>esc(o.t)).join(', ')}</div>`:''}${d.bad.length?`<div><b>🔥 보완할 유형</b> ${d.bad.map(o=>esc(o.t)).join(', ')}</div>`:''}${!d.good.length&&!d.bad.length?'<div class="muted">문제가 더 쌓이면 강점·약점이 또렷해져요</div>':''}</div>
+  ${d.bad.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">틀린 문제 다시 보기</summary>${d.bad.concat(d.mid).map(o=>o.wrong.slice(0,4).map(w=>`<div class="xw"><span class="chip">${esc(o.t)}</span> ${esc((w.q||'').slice(0,80))}${w.note?`<br><small>✏️ ${esc(w.note)}</small>`:''}</div>`).join('')).join('')}</details>`:''}
+  ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117190939';
+const APP_VER='20261117191646';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1324,7 +1456,7 @@ function sToday(s){
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,-7)}';render()">‹ 지난주</button><b style="color:var(--ink)">${pd(ws).getMonth()+1}월 ${pd(ws).getDate()}일 주</b><button class="btn btn-ghost btn-sm" onclick="UI.day='${addD(ws,7)}';render()">다음주 ›</button></div>
   <div class="week">${strip}</div>
   ${overdue.length&&UI.day===TODAY?`<div class="task" style="border-color:var(--peach);background:var(--peach-soft)"><b style="color:var(--red)">⏰ 밀린 숙제 ${overdue.length}개</b><div class="meta" style="color:var(--red)">${overdue.slice(0,3).map(t=>esc(lbl(t.date)+' '+t.title)).join(' · ')}</div><div class="acts"><button class="btn btn-warn btn-sm" onclick="UI.day='${overdue[0].date}';render()">밀린 숙제 보러 가기</button></div></div>`:''}
-  ${sNoteBanner(s)}${sVideos(s)}
+  ${sXBanner(s)}${sNoteBanner(s)}${sVideos(s)}
   ${prStudentCard(s,ws)}
   <div class="sec-t"><h3 class="jua">${UI.day===TODAY?'오늘 할 일':lbl(UI.day)+' 할 일'}</h3><span class="muted" style="font-size:13.5px;font-weight:700">${done} / ${list.length} 완료</span></div>
   ${list.length?list.map(taskCard).join(''):`<div class="empty"><div class="e">🌿</div>이 날은 숙제가 없어요</div>`}`;
@@ -1367,6 +1499,7 @@ const qok=(e,a,i)=>!!a&&(isSubj(e,i)?a[i]===1:a[i]===e.key[i]);
 const nObj=e=>e.key.filter(k=>typeof k!=='string').length;
 function examScore(e,sid){const a=e.res[sid];if(!a)return null;let c=0;e.key.forEach((k,i)=>{if(qok(e,a,i))c++});return {c,n:e.key.length,pct:Math.round(c/e.key.length*100)}}
 function sScore(s){
+  if(UI.xt&&xGet(UI.xt))return sXView(xGet(UI.xt));UI.xt=null;
   const ex=DB.E.filter(e=>e.res[s.id]).sort((a,b)=>a.date<b.date?-1:1);
   const recs=DB.R.filter(r=>r.sid===s.id&&!r.voca);
   if(UI.exam){const e=DB.E.find(x=>x.id===UI.exam),sc=examScore(e,s.id),a=e.res[s.id];
@@ -1377,7 +1510,7 @@ function sScore(s){
     <p class="muted" style="font-size:12.5px;margin-top:10px">❌ 옆 숫자는 정답 번호예요. 틀린 문제는 💬 질문으로 바로 물어보세요.</p>
     <button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="newQ('${esc(e.title)} 질문')">✉️ 이 시험 선생님께 묻기</button></div>`}
   const mx=ex.slice(-6);
-  return `<div class="card"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
+  return `${sXList(s)}<div class="card"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
     ${mx.length?`<div class="chart">${mx.map(e=>{const p=examScore(e,s.id).pct;return `<div class="col"><b>${p}</b><i style="height:${Math.max(6,p)}%;background:${p>=80?'var(--sage)':p>=60?'var(--butter)':'var(--peach)'}"></i></div>`}).join('')}</div><div class="chart-l">${mx.map(e=>`<span>${esc(e.title)}</span>`).join('')}</div>`:'<div class="empty">아직 시험 기록이 없어요</div>'}</div>
   <div class="sec-t"><h3 class="jua">학원 시험</h3></div>
   ${ex.slice().reverse().map(e=>{const sc=examScore(e,s.id);return `<button class="exam" onclick="UI.exam='${e.id}';render()"><div style="flex:1"><b style="color:var(--ink)">${esc(e.title)}</b><div class="muted" style="font-size:12.5px">${esc(e.date)} · 틀린 문제 ${sc.n-sc.c}개 보기 ›</div></div><div class="sc">${sc.pct}<small style="font-size:14px">점</small></div></button>`}).join('')||'<div class="empty">아직 없어요</div>'}
@@ -1955,7 +2088,7 @@ function tStuPlan(sid){
   const subs=DB.tasks.filter(t=>t.sid===sid&&t.status==='sub').sort((a,b)=>a.date<b.date?-1:1);
   return `<button class="backlink" onclick="UI.ws=null;render();scrollTo(0,0)">← 학생 목록으로</button>
   <div class="ph"><div><h2 class="jua">${esc(s.name)} ${riskBadge(sid)}</h2><p>${esc(s.school)} ${esc(s.grade)} · ${esc(sLabel(s))} · <b style="color:${nc&&diffD(TODAY,nc)<=1?'var(--red)':'inherit'}">${classLabel(nc)}</b> · 콩떡이 ${MOODICON[mood(petDays(sid))]} Lv.${pet(sid).lv}</p>${riskWhy(sid)}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='people';UI.pv='${sid}';render();scrollTo(0,0)">📋 상담 일지</button><button class="btn btn-ghost" onclick="UI.tv='msg';UI.mr='k:${sid}';UI.mdraft='';render();msgScroll()">✉️ 쪽지</button><button class="btn btn-navy" onclick="addPlan('${TODAY>=days[0]&&TODAY<=days[6]?TODAY:days[0]}')">+ 숙제 내주기</button></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='people';UI.pv='${sid}';render();scrollTo(0,0)">📋 상담 일지</button><button class="btn btn-ghost" onclick="UI.tv='msg';UI.mr='k:${sid}';UI.mdraft='';render();msgScroll()">✉️ 쪽지</button><button class="btn btn-ghost" onclick="xNew(['${sid}'])">⚔️ 도전장</button><button class="btn btn-navy" onclick="addPlan('${TODAY>=days[0]&&TODAY<=days[6]?TODAY:days[0]}')">+ 숙제 내주기</button></div></div>
   <div class="tiles">
     <div class="tile" onclick="UI.lf='all';render()"><small>누적 숙제</small><b>${st.total}</b><span class="muted" style="font-size:13px">오늘까지 낸 숙제</span></div>
     <div class="tile" onclick="UI.lf='ok';render()"><small>제출률</small><b style="color:${(st.rate||0)>=80?'var(--sage)':(st.rate||0)>=50?'#946A0A':'var(--red)'}">${st.rate===null?'-':st.rate+'%'}</b><span class="muted" style="font-size:13px">제출 ${st.done} / ${st.total} · 최근 2주 ${st.rate2===null?'-':st.rate2+'%'}</span></div>
@@ -2069,9 +2202,12 @@ function okAll(){const ids=myStudents().map(s=>s.id);let n=0;DB.tasks.forEach(t=
 
 /* ----- 채점 · 성적 ----- */
 function tExam(){
+  if(UI.xe) return xEditor();
+  if(UI.xg) return xGrade(UI.xg);
   if(UI.exam) return examGrade(UI.exam);
   const mine=myStudents().map(s=>s.id), ex=DB.E.filter(e=>isOwner()||e.by===ME.id||exS(e).some(s=>mine.includes(s.id))).sort((a,b)=>a.date<b.date?1:-1);
   return `<div class="ph"><div><h2 class="jua">채점 · 성적</h2><p>정답만 넣어두면 학생 답을 입력하는 순간 자동으로 채점돼요</p></div><button class="btn btn-navy" onclick="newExam()">+ 새 시험 만들기</button></div>
+  ${tXSection()}
   ${ex.length?`<div class="tbwrap"><table class="tb"><tr><th>시험</th><th>대상</th><th>날짜</th><th>문항</th><th>채점</th><th>평균</th><th></th></tr>${ex.map(e=>{const ss=exS(e),gr=ss.filter(s=>e.res[s.id]),avg=gr.length?Math.round(gr.reduce((a,s)=>a+examScore(e,s.id).pct,0)/gr.length):'-';return `<tr style="cursor:pointer" onclick="UI.exam='${e.id}';render()"><td><b style="color:var(--ink)">${esc(e.title)}</b></td><td>${ss.length}명</td><td>${esc(e.date)}</td><td>${e.key.length}</td><td>${gr.length}/${ss.length}명</td><td><b>${avg}${avg==='-'?'':'점'}</b></td><td><span class="btn btn-ghost btn-sm">채점하기 ›</span></td></tr>`}).join('')}</table></div>`:'<div class="empty"><div class="e">📝</div>아직 만든 시험이 없어요</div>'}`;
 }
 function newExam(){
@@ -2180,7 +2316,7 @@ function tStuProfile(sid){
   const logs=n.logs.slice().sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at<b.at?1:-1));
   return `<button class="backlink" onclick="UI.pv=null;render();scrollTo(0,0)">← 학생 목록으로</button>
   <div class="ph"><div><h2 class="jua">${esc(s.name)} ${riskBadge(sid)}</h2><p>${esc(s.school)} ${esc(s.grade)} · ${esc(sLabel(s))} · <b style="color:${nc&&diffD(TODAY,nc)<=1?'var(--red)':'inherit'}">${classLabel(nc)}</b> · 코드 <span style="font-family:monospace">${esc(s.code)}</span></p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='plan';UI.ws='${sid}';UI.pmode=null;UI.pw=wkStart(TODAY);UI.lf='all';render();scrollTo(0,0)">🗓️ 숙제 보기</button><button class="btn btn-navy" onclick="UI.rm=TODAY.slice(0,7);monthReport('${sid}')">📄 월간 리포트</button><button class="btn btn-ghost" onclick="editStu('${sid}')">기본 정보 수정</button></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="UI.tv='plan';UI.ws='${sid}';UI.pmode=null;UI.pw=wkStart(TODAY);UI.lf='all';render();scrollTo(0,0)">🗓️ 숙제 보기</button><button class="btn btn-navy" onclick="UI.rm=TODAY.slice(0,7);monthReport('${sid}')">📄 월간 리포트</button>${xRows().some(x=>x.sid===sid&&x.status==='graded')?`<button class="btn btn-ghost" onclick="xReport('${sid}')">⚔️ 1:1 테스트 리포트</button>`:''}<button class="btn btn-ghost" onclick="editStu('${sid}')">기본 정보 수정</button></div></div>
   <div class="grid2">
     <div class="card"><h3 class="sec" style="margin-top:0">👤 기본 정보</h3>
       <div class="kv"><span>등록일</span><b>${esc(s.reg||'-')}</b></div>
@@ -2290,9 +2426,7 @@ function inqBanner(){const nw=(DB.I||[]).filter(i=>i.status==='new').sort((a,b)=
 /* 신규 상담 일지 → 학부모 카톡 */
 const CSF=[
  ['기본 정보',[['name','학생 이름','예) 김하늘',1],['school','학교','예) 경북예고',1],['grade','학년','예) 중3 (예비고1)',1],['parent','학부모 연락처','010-',1],['date','상담일','',1,'date'],['how','상담 방식','방문 / 전화',1]]],
- ['지금까지의 영어 공부',[['prev','이전 학원 · 기간','예) ○○어학원 중1~중3, 문법 위주'],['study','공부 방식 · 습관','예) 단어는 꾸준히 외우는데 독해는 해석만 하고 넘어감'],['score','최근 성적 · 등급','예) 중3 2학기 중간 88점 / 모의 3등급']]],
- ['상담 내용',[['diag','진단 · 상담 내용','예) 문장 구조 파악이 약해서 긴 문장에서 해석이 무너짐. 어휘량은 양호.',0,'area'],['goal','학생 목표','예) 고1 첫 내신 1등급 / 홍익대 시디'],['wish','어머님 요청사항','예) 서술형 대비, 숙제 관리 철저히']]],
- ['포워드 수업 안내',[['plan','추천 수업 방향','예) CORE 구문독해로 문장 구조부터 → 경북예고 내신반',0,'area'],['sched','수업 요일 · 시간','예) 화·목 18:00~20:00'],['next','다음 단계','예) 11/24(월) 첫 수업 / 레벨테스트 후 반 배정'],['etc','추가 안내','예) 교재는 첫 수업 때 드려요']]]];
+ ['상담 기록',[['study','이전 공부 방법 · 문제점','예) ○○어학원 중1~중3 문법 위주. 단어는 꾸준히 외우는데 독해는 해석만 하고 넘어가서 문장 구조를 못 잡음',0,'area'],['diag','상담 내용','예) 고1 첫 내신 1등급 목표. CORE 구문독해로 문장 구조부터 잡고 경북예고 내신반 합류. 화·목 18:00~20:00, 11/24 첫 수업',0,'area'],['etc','특이사항','예) 실기 때문에 평일 저녁만 가능 / 서술형 대비 요청',0,'area']]]];
 function newConsult(){const id='i'+uid();DB.I.push({id,status:'done',src:'direct',at:nowStr(),name:'',school:'',grade:'',parent:'',c:{date:TODAY,how:'방문',hon:'어머님'}});save();UI.iq='done';UI.cs=id;render();scrollTo(0,0)}
 function cv(i,k){return ['name','school','grade','parent'].includes(k)?(i[k]||''):((i.c||{})[k]||'')}
 function consultSet(id,k,v){const i=inq(id);if(!i)return;i.c=i.c||{};if(['name','school','grade','parent'].includes(k))i[k]=v;else i.c[k]=v;i.c.upd=nowStr();clearTimeout(UI.cst);UI.cst=setTimeout(save,800);const pv=$('#cs-pv');if(pv)pv.textContent=consultMsg(i);const t=$('#cs-title');if(t&&k==='name')t.textContent=(v||'새 학생')+' 상담 일지'}
@@ -2301,14 +2435,9 @@ function consultMsg(i){
   const sec=(t,rows)=>{rows=rows.filter(r=>r[1]&&String(r[1]).trim());if(!rows.length)return;L.push('',t);rows.forEach(([k,v])=>L.push(k?`- ${k}: ${String(v).trim()}`:String(v).trim()))};
   L.push(`안녕하세요, ${hon}. 포워드 영어학원입니다 😊`,`오늘 ${nm} 학생 상담 내용을 정리해서 보내드려요.`);
   sec('📌 학생 정보',[['학교 · 학년',[i.school,i.grade].filter(Boolean).join(' ')],['상담일',c.date?lbl(c.date):'']]);
-  sec('📖 지금까지의 영어 공부',[['이전 학원',c.prev],['공부 방식',c.study],['최근 성적',c.score]]);
-  sec('🔍 상담 내용',[['',c.diag]]);
-  sec('🎯 목표',[['',c.goal]]);
-  sec(`💬 ${hon} 요청사항`,[['',c.wish]]);
-  sec('✏️ 포워드 수업 방향',[['',c.plan]]);
-  sec('🗓️ 수업 일정',[['',c.sched]]);
-  sec('📍 다음 단계',[['',c.next]]);
-  sec('📎 안내',[['',c.etc]]);
+  sec('📖 지금까지의 공부 방법 · 보완할 점',[['',[c.prev,c.study].filter(Boolean).join('\n')]]);
+  sec('🔍 상담 내용',[['',[c.diag,c.goal&&('목표: '+c.goal),c.plan,c.sched,c.next].filter(Boolean).join('\n')]]);
+  sec('📎 참고 사항',[['',[c.wish,c.etc].filter(Boolean).join('\n')]]);
   L.push('',`궁금하신 점은 언제든 편하게 연락 주세요.`,`감사합니다 🙏`,'',`포워드 영어학원 드림`,`☎ 053-716-0859`);
   return L.join('\n');
 }
@@ -2328,7 +2457,7 @@ function consultView(i){
 }
 function consultCopy(id){const i=inq(id);if(!i.name){toast('학생 이름을 먼저 적어주세요');return}i.c.sentAt=nowStr();if(i.status==='new')i.status='done';save();copyText(consultMsg(i))}
 function consultToStu(iid,sid){const i=inq(iid);if(!i||!i.c)return;const c=i.c,n=cnoteW(sid);
-  const map={grade:c.score,habit:[c.study,c.prev?'이전 학원: '+c.prev:''].filter(Boolean).join(' / '),parentWish:c.wish,goalUni:c.goal};
+  const map={grade:c.score,habit:[c.study,c.prev?'이전 학원: '+c.prev:''].filter(Boolean).join(' / '),parentWish:[c.wish,c.etc].filter(Boolean).join(' / '),goalUni:c.goal};
   for(const k in map)if(map[k]&&!n[k])n[k]=map[k];
   const txt=[c.diag&&'진단: '+c.diag,c.plan&&'수업 방향: '+c.plan,c.sched&&'일정: '+c.sched,c.next&&'다음 단계: '+c.next].filter(Boolean).join('\n');
   if(txt)n.logs.push({id:uid(),date:c.date||TODAY,type:'등록 상담',text:txt,by:ME.id,at:nowStr()});}

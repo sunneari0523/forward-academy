@@ -78,6 +78,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .sdbtn{font-size:19px;padding:14px 34px;min-width:220px;justify-content:center}
 .sdsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.sdsum>div{background:var(--card,#fff);border-radius:14px;padding:12px;text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.04)}.sdsum small{display:block;color:var(--muted,#888);font-size:12px}.sdsum b{font-size:17px;color:var(--ink)}
 .sdcard.pz{border:2px dashed var(--sage);background:var(--sage-soft)}.sdbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.sdbtns .sdbtn{min-width:150px}
+.sunletter{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;text-align:center;padding:6px 4px}.sl-top{font-size:40px}.sl-to{font-size:18px;color:var(--navy);margin:6px 0 14px;line-height:1.4}.sl-body{background:var(--navy-soft);border-radius:16px;padding:18px 16px;font-size:15.5px;line-height:1.85;color:var(--ink);font-weight:600;max-height:58vh;overflow:auto}.sl-sign{text-align:right;margin-top:10px;color:var(--muted,#888);font-size:13px}
 .sdbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:150px;align-items:end}.sdbars .b{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:4px}.sdbars i{display:block;width:70%;min-height:3px;border-radius:6px 6px 2px 2px;background:var(--sage)}.sdbars small{font-size:10.5px;color:var(--ink);font-weight:700;white-space:nowrap}.sdbars span{font-size:12px;color:var(--muted,#888)}
 .bnav .in{display:grid;grid-template-columns:repeat(var(--n),1fr);width:100%;max-width:560px}
 .bnav button{padding:9px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;font-weight:700;color:var(--muted);position:relative}
@@ -1515,7 +1516,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261117234141';
+const APP_VER='20261118011542';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1646,6 +1647,39 @@ async function pushSetup(){
 }
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+/* 2027 수능 응원 편지 팝업 — 고3 학생 + 선생님, 수능 당일까지 */
+const SUN_END='2026-11-19',SUN_MSG=`9번째 나의 제자들아!
+짧게는 8개월 길게는 3년
+포기하지 않고
+최선을 다한 경험이 있다면 결과와 상관없이
+멋진 어른이 될거라고 너희를 가르쳐 왔는데
+수능을 2일 남겨두고 너희의 노력이 제대로
+평가 받지 못하고 억울 할 수도 있는 세상을
+보여줘서 어른으로서 부끄럽다
+환경탓하는 것만큼 못난게 없다고 생각했는데
+이번만큼은 진짜 시원하게 욕박고 싶다
+
+개같은교육부야 3대가 망하고 평생 가위 눌리며
+밤잠 설치다 가진 재산 다 날리고 걷는 발걸음 마다 압정이 가득하고 자식들에게 외면 받으며 얻을 수 있는
+모든 병을 얻고 길거리에서 구걸하다 죽고 지옥에 떨어져 모기로 환생해라 터트려 죽여줄게
+(캡쳐금지)
+
+그래도 우리 최선을 다하고 오자
+어떻게든 아직 어린 너희를 지켜내려는
+어른들이 지켜보고 있으니
+너희가 덜 억울하게 노력할게
+
+쫄지말고 흔들리지말고 잘보고 와라
+시험은 기세다!!!!
+이와중에 우리 대박나보자
+할 수 있다 내 수명 10퍼 너희 수능날에 쓸게
+부처랑 예수도 이정도 했으면 좀 봐줄듯`;
+function sunWho(){if(!ME||TODAY>SUN_END)return false;if(ME.role!=='student')return true;const s=stu(ME.id);return !!s&&/고\s*3/.test(s.grade||'')}
+function sunSeen(){try{if(localStorage.getItem('fw_sun_'+ME.id))return true}catch(e){}return ME.role==='student'?!!(DB.P[ME.id]&&DB.P[ME.id].sun):!!(tch(ME.id)||{}).sun}
+function sunMark(){try{localStorage.setItem('fw_sun_'+ME.id,'1')}catch(e){}if(ME.role==='student')pet(ME.id).sun=1;else{const t=tch(ME.id);if(t)t.sun=1}save()}
+function sunDone(){closeModal()}
+function sunPop(){if(!sunWho()||sunSeen())return false;setTimeout(sunMark,0);
+  modal(`<div class="sunletter"><div class="sl-top">✉️</div><div class="sl-to jua">To. 2027 수능 전 마지막 포워드를 켠 고3에게</div><div class="sl-body">${esc(SUN_MSG).replace(/\n/g,'<br>')}</div><div class="sl-sign">— 포워드 영어학원</div><button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:16px;font-size:16px" onclick="sunDone()">💪 잘 보고 올게요!</button></div>`);return true}
 function pushPrompt(){
   if(!ONLINE||!ME||pushOn())return;try{if(sessionStorage.getItem('fw_pp'))return;sessionStorage.setItem('fw_pp','1')}catch(e){}
   if('Notification' in window&&Notification.permission==='denied'){return}
@@ -2879,7 +2913,7 @@ function visitCard(){
 }
 function afterLoad(){
   const got=processEvents();
-  clearTimeout(window.__bootT);try{navRestoreOnLoad();render()}catch(e){console.error(e);UI={};VS.view='home';render()}setTimeout(()=>{pushResync();if(!(got&&ME&&ME.role==='student'))pushPrompt()},1200);trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
+  clearTimeout(window.__bootT);try{navRestoreOnLoad();render()}catch(e){console.error(e);UI={};VS.view='home';render()}setTimeout(()=>{pushResync();if(sunPop())return;if(!(got&&ME&&ME.role==='student'))pushPrompt()},1200);trackVisit();loadHits().then(()=>{if(UI.tv==='home'&&!busyTyping())render()});
   if(got&&ME&&ME.role==='student'){setTimeout(()=>petCelebrate(got.r,'🍤',`단어 시험 ${got.e.score}/${got.e.n} 통과! 간식 맛있다냥 🍤`),300);toast('단어 시험 통과! 플래너가 체크되고 콩떡이에게 간식을 줬어요 🍤')}
 }
 load();

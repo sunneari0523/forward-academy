@@ -352,6 +352,12 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .pwbtn{display:block;margin-top:6px;background:#fff;border:1px solid var(--line);color:#8A6A76;font-size:12px;border-radius:8px;padding:5px 8px;cursor:pointer}.pwbtn:hover{color:var(--ink)}
 .tdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
 .vdrow{display:grid;grid-template-columns:50px auto 50px auto 1fr 24px;gap:6px;align-items:center;margin-bottom:6px}.vdrow .inp{margin:0;padding:9px 8px}.vdrow span{font-size:13px;color:var(--muted)}.vdrow .x{border:0;background:none;color:var(--muted);font-size:15px;cursor:pointer}
+.csplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+.csform .sec{margin:16px 0 4px}.csform .sec:first-child{margin-top:0}
+.csgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.csgrid>div{grid-column:1/-1}.csgrid>div.half{grid-column:auto}
+.csgrid textarea.auto{resize:vertical;min-height:0}
+.cspv-wrap{position:sticky;top:12px}
+@media(max-width:900px){.csplit{grid-template-columns:1fr}.cspv-wrap{position:static}}
 .chartbox{margin-top:12px;padding:10px 6px 4px;border:1px solid var(--line);border-radius:14px;background:#fff}
 .cleg{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13px;padding:0 6px 6px}.cleg .ci{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.cleg .ci i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 .rgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.rbox{background:var(--navy-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px}.rbox span{font-size:12.5px;color:var(--muted)}.rbox b{font-size:20px}.rbox small{font-size:11px;color:var(--muted)}
@@ -2070,22 +2076,68 @@ function repSaveCm(sid){const e=$('#rp-cm');if(!e)return;const v=e.value.trim(),
 const IST=[['new','새 문의','c-todo'],['done','상담 완료','c-sub'],['reg','등록','c-ok'],['hold','보류','c-miss']];
 function tInq(){
   DB.I=DB.I||[];UI.iq=UI.iq||'new';
+  if(UI.cs&&inq(UI.cs))return consultView(inq(UI.cs));UI.cs=null;
   const cnt=k=>DB.I.filter(i=>(i.status||'new')===k).length;
   const list=DB.I.filter(i=>(i.status||'new')===UI.iq).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
-  return `<div class="ph"><div><h2 class="jua">📥 상담 문의</h2><p>홈페이지 '상담 신청'으로 들어온 문의가 여기에 모여요</p></div></div>
+  return `<div class="ph"><div><h2 class="jua">📥 상담 문의</h2><p>홈페이지 '상담 신청'으로 들어온 문의와 신규 상담 일지가 여기에 모여요</p></div><button class="btn btn-navy" onclick="newConsult()">📋 새 상담 일지 쓰기</button></div>
   <div class="chips-sel" style="margin-bottom:12px">${IST.map(([k,l])=>`<button class="${UI.iq===k?'on':''}" onclick="UI.iq='${k}';render()">${l} ${cnt(k)}</button>`).join('')}</div>
   ${list.length?list.map(i=>`<div class="card inq"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start"><div><b style="font-size:17px">${esc(i.name||'(이름 없음)')}</b> <span class="muted">${esc([i.school,i.grade].filter(Boolean).join(' '))}</span><div style="margin-top:4px"><a href="tel:${esc((i.parent||'').replace(/[^0-9]/g,''))}" style="font-weight:700;color:var(--navy)">📞 ${esc(i.parent||'')}</a> <span class="muted" style="font-size:12.5px">· ${esc(i.at||'')} 신청</span></div></div>
     <div class="chips-sel">${IST.map(([k,l])=>`<button class="${(i.status||'new')===k?'on':''}" onclick="inqSet('${i.id}','${k}')">${l}</button>`).join('')}</div></div>
     ${i.msg?`<div class="inq-msg">${esc(i.msg)}</div>`:''}
     ${i.memo?`<div class="muted" style="font-size:13px;margin-top:6px;white-space:pre-wrap">📝 ${esc(i.memo)}</div>`:''}
-    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-soft btn-sm" onclick="inqMemo('${i.id}')">📝 상담 메모</button>${i.status==='reg'?'':`<button class="btn btn-navy btn-sm" onclick="inqReg('${i.id}')">👤 학생으로 등록</button>`}${isOwner()?`<button class="btn btn-ghost btn-sm" onclick="inqDel('${i.id}',this)">삭제</button>`:''}</div></div>`).join(''):`<div class="empty">${UI.iq==='new'?'새로 들어온 문의가 없어요':'해당하는 문의가 없어요'}</div>`}`;
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn ${i.c?'btn-sage':'btn-navy'} btn-sm" onclick="UI.cs='${i.id}';render();scrollTo(0,0)">📋 상담 일지${i.c?' 보기':' 쓰기'}</button>${i.c&&i.c.sentAt?`<span class="chip c-ok" style="align-self:center">카톡 보냄 ${esc(i.c.sentAt.slice(5,10).replace('-','/'))}</span>`:''}<button class="btn btn-soft btn-sm" onclick="inqMemo('${i.id}')">📝 메모</button>${i.status==='reg'?'':`<button class="btn btn-ghost btn-sm" onclick="inqReg('${i.id}')">👤 학생으로 등록</button>`}${isOwner()?`<button class="btn btn-ghost btn-sm" onclick="inqDel('${i.id}',this)">삭제</button>`:''}</div></div>`).join(''):`<div class="empty">${UI.iq==='new'?'새로 들어온 문의가 없어요':'해당하는 문의가 없어요'}</div>`}`;
 }
 function inqBanner(){const nw=(DB.I||[]).filter(i=>i.status==='new').sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);if(!nw.length)return '';
   return `<div class="card" style="margin-bottom:14px;border:2px solid var(--navy);background:var(--navy-soft);cursor:pointer" onclick="UI.tv='inq';UI.iq='new';render();scrollTo(0,0)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:16px">📥 새 상담 신청 ${nw.length}건</b><div style="margin-top:4px;font-size:14px">${nw.slice(0,3).map(i=>`${esc(i.name||'')} <span class="muted">${esc([i.school,i.grade].filter(Boolean).join(' '))} · ${esc(i.parent||'')}</span>`).join('<br>')}</div></div><span class="btn btn-navy btn-sm">확인하고 전화하기 →</span></div></div>`}
+/* 신규 상담 일지 → 학부모 카톡 */
+const CSF=[
+ ['기본 정보',[['name','학생 이름','예) 김하늘',1],['school','학교','예) 경북예고',1],['grade','학년','예) 중3 (예비고1)',1],['parent','학부모 연락처','010-',1],['date','상담일','',1,'date'],['how','상담 방식','방문 / 전화',1]]],
+ ['지금까지의 영어 공부',[['prev','이전 학원 · 기간','예) ○○어학원 중1~중3, 문법 위주'],['study','공부 방식 · 습관','예) 단어는 꾸준히 외우는데 독해는 해석만 하고 넘어감'],['score','최근 성적 · 등급','예) 중3 2학기 중간 88점 / 모의 3등급']]],
+ ['상담 내용',[['diag','진단 · 상담 내용','예) 문장 구조 파악이 약해서 긴 문장에서 해석이 무너짐. 어휘량은 양호.',0,'area'],['goal','학생 목표','예) 고1 첫 내신 1등급 / 홍익대 시디'],['wish','어머님 요청사항','예) 서술형 대비, 숙제 관리 철저히']]],
+ ['포워드 수업 안내',[['plan','추천 수업 방향','예) CORE 구문독해로 문장 구조부터 → 경북예고 내신반',0,'area'],['sched','수업 요일 · 시간','예) 화·목 18:00~20:00'],['next','다음 단계','예) 11/24(월) 첫 수업 / 레벨테스트 후 반 배정'],['etc','추가 안내','예) 교재는 첫 수업 때 드려요']]]];
+function newConsult(){const id='i'+uid();DB.I.push({id,status:'done',src:'direct',at:nowStr(),name:'',school:'',grade:'',parent:'',c:{date:TODAY,how:'방문',hon:'어머님'}});save();UI.iq='done';UI.cs=id;render();scrollTo(0,0)}
+function cv(i,k){return ['name','school','grade','parent'].includes(k)?(i[k]||''):((i.c||{})[k]||'')}
+function consultSet(id,k,v){const i=inq(id);if(!i)return;i.c=i.c||{};if(['name','school','grade','parent'].includes(k))i[k]=v;else i.c[k]=v;i.c.upd=nowStr();clearTimeout(UI.cst);UI.cst=setTimeout(save,800);const pv=$('#cs-pv');if(pv)pv.textContent=consultMsg(i);const t=$('#cs-title');if(t&&k==='name')t.textContent=(v||'새 학생')+' 상담 일지'}
+function consultMsg(i){
+  const c=i.c||{},hon=c.hon||'어머님',nm=i.name||'학생',L=[];
+  const sec=(t,rows)=>{rows=rows.filter(r=>r[1]&&String(r[1]).trim());if(!rows.length)return;L.push('',t);rows.forEach(([k,v])=>L.push(k?`- ${k}: ${String(v).trim()}`:String(v).trim()))};
+  L.push(`안녕하세요, ${hon}. 포워드 영어학원입니다 😊`,`오늘 ${nm} 학생 상담 내용을 정리해서 보내드려요.`);
+  sec('📌 학생 정보',[['학교 · 학년',[i.school,i.grade].filter(Boolean).join(' ')],['상담일',c.date?lbl(c.date):'']]);
+  sec('📖 지금까지의 영어 공부',[['이전 학원',c.prev],['공부 방식',c.study],['최근 성적',c.score]]);
+  sec('🔍 상담 내용',[['',c.diag]]);
+  sec('🎯 목표',[['',c.goal]]);
+  sec(`💬 ${hon} 요청사항`,[['',c.wish]]);
+  sec('✏️ 포워드 수업 방향',[['',c.plan]]);
+  sec('🗓️ 수업 일정',[['',c.sched]]);
+  sec('📍 다음 단계',[['',c.next]]);
+  sec('📎 안내',[['',c.etc]]);
+  L.push('',`궁금하신 점은 언제든 편하게 연락 주세요.`,`감사합니다 🙏`,'',`포워드 영어학원 드림`,`☎ 053-716-0859`);
+  return L.join('\n');
+}
+function consultView(i){
+  const c=i.c=i.c||{};if(!c.date)c.date=(i.at||TODAY).slice(0,10);if(!c.hon)c.hon='어머님';
+  const fld=([k,l,ph,half,type])=>{const v=esc(cv(i,k));const on=`oninput="consultSet('${i.id}','${k}',this.value)"`;
+    return `<div class="${half?'half':''}"><label class="lb">${l}</label>${type==='area'?`<textarea class="inp" rows="4" placeholder="${esc(ph)}" ${on}>${v}</textarea>`:type==='date'?`<input class="inp" type="date" value="${v}" ${on} onchange="consultSet('${i.id}','${k}',this.value)">`:`<textarea class="inp auto" rows="${['name','school','grade','parent','how'].includes(k)?1:2}" placeholder="${esc(ph)}" ${on}>${v}</textarea>`}</div>`};
+  return `<button class="backlink" onclick="save();UI.cs=null;render();scrollTo(0,0)">← 상담 문의 목록</button>
+  <div class="ph"><div><h2 class="jua" id="cs-title">${esc(i.name||'새 학생')} 상담 일지</h2><p>적는 대로 자동 저장되고, 오른쪽에 어머님께 보낼 카톡이 바로 만들어져요</p></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">${i.status==='reg'?'<span class="chip c-ok" style="align-self:center">등록 완료</span>':`<button class="btn btn-ghost" onclick="save();inqReg('${i.id}')">👤 학생으로 등록</button>`}</div></div>
+  <div class="csplit"><div class="card csform">${CSF.map(([t,fs])=>`<h3 class="sec">${t}</h3><div class="csgrid">${fs.map(fld).join('')}</div>`).join('')}</div>
+  <div class="cspv-wrap"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3 class="sec" style="margin:0">💬 카톡 미리보기</h3>
+    <div class="chips-sel">${['어머님','아버님','학부모님'].map(h=>`<button class="${c.hon===h?'on':''}" onclick="consultSet('${i.id}','hon','${h}');[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">${h}</button>`).join('')}</div></div>
+    <pre id="cs-pv" class="rpv" style="max-height:none;margin-top:10px">${esc(consultMsg(i))}</pre>
+    <button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:10px" onclick="consultCopy('${i.id}')">📋 카톡용으로 복사</button>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">복사한 뒤 카톡에서 어머님 대화방에 붙여넣기 하면 돼요. 빈 칸은 메시지에서 자동으로 빠져요.</p></div></div></div>`;
+}
+function consultCopy(id){const i=inq(id);if(!i.name){toast('학생 이름을 먼저 적어주세요');return}i.c.sentAt=nowStr();if(i.status==='new')i.status='done';save();copyText(consultMsg(i))}
+function consultToStu(iid,sid){const i=inq(iid);if(!i||!i.c)return;const c=i.c,n=cnoteW(sid);
+  const map={grade:c.score,habit:[c.study,c.prev?'이전 학원: '+c.prev:''].filter(Boolean).join(' / '),parentWish:c.wish,goalUni:c.goal};
+  for(const k in map)if(map[k]&&!n[k])n[k]=map[k];
+  const txt=[c.diag&&'진단: '+c.diag,c.plan&&'수업 방향: '+c.plan,c.sched&&'일정: '+c.sched,c.next&&'다음 단계: '+c.next].filter(Boolean).join('\n');
+  if(txt)n.logs.push({id:uid(),date:c.date||TODAY,type:'등록 상담',text:txt,by:ME.id,at:nowStr()});}
 function inq(id){return DB.I.find(i=>i.id===id)}
 function inqSet(id,k){const i=inq(id);if(!i)return;i.status=k;i.upd=nowStr();save();render()}
 function inqMemo(id){const i=inq(id);modal(`<h3 class="jua">상담 메모 · ${esc(i.name||'')}</h3><textarea class="inp" id="iq-m" rows="6" placeholder="예) 11/18 어머니와 통화. 금요일 4시 방문 상담 예약.">${esc(i.memo||'')}</textarea><div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="inq('${id}').memo=$('#iq-m').value.trim();save();closeModal();render();toast('저장했어요')">저장</button></div>`)}
-function inqReg(id){const i=inq(id);i.status='reg';i.upd=nowStr();save();UI.iq='reg';render();editStu(null,{name:i.name||'',school:i.school||'',grade:i.grade||'',parent:i.parent||''})}
+function inqReg(id){const i=inq(id);i.status='reg';i.upd=nowStr();save();UI.iq='reg';UI.cs=null;render();UI.regInq=id;editStu(null,{name:i.name||'',school:i.school||'',grade:i.grade||'',parent:i.parent||''})}
 function inqDel(id,b){if(!b.dataset.c){b.dataset.c=1;b.textContent='정말 삭제?';return}DB.I=DB.I.filter(i=>i.id!==id);save();render()}
 function editCInfo(sid){
   const n=cnote(sid);
@@ -2113,6 +2165,7 @@ function dayPick(id,days){return `<div class="daypick" id="${id}">${[1,2,3,4,5,6
 function readDays(id){return [...document.querySelectorAll('#'+id+' button.on')].map(b=>+b.dataset.d)}
 function tchOpts(sel){return DB.T.filter(t=>isOwner()||t.id===ME.id||t.id===sel).map(t=>`<option value="${t.id}" ${t.id===sel?'selected':''}>${esc(t.name)}${t.role==='owner'?' (원장)':''}</option>`).join('')}
 function editStu(id,pre){
+  if(!pre)UI.regInq=null;
   const s=id?stu(id):Object.assign({name:'',school:'',grade:'',tid:ME.id,days:[],parent:'',phone:'',code:'',reg:TODAY,time:''},pre||{});
   modal(`<h3 class="jua">${id?'학생 정보 수정':'학생 등록'}</h3>
   <label class="lb">이름</label><input class="inp" id="es-n" value="${esc(s.name)}">
@@ -2133,7 +2186,7 @@ function saveStu(id){
   if(dup){toast(`${dup.name} 학생과 코드가 같아요 (휴대폰 뒷번호가 같음). 코드를 조금 바꿔주세요`);return}
   const o={name,school:v('s'),grade:v('g'),tid:$('#es-t').value,days:readDays('es-days'),time:v('tm'),reg:v('r'),code,parent:v('p'),phone:v('ph')};
   let nid=id;
-  if(id){const s=stu(id);delete s.cid;Object.assign(s,o)}else{nid='s'+uid();DB.S.push(Object.assign({id:nid},o))}
+  if(id){const s=stu(id);delete s.cid;Object.assign(s,o)}else{nid='s'+uid();DB.S.push(Object.assign({id:nid},o));if(UI.regInq){consultToStu(UI.regInq,nid);UI.regInq=null}}
   save();closeModal();
   if(!id){UI.tv='people';UI.pv=nid;render();scrollTo(0,0);toast(`${name} 학생 등록 완료 · 코드 ${code} · 상담 내용을 남겨 보세요`)}
   else{render();toast('저장했어요')}

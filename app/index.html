@@ -316,6 +316,10 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .vlist .x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px}.vlist .x:hover{color:var(--red)}
 .vcard{background:#fff;border:1.5px solid var(--line);border-radius:22px;padding:34px 18px;text-align:center;min-height:230px;cursor:pointer;display:flex;flex-direction:column;justify-content:center}
 .vcard.f{border-color:var(--sage)}.vcard .m{font-size:20px;font-weight:700;color:var(--sage-d);margin-top:14px}.vcard .hint{color:var(--muted);font-size:13px;margin-top:16px}
+.pt-wrap{max-width:720px;margin:0 auto}.pt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:800;color:var(--muted)}
+.pt-stage{background:#fff;border:2px solid var(--line);border-radius:24px;min-height:min(62vh,460px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+.pt-num{font-size:22px;font-weight:800;color:var(--navy)}.pt-word{font-size:clamp(44px,12vw,96px);font-weight:800;color:var(--ink);line-height:1.1;word-break:break-word}.pt-word.write{font-size:clamp(34px,9vw,64px);color:var(--sage-d,#5f8a6c)}
+.pt-sub{font-size:16px;color:var(--muted);font-weight:700}.pt-bar{width:70%;height:8px;border-radius:6px;background:var(--line);overflow:hidden}.pt-bar i{display:block;height:100%;background:var(--navy);transition:width 1s linear}
 .paper{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
 .paper .ph2{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:12px;font-size:14px;color:var(--ink)}
 .paper ol{columns:2;column-gap:30px;padding-left:22px;margin:0}.paper li{break-inside:avoid;padding:9px 0;font-size:15px;color:var(--ink)}
@@ -960,12 +964,12 @@ function vTestHome(){
   <label class="lb">문제 수</label><div class="chips-sel">${[20,30,50,0].map(k=>`<button class="${VS.tn===k?'on':''}" onclick="VS.tn=${k};render()">${k?k+'문제':'전부 ('+n+')'}</button>`).join('')}</div>
   <label class="lb">시험 방식</label>
   <div class="vbig" style="margin-top:6px"><button class="${VS.tm==='mc'?'sel':''}" onclick="VS.tm='mc';render()"><span class="i">🔘</span><b>4지선다</b><small>화면에서 뜻을 골라요.<br>바로 채점돼요.</small></button>
-  <button class="${VS.tm==='paper'?'sel':''}" onclick="VS.tm='paper';render()"><span class="i">✍️</span><b>종이 시험</b><small>시험지를 인쇄하거나 보고<br>종이에 뜻을 적어요.</small></button></div>
+  <button class="${VS.tm==='paper'?'sel':''}" onclick="VS.tm='paper';render()"><span class="i">✍️</span><b>종이 시험</b><small>단어를 4초 크게 보여주면<br>3초 안에 종이에 뜻을 적어요.</small></button></div>
   <button class="btn btn-navy" style="width:100%;margin-top:16px;padding:15px" onclick="vStartTest()">${vRangeL()} 시험 시작 →</button>`;
 }
 function vStartTest(){
   let ids=shuf(vRange().map(x=>x.id));if(VS.tn)ids=ids.slice(0,VS.tn);
-  if(VS.tm==='paper'){VS.paper={ids,show:false,title:vRangeL()+' 종이 시험'};vGo('paper')}
+  if(VS.tm==='paper'){VS.paper={ids,show:false,title:vRangeL()+' 종이 시험',phase:'ready',i:0};vGo('paper')}
   else vStartQuiz(ids,'test',vRangeL()+' 단어 테스트');
 }
 function vStartSplit(){vStartQuiz(shuf(vRange().map(x=>x.id)),'split',vRangeL()+' 단어 스캔')}
@@ -1035,16 +1039,34 @@ function vBook(){
   <div class="vlist book">${list.map(x=>`<label class="${VS.bsel.includes(x.id)?'on':''}"><input type="checkbox" ${VS.bsel.includes(x.id)?'checked':''} onchange="const i=VS.bsel.indexOf('${x.id}');if(i>=0)VS.bsel.splice(i,1);else VS.bsel.push('${x.id}');render()"><b>${esc(x.w)}</b><span>${esc(x.m)}</span><small>${esc(bkOf(x.b).name)} ${uL(x.u,x.b)}</small><button class="x" onclick="event.preventDefault();wbDel(['${x.id}']);render()">✕</button></label>`).join('')}</div>`
   :`<div class="empty"><div class="e">📒</div>아직 비어 있어요.<br>학습하기 1단계에서 모르는 단어를 고르거나, 테스트에서 틀리면 여기에 모여요.</div>`}`;
 }
+const PT={show:4,write:3,t:null,left:0,stage:'',paused:false};
+function ptClear(){if(PT.t)clearInterval(PT.t);PT.t=null}
+function ptStart(){const p=VS.paper;p.phase='run';p.i=0;PT.paused=false;PT.stage='count';PT.left=3;ptClear();PT.t=setInterval(ptTick,1000);render();ptDraw()}
+function ptTick(){const p=VS.paper;if(!p||VS.view!=='paper'||p.phase!=='run'){ptClear();return}if(PT.paused)return;
+  PT.left--;if(PT.left>0){ptDraw();return}
+  if(PT.stage==='count'){PT.stage='show';PT.left=PT.show}
+  else if(PT.stage==='show'){PT.stage='write';PT.left=PT.write}
+  else{p.i++;if(p.i>=p.ids.length){ptClear();p.phase='check';p.show=true;render();scrollTo(0,0);try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}return}PT.stage='show';PT.left=PT.show}
+  ptDraw()}
+function ptDraw(){const p=VS.paper,box=$('#pt-stage');if(!box)return;const n=p.ids.length,x=WMAP[p.ids[p.i]],tot=PT.stage==='show'?PT.show:PT.stage==='write'?PT.write:3;
+  const bar=`<div class="pt-bar"><i style="width:${PT.left/tot*100}%"></i></div>`;
+  if(PT.stage==='count')box.innerHTML=`<div class="pt-num">준비</div><div class="pt-word">${PT.left}</div><div class="pt-sub">종이와 펜을 준비하세요 · 번호에 맞춰 뜻을 적어요</div>`;
+  else if(PT.stage==='show')box.innerHTML=`<div class="pt-num">${p.i+1}번</div><div class="pt-word">${esc(x.w)}</div>${bar}<div class="pt-sub">잘 보세요 👀 ${PT.left}</div>`;
+  else box.innerHTML=`<div class="pt-num">${p.i+1}번</div><div class="pt-word write">✍️ 적으세요</div>${bar}<div class="pt-sub">${PT.left}초</div>`;
+  const pr=$('#pt-prog');if(pr)pr.textContent=`${Math.min(p.i+1,n)} / ${n}`}
 function vPaper(){
-  const p=VS.paper, list=p.ids.map(i=>WMAP[i]);
-  return `<div class="noprint">${vBack('test')}<h2 class="jua vh">✍️ ${esc(p.title)}</h2>
-  <p class="muted" style="margin-bottom:10px">시험지를 인쇄하거나 화면을 보고 종이에 뜻을 적어요. 다 쓰면 <b>정답 보기</b>로 채점하고 맞은 개수를 입력해요.</p>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ 시험지 인쇄</button><button class="btn ${p.show?'btn-ghost':'btn-navy'} btn-sm" onclick="VS.paper.show=!VS.paper.show;render()">${p.show?'정답 숨기기':'👀 정답 보기'}</button><button class="btn btn-ghost btn-sm" onclick="VS.paper.ids=shuf(VS.paper.ids);render()">🔀 순서 섞기</button></div></div>
-  <div class="paper" id="paper"><div class="ph2"><b>FORWARD 단어 시험 · ${esc(p.title)}</b><span>이름 ________ &nbsp; 날짜 ${TODAY} &nbsp; 점수 ____ / ${list.length}</span></div>
-  <ol>${list.map(x=>`<li><b>${esc(x.w)}</b><span class="ln">${p.show?`<em>${esc(x.m)}</em>`:''}</span></li>`).join('')}</ol></div>
-  <div class="noprint card" style="margin-top:14px"><b style="color:var(--ink)">채점 결과 입력</b><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input class="inp" id="pp-s" type="number" min="0" max="${list.length}" placeholder="맞은 개수" style="max-width:140px"><span class="muted">/ ${list.length}</span><button class="btn btn-navy" onclick="vPaperDone()">기록하기</button></div>
-  <p class="muted" style="font-size:12.5px;margin-top:6px">틀린 단어는 아래 정답 보기에서 눌러 나만의 단어장에 넣을 수 있어요.</p>
-  ${p.show?`<div class="vlist" style="margin-top:10px">${list.map(x=>`<div style="cursor:pointer" onclick="const n=wbAdd(['${x.id}']);toast(n?'${esc(x.w).replace(/'/g,'')} → 단어장에 넣었어요':'이미 단어장에 있어요')"><b>${esc(x.w)}</b><span>${esc(x.m)}</span><small>+ 단어장</small></div>`).join('')}</div>`:''}</div>`;
+  const p=VS.paper, list=p.ids.map(i=>WMAP[i]),n=list.length;p.phase=p.phase||'ready';
+  if(p.phase==='ready')return `${vBack('test')}<h2 class="jua vh">✍️ ${esc(p.title)}</h2>
+  <div class="card" style="text-align:center;padding:26px 18px"><div style="font-size:44px">📝</div><h3 style="margin:6px 0 10px">종이와 펜을 준비하세요</h3>
+  <p style="font-size:15px;line-height:1.8;margin:0 0 6px">단어가 <b>4초</b> 동안 크게 나오고, 사라지면 <b>3초</b> 안에<br>종이에 <b>번호와 뜻</b>을 적어요. 총 <b>${n}문제</b> (약 ${Math.ceil(n*7/60)}분)</p>
+  <p class="muted" style="font-size:12.5px;margin:0 0 16px">끝나면 정답을 보고 스스로 채점해서 맞은 개수를 입력해요</p>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-navy" style="font-size:17px;padding:14px 28px" onclick="ptStart()">▶ 시작하기</button><button class="btn btn-ghost" onclick="VS.paper.ids=shuf(VS.paper.ids);toast('순서를 섞었어요')">🔀 순서 섞기</button></div></div>`;
+  if(p.phase==='run'){setTimeout(ptDraw,0);return `<div class="pt-wrap"><div class="pt-top"><span id="pt-prog">${p.i+1} / ${n}</span><span><button class="btn btn-ghost btn-sm" onclick="PT.paused=!PT.paused;this.textContent=PT.paused?'▶ 계속':'⏸ 잠깐 멈춤'">${PT.paused?'▶ 계속':'⏸ 잠깐 멈춤'}</button> <button class="btn btn-ghost btn-sm" onclick="if(this.dataset.c){ptClear();VS.paper.phase='ready';render()}else{this.dataset.c=1;this.textContent='정말 그만할까요?'}">그만하기</button></span></div><div class="pt-stage" id="pt-stage"></div></div>`}
+  return `${vBack('test')}<h2 class="jua vh">✅ 채점하기 · ${esc(p.title)}</h2>
+  <p class="muted" style="margin-bottom:10px">종이에 적은 답과 비교해서 맞은 개수를 세어 주세요. 틀린 단어는 눌러서 나만의 단어장에 넣을 수 있어요.</p>
+  <div class="vlist" style="margin-bottom:12px">${list.map((x,k)=>`<div style="cursor:pointer" onclick="const n=wbAdd(['${x.id}']);toast(n?'${esc(x.w).replace(/'/g,'')} → 단어장에 넣었어요':'이미 단어장에 있어요')"><b>${k+1}. ${esc(x.w)}</b><span>${esc(x.m)}</span><small>+ 단어장</small></div>`).join('')}</div>
+  <div class="card"><b style="color:var(--ink)">채점 결과 입력</b><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input class="inp" id="pp-s" type="number" min="0" max="${n}" placeholder="맞은 개수" style="max-width:140px"><span class="muted">/ ${n}</span><button class="btn btn-navy" onclick="vPaperDone()">기록하기</button></div>
+  <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="VS.paper.phase='ready';render()">↺ 처음부터 다시</button></div>`;
 }
 function vPaperDone(){
   const p=VS.paper,n=p.ids.length,sc=Math.max(0,Math.min(n,parseInt($('#pp-s').value,10)));

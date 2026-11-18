@@ -994,16 +994,29 @@ function vocabView(){
 }
 /* ----- 📚 단어장 등록 (선생님) ----- */
 function xlsxLib(){return new Promise((res,rej)=>{if(window.XLSX)return res(window.XLSX);const t=document.createElement('script');t.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';t.onload=()=>res(window.XLSX);t.onerror=()=>rej(new Error('엑셀 읽기 도구를 불러오지 못했어요'));document.head.appendChild(t)})}
-function wbParse(rows){const out=[],bad=[];let cu=null;
-  const unitOf=v=>{const m=String(v==null?'':v).trim().match(/^(?:day|DAY|Day|unit|Unit|UNIT|lesson|Lesson)?\s*(\d{1,4})\s*(?:과|일|강|회|day|Day)?$/);return m?+m[1]:null};
-  rows.forEach((r,i)=>{const c=(r||[]).map(x=>String(x==null?'':x).replace(/\s+/g,' ').trim().replace(/^"([\s\S]*)"$/,'$1').replace(/""/g,'"').trim()).filter((x,j,a)=>x!==''||j<3);
-    const cells=c.filter(x=>x!=='');if(!cells.length)return;
-    if(cells.length===1){const u=unitOf(cells[0]);if(u!=null)cu=u;return}
-    let u=unitOf(cells[0]),w,m;
-    if(u!=null&&cells.length>=3){w=cells[1];m=cells.slice(2).join(', ')}else{w=cells[0];m=cells.slice(1).join(', ');u=cu}
-    if(!/[A-Za-z]/.test(w)||/^(word|단어|영단어|english|어휘)$/i.test(w)){if(i>2)bad.push(i+1);return}
-    out.push([u==null?1:u,w,m])});
-  return {words:out,bad}}
+function wbParse(rows){const E=[],bad=[];let cu=null;
+  const unitOf=v=>{const m=String(v==null?'':v).trim().match(/^(?:day|unit|lesson|chapter|ch\.?)?\s*(\d{1,4})\s*(?:과|일|강|회|day)?[.)]?$/i);return m?+m[1]:null};
+  const hdrOf=v=>{const m=String(v).trim().match(/^(?:day|unit|lesson|chapter)\s*(\d{1,4})\b|^(\d{1,4})\s*(?:과|일차|강|회)$/i);return m?+(m[1]||m[2]):null};
+  const isW=x=>/[A-Za-z]/.test(x)&&!/[가-힣]/.test(x), isM=x=>/[가-힣]/.test(x)||/^[~(（\[]/.test(x);
+  rows.forEach((r,i)=>{const cells=(r||[]).map(x=>String(x==null?'':x).replace(/\s+/g,' ').trim().replace(/^"([\s\S]*)"$/,'$1').replace(/""/g,'"').trim()).filter(x=>x!=='');if(!cells.length)return;
+    if(cells.length===1){const h=hdrOf(cells[0])??unitOf(cells[0]);if(h!=null)cu=h;else if(i>2&&/[A-Za-z]/.test(cells[0]))bad.push(i+1);return}
+    if(cells.length===2&&hdrOf(cells[0])!=null&&!isW(cells[1])){cu=hdrOf(cells[0]);return}
+    let ch=null,got=0;const push=()=>{if(ch&&ch.w&&ch.m.length){E.push({n:ch.n,h:cu,w:ch.w,m:ch.m.join(', ')});got++}};
+    cells.forEach(x=>{const h=hdrOf(x);if(h!=null&&!(ch&&ch.w&&!ch.m.length)){push();cu=h;ch=null;return}
+      const n=unitOf(x);
+      if(n!=null&&!(ch&&ch.w&&!ch.m.length)){push();ch={n,w:null,m:[]};return}
+      if(isW(x)&&(!ch||ch.m.length||!ch.w)){if(ch&&ch.w)push(),ch=null;if(!ch)ch={n:null,w:null,m:[]};if(!ch.w){ch.w=x;return}}
+      if(ch&&ch.w){ch.m.push(x);return}});
+    push();if(!got&&i>2&&!/^(word|단어|영단어|english|어휘|no|번호)/i.test(cells.join(' ')))bad.push(i+1)});
+  const ws=E.filter(e=>!/^(word|단어|영단어|english|어휘)$/i.test(e.w));
+  const ns=ws.filter(e=>e.n!=null),seq=ns.length>15&&new Set(ns.map(e=>e.n)).size>ns.length*.6;
+  const words=ws.map(e=>[seq?(e.h??1):(e.n??e.h??1),e.w,e.m]);
+  return {words,bad,numbered:seq}}
+async function wbPdfRows(file){const pdfjs=await xLoadPdfJs(),doc=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise,rows=[];let chars=0;
+  for(let p=1;p<=doc.numPages;p++){const tc=await (await doc.getPage(p)).getTextContent(),L=[];
+    tc.items.forEach(it=>{const t=it.str;if(!t||!t.trim())return;chars+=t.length;const x=it.transform[4],y=it.transform[5],w=it.width||t.length*5,h=Math.abs(it.transform[3])||10;let ln=L.find(l=>Math.abs(l.y-y)<h*.5);if(!ln){ln={y,h,it:[]};L.push(ln)}ln.it.push({x,w,t})});
+    L.sort((a,b)=>b.y-a.y).forEach(l=>{l.it.sort((a,b)=>a.x-b.x);const cells=[];let cur='',end=null;l.it.forEach(o=>{if(end!=null&&o.x-end>l.h*.9){cells.push(cur);cur=''}else if(end!=null&&o.x-end>l.h*.15&&cur&&!cur.endsWith(' '))cur+=' ';cur+=o.t;end=o.x+o.w});cells.push(cur);rows.push(cells)})}
+  if(chars<20)throw new Error('글자를 읽을 수 없는 PDF예요 (스캔한 이미지 PDF는 안 돼요)');return rows}
 function wbMgr(){const L=(DB.WB||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
   modal(`<h3 class="jua">📚 단어장 등록 · 관리</h3><p class="muted" style="font-size:13px;margin-top:4px">엑셀 · CSV 파일이나 복사한 단어로 단어장을 만들면 학생들 단어 화면에 바로 생기고, 학습 · 4지선다 · 종이시험을 똑같이 칠 수 있어요.</p>
   <button class="btn btn-navy" style="width:100%;justify-content:center;margin:10px 0" onclick="wbEdit()">＋ 새 단어장 등록</button>
@@ -1016,7 +1029,7 @@ function wbEdit(id){const b=id&&(DB.WB||[]).find(x=>x.id===id);WBD={id:id||null,
   <label class="lb">단어장 이름</label><input class="inp" id="wb-n" value="${esc(b?b.name:'')}" placeholder="예) 수능 필수 어휘 / 경북예고 2학기 기말 단어">
   <label class="lb">단위</label><div class="chips-sel" id="wb-u">${['과','Day','강','회'].map(x=>`<button class="${(b?b.unit:'과')===x?'on':''}" onclick="this.parentNode.querySelectorAll('button').forEach(e=>e.classList.remove('on'));this.classList.add('on')">${x}</button>`).join('')}</div>
   <label class="lb">단어 넣기</label>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-soft" onclick="wbPick()">📎 엑셀 · CSV 파일 선택</button><span class="muted" style="font-size:12.5px;align-self:center">또는 아래에 붙여넣기</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-soft" onclick="wbPick()">📎 엑셀 · CSV · PDF 파일 선택</button><span class="muted" style="font-size:12.5px;align-self:center">또는 아래에 붙여넣기</span></div>
   <textarea class="inp" id="wb-t" rows="6" style="margin-top:8px;font-size:13px" placeholder="엑셀에서 복사해 붙여넣거나 한 줄에 하나씩 적어요&#10;1	admit	인정하다&#10;1	tend	~하는 경향이 있다&#10;2	extend	연장하다&#10;&#10;과 번호 없이 '단어 [탭/쉼표] 뜻'만 있어도 돼요. 'Day 3'처럼 과 제목만 있는 줄이 있으면 그 아래 단어는 그 과로 들어가요." oninput="wbFromText()"></textarea>
   <div id="wb-pv" style="margin-top:10px">${wbPv()}</div>
   <div class="btns"><button class="btn btn-ghost" onclick="wbMgr()">← 목록</button><button class="btn btn-navy" onclick="wbSave()">저장</button></div>`)}
@@ -1029,10 +1042,11 @@ function wbLine(l){if(l.includes('\t'))return l.split('\t');const isU=x=>/^\s*(?
   const m=l.match(/^\s*(?:((?:day|unit|lesson)?\s*\d{1,4})\s*(?:과|일|강|회)?[.)]?\s+)?([A-Za-z][A-Za-z0-9'’~\-().\/ ]*?)\s*(?:[:=|\-–]\s*|\s+)([^A-Za-z\s].*)$/i);
   if(m)return m[1]!=null?[m[1],m[2],m[3]]:[m[2],m[3]];return p.length>1?[p[0],p.slice(1).join(',')]:[l]}
 function wbFromText(){const t=$('#wb-t').value;if(!t.trim())return;const rows=t.split(/\r?\n/).map(wbLine);const r=wbParse(rows);WBD.words=r.words;WBD.bad=r.bad;WBD.src='붙여넣은 내용';$('#wb-pv').innerHTML=wbPv()}
-function wbPick(){const f=document.createElement('input');f.type='file';f.accept='.xlsx,.xls,.csv,.txt';f.onchange=async()=>{const file=f.files[0];if(!file)return;toast('파일 읽는 중…');try{let rows;
-  if(/\.(xlsx|xls)$/i.test(file.name)){const X=await xlsxLib(),wb=X.read(await file.arrayBuffer(),{type:'array'});rows=[];wb.SheetNames.forEach(n=>{rows.push(...X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}))})}
+function wbPick(){const f=document.createElement('input');f.type='file';f.accept='.xlsx,.xls,.csv,.txt,.pdf';f.onchange=async()=>{const file=f.files[0];if(!file)return;toast('파일 읽는 중…');try{let rows;
+  if(/\.pdf$/i.test(file.name)){rows=await wbPdfRows(file)}
+  else if(/\.(xlsx|xls)$/i.test(file.name)){const X=await xlsxLib(),wb=X.read(await file.arrayBuffer(),{type:'array'});rows=[];wb.SheetNames.forEach(n=>{rows.push(...X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}))})}
   else{let t=await file.text();if(t.includes('\ufffd')){t=new TextDecoder('euc-kr').decode(await file.arrayBuffer())}rows=t.split(/\r?\n/).map(wbLine)}
-  const r=wbParse(rows);WBD.words=r.words;WBD.bad=r.bad;WBD.src=file.name;const n=$('#wb-n');if(n&&!n.value.trim())n.value=file.name.replace(/\.[^.]+$/,'');$('#wb-pv').innerHTML=wbPv();toast(r.words.length?`${r.words.length}단어를 읽었어요`:'단어를 찾지 못했어요. 칸 순서를 확인해 주세요')}catch(e){toast('파일을 못 읽었어요: '+e.message)}};f.click()}
+  const r=wbParse(rows);WBD.words=r.words;WBD.bad=r.bad;WBD.src=file.name+(r.numbered?' · 단어 번호는 빼고 Day/과 제목으로 나눴어요':'');const n=$('#wb-n');if(n&&!n.value.trim())n.value=file.name.replace(/\.[^.]+$/,'');$('#wb-pv').innerHTML=wbPv();toast(r.words.length?`${r.words.length}단어를 읽었어요`:'단어를 찾지 못했어요. 칸 순서를 확인해 주세요')}catch(e){toast('파일을 못 읽었어요: '+e.message)}};f.click()}
 function wbSave(){const name=$('#wb-n').value.trim(),unit=($('#wb-u .on')||{}).textContent||'과';if(!name)return toast('단어장 이름을 적어주세요');if(!WBD.words.length)return toast('단어를 넣어주세요');
   const seen=new Set(),words=WBD.words.filter(r=>{const k=r[0]+'|'+r[1];if(seen.has(k))return false;seen.add(k);return true});
   if(words.length<4)return toast('4지선다 시험을 위해 단어를 4개 이상 넣어주세요');
@@ -1568,7 +1582,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118191223';
+const APP_VER='20261118191424';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}

@@ -1012,7 +1012,7 @@ function wbParse(rows){const E=[],bad=[];let cu=null;
   const ns=ws.filter(e=>e.n!=null),seq=ns.length>15&&new Set(ns.map(e=>e.n)).size>ns.length*.6;
   const words=ws.map(e=>[seq?(e.h??1):(e.n??e.h??1),e.w,e.m]);
   return {words,bad,numbered:seq}}
-async function wbPdfRows(file){const pdfjs=await xLoadPdfJs(),doc=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise,rows=[];let chars=0;
+async function wbPdfRows(file){const pdfjs=await xLoadPdfJs(),doc=await pdfjs.getDocument({data:await file.arrayBuffer(),cMapUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',cMapPacked:true,standardFontDataUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/'}).promise,rows=[];let chars=0;
   for(let p=1;p<=doc.numPages;p++){const tc=await (await doc.getPage(p)).getTextContent(),L=[];
     tc.items.forEach(it=>{const t=it.str;if(!t||!t.trim())return;chars+=t.length;const x=it.transform[4],y=it.transform[5],w=it.width||t.length*5,h=Math.abs(it.transform[3])||10;let ln=L.find(l=>Math.abs(l.y-y)<h*.5);if(!ln){ln={y,h,it:[]};L.push(ln)}ln.it.push({x,w,t})});
     L.sort((a,b)=>b.y-a.y).forEach(l=>{l.it.sort((a,b)=>a.x-b.x);const cells=[];let cur='',end=null;l.it.forEach(o=>{if(end!=null&&o.x-end>l.h*.9){cells.push(cur);cur=''}else if(end!=null&&o.x-end>l.h*.15&&cur&&!cur.endsWith(' '))cur+=' ';cur+=o.t;end=o.x+o.w});cells.push(cur);rows.push(cells)})}
@@ -1582,7 +1582,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118191424';
+const APP_VER='20261118191616';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}

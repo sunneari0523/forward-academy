@@ -666,10 +666,10 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],WB:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
 const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD'];
-function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};return m}
-function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
+function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
+function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
   if(!rows||!rows.length)return false;
   const m=toRows(DB);
@@ -807,7 +807,7 @@ function seed(){
 let DB, ME=null;
 function load(){ try{ME=JSON.parse(store.get(SKEY))}catch(e){ME=null}
   if(ONLINE){DB=emptyDB();TOKEN=ME&&ME.token||null;if(!TOKEN)ME=null;return}
-  try{DB=JSON.parse(store.get(KEY))}catch(e){DB=null} if(!DB||DB.v!==3){DB=seed();save();} DB.N=DB.N||[];DB.W=DB.W||[];DB.PR=DB.PR||[];DB.L=DB.L||[];DB.PC=DB.PC||[];DB.V=DB.V||[];DB.A=DB.A||[]; }
+  try{DB=JSON.parse(store.get(KEY))}catch(e){DB=null} if(!DB||DB.v!==3){DB=seed();save();} DB.N=DB.N||[];DB.WB=DB.WB||[];DB.W=DB.W||[];DB.PR=DB.PR||[];DB.L=DB.L||[];DB.PC=DB.PC||[];DB.V=DB.V||[];DB.A=DB.A||[]; }
 function save(){ if(ONLINE){syncDot('busy');clearTimeout(pushT);pushT=setTimeout(pushNow,500);return}
   if(!store.set(KEY,JSON.stringify(DB))) toast('사진이 많아 이 기기 저장 공간이 꽉 찼어요 (시연 버전 한계)'); }
 const stu=id=>DB.S.find(s=>s.id===id), tch=id=>DB.T.find(t=>t.id===id), cls=id=>DB.C.find(c=>c.id===id);
@@ -941,10 +941,13 @@ function petCelebrate(r,food,line){
    단어 (학습하기 · 테스트 · 나만의 단어장)
    ========================================================= */
 let WORDS=null, WMAP=null, UNITS=[], BK=[];
+let WBSIG='';
+function wbSig(){return (DB.WB||[]).map(b=>b.id+':'+(b.upd||'')).sort().join(',')}
 function wInit(){
-  if(BK.length)return wBook(VS.book);if(typeof RAW==='undefined')return false;
+  if(BK.length&&WBSIG===wbSig())return wBook(VS.book);if(typeof RAW==='undefined')return false;WBSIG=wbSig();
   BK=[{id:'gd',name:'고단끝',unit:'과',words:RAW.map(r=>({id:r[0]+'|'+r[1],b:'gd',u:r[0],w:r[1],m:r[2],a:(typeof ASSOC!=='undefined'&&ASSOC[r[1]])||null}))}];
   (window.BOOKS||[]).forEach(b=>BK.push({id:b.id,name:b.name,unit:b.unit,words:b.words.map(r=>({id:b.id+'|'+r[0]+'|'+r[1],b:b.id,u:r[0],w:r[1],m:r[2],a:null}))}));
+  (DB.WB||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?-1:1).forEach(b=>{if(b.words&&b.words.length)BK.push({id:b.id,name:b.name,unit:b.unit,custom:1,words:b.words.map(r=>({id:b.id+'|'+r[0]+'|'+r[1],b:b.id,u:r[0],w:r[1],m:r[2],a:null}))})});
   WMAP={};BK.forEach(b=>b.words.forEach(x=>WMAP[x.id]=x));return wBook(VS.book);
 }
 function wBook(id){const b=BK.find(x=>x.id===id)||BK[0];VS.book=b.id;WORDS=b.words;UNITS=[...new Set(WORDS.map(x=>x.u))].sort((a,b)=>a-b);if(!UNITS.includes(VS.from))VS.from=UNITS[0];if(!UNITS.includes(VS.to))VS.to=UNITS[0];return true}
@@ -985,9 +988,58 @@ function vocabView(){
   ${vt.length?`<div class="task" style="border-color:var(--butter);background:var(--butter-soft);margin-bottom:12px"><b>✏️ 단어 숙제 ${vt.length}개가 있어요</b><div class="meta">${vt.slice(0,3).map(t=>esc(lbl(t.date)+' '+t.title)).join(' · ')}</div></div>`:''}
   <div class="vbig"><button onclick="vGo('learn')"><span class="i">📖</span><b>학습하기</b><small>아는 단어 · 모르는 단어 나누고<br>모르는 단어만 집중해서 외워요</small></button>
   <button onclick="vGo('test')"><span class="i">📝</span><b>테스트</b><small>4지선다 또는<br>종이에 적는 시험</small></button></div>
+  ${isS?'':`<button class="vbook" style="border-color:var(--navy)" onclick="wbMgr()"><span>📚 단어장 등록 · 관리 <small class="muted">(선생님만 보여요)</small></span><b>${(DB.WB||[]).length}권</b><span class="muted">›</span></button>`}
   <button class="vbook" onclick="vGo('book')"><span>📒 나만의 단어장</span><b>${nb}단어</b><span class="muted">›</span></button>
   ${recent.length?`<h3 class="sec" style="margin-top:18px">최근 테스트</h3>${recent.map(r=>`<div class="list-row"><span style="flex:1;font-size:14px">${esc(r.title.replace('단어 · ',''))}</span><span class="muted" style="font-size:12.5px">${esc(r.date)}</span><b style="margin-left:10px">${esc(r.value)}</b></div>`).join('')}`:''}`;
 }
+/* ----- 📚 단어장 등록 (선생님) ----- */
+function xlsxLib(){return new Promise((res,rej)=>{if(window.XLSX)return res(window.XLSX);const t=document.createElement('script');t.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';t.onload=()=>res(window.XLSX);t.onerror=()=>rej(new Error('엑셀 읽기 도구를 불러오지 못했어요'));document.head.appendChild(t)})}
+function wbParse(rows){const out=[],bad=[];let cu=null;
+  const unitOf=v=>{const m=String(v==null?'':v).trim().match(/^(?:day|DAY|Day|unit|Unit|UNIT|lesson|Lesson)?\s*(\d{1,4})\s*(?:과|일|강|회|day|Day)?$/);return m?+m[1]:null};
+  rows.forEach((r,i)=>{const c=(r||[]).map(x=>String(x==null?'':x).replace(/\s+/g,' ').trim().replace(/^"([\s\S]*)"$/,'$1').replace(/""/g,'"').trim()).filter((x,j,a)=>x!==''||j<3);
+    const cells=c.filter(x=>x!=='');if(!cells.length)return;
+    if(cells.length===1){const u=unitOf(cells[0]);if(u!=null)cu=u;return}
+    let u=unitOf(cells[0]),w,m;
+    if(u!=null&&cells.length>=3){w=cells[1];m=cells.slice(2).join(', ')}else{w=cells[0];m=cells.slice(1).join(', ');u=cu}
+    if(!/[A-Za-z]/.test(w)||/^(word|단어|영단어|english|어휘)$/i.test(w)){if(i>2)bad.push(i+1);return}
+    out.push([u==null?1:u,w,m])});
+  return {words:out,bad}}
+function wbMgr(){const L=(DB.WB||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
+  modal(`<h3 class="jua">📚 단어장 등록 · 관리</h3><p class="muted" style="font-size:13px;margin-top:4px">엑셀 · CSV 파일이나 복사한 단어로 단어장을 만들면 학생들 단어 화면에 바로 생기고, 학습 · 4지선다 · 종이시험을 똑같이 칠 수 있어요.</p>
+  <button class="btn btn-navy" style="width:100%;justify-content:center;margin:10px 0" onclick="wbEdit()">＋ 새 단어장 등록</button>
+  ${L.length?L.map(b=>`<div class="list-row"><div style="flex:1"><b>${esc(b.name)}</b><div class="muted" style="font-size:12px">${b.words.length}단어 · ${wbUnitsL(b)} · ${esc(b.byName||'')} ${esc((b.upd||'').slice(5,16))}</div></div><button class="btn btn-ghost btn-sm" onclick="wbEdit('${b.id}')">수정</button><button class="btn btn-ghost btn-sm" onclick="wbDelBook('${b.id}',this)">삭제</button></div>`).join(''):'<p class="muted" style="text-align:center">아직 등록한 단어장이 없어요</p>'}
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>`)}
+function wbUnitsL(b){const us=[...new Set(b.words.map(x=>x[0]))].sort((a,c)=>a-c);if(!us.length)return '';const a=us[0],z=us[us.length-1];return b.unit==='Day'?`Day ${a}~${z}`:`${a}~${z}${b.unit}`}
+let WBD=null;
+function wbEdit(id){const b=id&&(DB.WB||[]).find(x=>x.id===id);WBD={id:id||null,words:b?b.words.slice():[],bad:[],src:b?'기존 단어 유지':''};
+  modal(`<h3 class="jua">${b?'✏️ 단어장 수정':'＋ 새 단어장 등록'}</h3>
+  <label class="lb">단어장 이름</label><input class="inp" id="wb-n" value="${esc(b?b.name:'')}" placeholder="예) 수능 필수 어휘 / 경북예고 2학기 기말 단어">
+  <label class="lb">단위</label><div class="chips-sel" id="wb-u">${['과','Day','강','회'].map(x=>`<button class="${(b?b.unit:'과')===x?'on':''}" onclick="this.parentNode.querySelectorAll('button').forEach(e=>e.classList.remove('on'));this.classList.add('on')">${x}</button>`).join('')}</div>
+  <label class="lb">단어 넣기</label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-soft" onclick="wbPick()">📎 엑셀 · CSV 파일 선택</button><span class="muted" style="font-size:12.5px;align-self:center">또는 아래에 붙여넣기</span></div>
+  <textarea class="inp" id="wb-t" rows="6" style="margin-top:8px;font-size:13px" placeholder="엑셀에서 복사해 붙여넣거나 한 줄에 하나씩 적어요&#10;1	admit	인정하다&#10;1	tend	~하는 경향이 있다&#10;2	extend	연장하다&#10;&#10;과 번호 없이 '단어 [탭/쉼표] 뜻'만 있어도 돼요. 'Day 3'처럼 과 제목만 있는 줄이 있으면 그 아래 단어는 그 과로 들어가요." oninput="wbFromText()"></textarea>
+  <div id="wb-pv" style="margin-top:10px">${wbPv()}</div>
+  <div class="btns"><button class="btn btn-ghost" onclick="wbMgr()">← 목록</button><button class="btn btn-navy" onclick="wbSave()">저장</button></div>`)}
+function wbPv(){const W=WBD.words;if(!W.length)return '<div class="onebox">파일을 고르거나 단어를 붙여넣으면 여기에 미리보기가 나와요.<br><b>칸 순서: 과(Day) · 단어 · 뜻</b> (과가 없으면 단어 · 뜻)</div>';
+  const us=[...new Set(W.map(x=>x[0]))].sort((a,b)=>a-b),cnt=u=>W.filter(x=>x[0]===u).length;
+  return `<div class="onebox">✅ <b>${W.length}단어</b> · ${us.length}개 단위 (${us.slice(0,12).map(u=>`${u}: ${cnt(u)}개`).join(', ')}${us.length>12?' …':''})${WBD.src?` · <span class="muted">${esc(WBD.src)}</span>`:''}${WBD.bad.length?`<br><span style="color:var(--red)">⚠️ 단어로 못 읽은 줄 ${WBD.bad.length}개 (${WBD.bad.slice(0,8).join(', ')}번째 줄${WBD.bad.length>8?' …':''})</span>`:''}</div>
+  <table class="stable" style="margin-top:8px;font-size:13px"><thead><tr><th>단위</th><th>단어</th><th>뜻</th></tr></thead><tbody>${W.slice(0,8).map(r=>`<tr><td>${r[0]}</td><td><b>${esc(r[1])}</b></td><td>${esc(r[2])}</td></tr>`).join('')}${W.length>8?`<tr><td colspan="3" class="muted">… 외 ${W.length-8}단어</td></tr>`:''}</tbody></table>`}
+function wbLine(l){if(l.includes('\t'))return l.split('\t');const isU=x=>/^\s*(?:day|unit|lesson)?\s*\d{1,4}\s*(?:과|일|강|회)?\s*$/i.test(x);
+  if(isU(l))return [l.trim()];const p=l.split(',');if(p.length>2&&isU(p[0]))return [p[0],p[1],p.slice(2).join(',')];
+  const m=l.match(/^\s*(?:((?:day|unit|lesson)?\s*\d{1,4})\s*(?:과|일|강|회)?[.)]?\s+)?([A-Za-z][A-Za-z0-9'’~\-().\/ ]*?)\s*(?:[:=|\-–]\s*|\s+)([^A-Za-z\s].*)$/i);
+  if(m)return m[1]!=null?[m[1],m[2],m[3]]:[m[2],m[3]];return p.length>1?[p[0],p.slice(1).join(',')]:[l]}
+function wbFromText(){const t=$('#wb-t').value;if(!t.trim())return;const rows=t.split(/\r?\n/).map(wbLine);const r=wbParse(rows);WBD.words=r.words;WBD.bad=r.bad;WBD.src='붙여넣은 내용';$('#wb-pv').innerHTML=wbPv()}
+function wbPick(){const f=document.createElement('input');f.type='file';f.accept='.xlsx,.xls,.csv,.txt';f.onchange=async()=>{const file=f.files[0];if(!file)return;toast('파일 읽는 중…');try{let rows;
+  if(/\.(xlsx|xls)$/i.test(file.name)){const X=await xlsxLib(),wb=X.read(await file.arrayBuffer(),{type:'array'});rows=[];wb.SheetNames.forEach(n=>{rows.push(...X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}))})}
+  else{let t=await file.text();if(t.includes('\ufffd')){t=new TextDecoder('euc-kr').decode(await file.arrayBuffer())}rows=t.split(/\r?\n/).map(wbLine)}
+  const r=wbParse(rows);WBD.words=r.words;WBD.bad=r.bad;WBD.src=file.name;const n=$('#wb-n');if(n&&!n.value.trim())n.value=file.name.replace(/\.[^.]+$/,'');$('#wb-pv').innerHTML=wbPv();toast(r.words.length?`${r.words.length}단어를 읽었어요`:'단어를 찾지 못했어요. 칸 순서를 확인해 주세요')}catch(e){toast('파일을 못 읽었어요: '+e.message)}};f.click()}
+function wbSave(){const name=$('#wb-n').value.trim(),unit=($('#wb-u .on')||{}).textContent||'과';if(!name)return toast('단어장 이름을 적어주세요');if(!WBD.words.length)return toast('단어를 넣어주세요');
+  const seen=new Set(),words=WBD.words.filter(r=>{const k=r[0]+'|'+r[1];if(seen.has(k))return false;seen.add(k);return true});
+  if(words.length<4)return toast('4지선다 시험을 위해 단어를 4개 이상 넣어주세요');
+  DB.WB=DB.WB||[];let b=WBD.id&&DB.WB.find(x=>x.id===WBD.id);
+  if(!b){b={id:'WB_'+uid(),at:nowStr(),by:ME.id};DB.WB.push(b)}
+  Object.assign(b,{name,unit,words,upd:nowStr(),byName:(tch(ME.id)||{}).name||''});save();wInit();wBook(b.id);VS.from=UNITS[0];VS.to=UNITS[0];vSaveR();closeModal();render();toast(`📚 ${name} · ${words.length}단어 등록! 학생들 단어 화면에 바로 생겨요`)}
+function wbDelBook(id,btn){if(!btn.dataset.c){btn.dataset.c=1;btn.textContent='정말 삭제?';return}DB.WB=(DB.WB||[]).filter(x=>x.id!==id);save();if(VS.book===id)VS.book='gd';wInit();wbMgr();render();toast('단어장을 삭제했어요')}
 function vBack(to){return `<button class="backlink" onclick="vGo('${to||'home'}')">← ${to==='learn'?'학습하기':to==='test'?'테스트':'단어 처음'}으로</button>`}
 function vLearnHome(){
   const rng=vRange(), wb=new Set(wbIds()), unk=VS.unk&&VS.unkR===vRangeL()?VS.unk:rng.filter(x=>wb.has(x.id)).map(x=>x.id);
@@ -1516,7 +1568,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118013532';
+const APP_VER='20261118191223';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}

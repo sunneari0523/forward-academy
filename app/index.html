@@ -1583,7 +1583,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261118191834';
+const APP_VER='20261120190403';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -2308,10 +2308,34 @@ function fxView(id){const x=(DB.FX||[]).find(y=>y.id===id);if(!x){UI.fx=null;ret
   const worst=qr.map((p,i)=>({q:i+1,p})).filter(o=>o.p!==null).sort((a,b)=>a.p-b.p).slice(0,6);
   return `<button class="btn btn-ghost btn-sm" onclick="UI.fx=null;render()">← 채점·성적으로</button>
   <div class="ph" style="margin-top:10px"><div><h2 class="jua">🎯 ${esc(x.title)}</h2><p>${esc(x.date)} · ${esc(x.gr||'')} · 응시 ${R.length}명 · 평균 ${avg}점</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="fxNew('${id}')">정답·배점 수정</button><button class="btn btn-navy" onclick="frNew('${id}')">+ 학생 답 입력</button></div></div>
+  ${fxFilesCard(x)}
   ${worst.length?`<div class="card" style="margin-bottom:14px"><b style="color:var(--ink)">많이 틀린 문항</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${worst.map(o=>`<span class="chip ${o.p<50?'c-redo':'c-sub'}">${o.q}번 ${esc(FX_TYPES[o.q-1])} · 정답률 ${o.p}%</span>`).join('')}</div></div>`:''}
   <div class="tbwrap"><table class="tb"><tr><th>석차</th><th>이름</th><th>원점수</th><th>등급</th><th>틀린 문항</th><th></th></tr>
   ${R.map((r,i)=>`<tr><td>${1+R.filter(y=>y.score>r.score).length}</td><td><b style="color:var(--ink)">${esc(frName(r))}</b>${r.sid?'':' <span class="chip c-todo" title="같은 이름·휴대폰 뒷번호로 등록되면 자동 연결돼요">미등록</span>'}</td><td><b>${r.score}</b></td><td>${r.grd}등급</td><td class="muted" style="font-size:12.5px">${r.wrong.length?r.wrong.join(', '):'없음 🎉'}</td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="frPrint('${r.id}')">🖨 리포트</button> <button class="btn btn-ghost btn-sm" onclick="frNew('${id}','${r.id}')">수정</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty" style="padding:14px">학생 답을 입력하면 바로 채점돼요</div></td></tr>'}</table></div>
   ${R.length>1?`<button class="btn btn-ghost" style="margin-top:12px" onclick="frPrintAll('${id}')">🖨 전체 리포트 한 번에 인쇄</button>`:''}`}
+/* ----- F:OCUS 시험 자료 (문제지·정답·듣기) — FX 안에 있어서 선생님만 보여요 ----- */
+const FX_SLOTS=[['b4','📄 문제지 (B4 출력용)'],['pdf','📄 문제지 (A3 원본)'],['docx','📝 문제지 Word'],['ans','✅ 정답·해설 PDF'],['ansDocx','📝 정답·해설 Word'],['script','📜 듣기 대본'],['mp3','🎧 듣기 mp3']];
+function fxFilesCard(x){const f=x.files||{},has=FX_SLOTS.filter(([k])=>f[k]);
+  return `<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b style="color:var(--ink)">📁 시험 자료 <span class="muted" style="font-weight:400;font-size:12.5px">선생님 계정에서만 보여요</span></b><button class="btn btn-ghost btn-sm" onclick="fxFileAdd('${x.id}')">+ 파일 올리기</button></div>
+  ${has.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${has.filter(([k])=>k!=='mp3').map(([k,l])=>`<a class="btn btn-soft btn-sm" href="${esc(f[k])}" target="_blank" rel="noopener">${l}</a>`).join('')}</div>
+  ${f.mp3?`<div style="margin-top:10px"><div class="muted" style="font-size:12.5px;margin-bottom:4px">🎧 듣기${x.lsrc?' · '+esc(x.lsrc):''}</div><audio controls preload="none" src="${esc(f.mp3)}" style="width:100%"></audio></div>`:''}`:'<div class="muted" style="font-size:13px;margin-top:8px">아직 올린 자료가 없어요</div>'}</div>`}
+async function upFile(file,tag){
+  if(!ONLINE)return URL.createObjectURL(file);
+  const ext=((file.name.match(/\.[a-z0-9]+$/i)||['.bin'])[0]).toLowerCase();
+  const name=(FOLDER||'focus')+'/fx_'+tag+'_'+Date.now().toString(36)+uid()+ext;
+  const r=await fetch(SB_URL+'/storage/v1/object/hw/'+name,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':file.type||'application/octet-stream'},body:file});
+  if(!r.ok)throw new Error('upload');
+  return SB_URL+'/storage/v1/object/public/hw/'+name;
+}
+function fxFileAdd(id){UI.fxf={id,slot:'b4',file:null};
+  modal(`<h3 class="jua">📁 시험 자료 올리기</h3><label class="lb">어떤 파일인가요?</label><div class="chips-sel">${FX_SLOTS.map(([k,l],i)=>`<button class="${i?'':'on'}" onclick="UI.fxf.slot='${k}';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">${l}</button>`).join('')}</div>
+  <label class="lb">파일 *</label><button class="btn btn-ghost" id="fxf-f" onclick="fxFilePick()">📁 파일 고르기</button>
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" id="fxf-go" onclick="fxFileSave()">올리기</button></div>`)}
+function fxFilePick(){const f=document.createElement('input');f.type='file';f.onchange=()=>{const x=f.files[0];if(!x)return;if(x.size>45*1024*1024){toast('파일이 너무 커요 (45MB까지)');return}UI.fxf.file=x;$('#fxf-f').textContent='📎 '+x.name};f.click()}
+async function fxFileSave(){const o=UI.fxf,x=DB.FX.find(y=>y.id===o.id);if(!x)return;if(!o.file){toast('파일을 골라주세요');return}
+  const b=$('#fxf-go');b.disabled=true;b.textContent='올리는 중… 잠시만요';
+  let url;try{url=await upFile(o.file,o.slot)}catch(e){b.disabled=false;b.textContent='올리기';toast('파일 올리기에 실패했어요. 다시 시도해 주세요');return}
+  x.files=Object.assign({},x.files||{},{[o.slot]:url});save();closeModal();render();toast('올렸어요 📁')}
 function frNew(fxid,rid){const x=DB.FX.find(y=>y.id===fxid),old=rid&&DB.FR.find(r=>r.id===rid);
   const L=liveS().sort((a,b)=>a.name<b.name?-1:1);UI.fr={ans:old?old.ans.slice():Array(45).fill(''),sid:old?(old.sid||''):'',guest:old?!old.sid:false};
   modal(`<h3 class="jua">${esc(x.title)} · 학생 답 입력</h3>

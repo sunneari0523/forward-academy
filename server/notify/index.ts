@@ -35,6 +35,8 @@ async function remind() {
     const g = (by[t.sid] ||= { today: [], tmr: [] });
     (t.date === d0 ? g.today : g.tmr).push(String(t.title || "숙제"));
   }
+  const { data: grads } = await sb.from("fw_rec").select("id").eq("col", "S").in("id", Object.keys(by)).not("data->>grad", "is", null);
+  for (const g of grads || []) delete by[g.id as string];
   const sids = Object.keys(by);
   if (!sids.length) return { sent: 0, students: 0 };
   const v = await keys();

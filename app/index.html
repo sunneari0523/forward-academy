@@ -810,6 +810,7 @@ function load(){ try{ME=JSON.parse(store.get(SKEY))}catch(e){ME=null}
   try{DB=JSON.parse(store.get(KEY))}catch(e){DB=null} if(!DB||DB.v!==3){DB=seed();save();} DB.N=DB.N||[];DB.WB=DB.WB||[];DB.W=DB.W||[];DB.PR=DB.PR||[];DB.L=DB.L||[];DB.PC=DB.PC||[];DB.V=DB.V||[];DB.A=DB.A||[]; }
 function save(){ if(ONLINE){syncDot('busy');clearTimeout(pushT);pushT=setTimeout(pushNow,500);return}
   if(!store.set(KEY,JSON.stringify(DB))) toast('사진이 많아 이 기기 저장 공간이 꽉 찼어요 (시연 버전 한계)'); }
+const act=s=>!!s&&!s.grad, liveS=()=>DB.S.filter(act); // 졸업생(grad)은 목록에서 빠지고 기록은 남아요
 const stu=id=>DB.S.find(s=>s.id===id), tch=id=>DB.T.find(t=>t.id===id), cls=id=>DB.C.find(c=>c.id===id);
 const isOwner=()=>ME&&ME.role==='owner';
 function myClasses(){ if(!ME) return []; return isOwner()?DB.C:DB.C.filter(c=>c.tid===ME.id); }
@@ -821,8 +822,8 @@ function sessOf(sid){return DB.C.filter(c=>isSess(c)&&(c.sids||[]).includes(sid)
 function sDays(s){if(!s)return [];const a=sessOf(s.id).map(c=>c.day);const b=Array.isArray(s.days)?s.days:(cls(s.cid)&&!isSess(cls(s.cid))?(cls(s.cid).days||[]):[]);return [...new Set(a.concat(b))]}
 function sDaysL(s){const d=sDays(s);return d.length?[1,2,3,4,5,6,0].filter(x=>d.includes(x)).map(x=>WD[x]).join('·'):'요일 미정'}
 function sLabel(s){return (tch(sTid(s))||{name:'-'}).name+' · '+sDaysL(s)}
-function myStudents(){ if(!ME) return []; if(isOwner())return DB.S.slice(); const mine=new Set(DB.C.filter(c=>isSess(c)&&c.tid===ME.id).flatMap(c=>c.sids||[])); return DB.S.filter(s=>sTid(s)===ME.id||mine.has(s.id)); }
-function exS(e){return (e.sids?e.sids.map(stu):DB.S.filter(s=>s.cid===e.cid)).filter(Boolean)}
+function myStudents(){ if(!ME) return []; if(isOwner())return liveS(); const mine=new Set(DB.C.filter(c=>isSess(c)&&c.tid===ME.id).flatMap(c=>c.sids||[])); return liveS().filter(s=>sTid(s)===ME.id||mine.has(s.id)); }
+function exS(e){return (e.sids?e.sids.map(stu):liveS().filter(s=>s.cid===e.cid)).filter(Boolean)}
 /* 다음 수업 날짜 */
 function nextClass(sid){const ds=sDays(stu(sid));if(!ds.length)return null;for(let i=0;i<7;i++){const d=addD(TODAY,i);if(ds.includes(pd(d).getDay()))return d}return null}
 function classLabel(d){if(!d)return '수업 요일 미정';const n=diffD(TODAY,d);return n===0?'오늘 수업':n===1?'내일 수업':lbl(d)+' 수업'}
@@ -1272,7 +1273,7 @@ function kioskView(){const k=UI.kiosk,m=k.msg;const n=atRows().filter(a=>a.date=
   <div class="k-pad">${[1,2,3,4,5,6,7,8,9,'지움',0,'확인'].map(v=>`<button class="${typeof v==='string'?'f':''}" onclick="kioskKey('${v}')">${v}</button>`).join('')}</div>
   <div class="k-foot"><span>지금 학원에 ${n}명</span><button onclick="kioskClose()">닫기</button></div></div>`}
 function kioskKey(v){const k=UI.kiosk;if(k.msg&&!k.msg.pick){k.msg=null}if(v==='지움'){k.d=k.d.slice(0,-1)}else if(v==='확인'){kioskGo();return}else if(k.d.length<4){k.d+=v;if(k.d.length===4){render();setTimeout(kioskGo,150);return}}render()}
-function kioskGo(){const k=UI.kiosk,d=k.d;if(d.length<4)return;const L=DB.S.filter(s=>{const p=String(s.phone||'').replace(/\D/g,''),c=String(s.code||'');return p.endsWith(d)||c.endsWith(d)});
+function kioskGo(){const k=UI.kiosk,d=k.d;if(d.length<4)return;const L=liveS().filter(s=>{const p=String(s.phone||'').replace(/\D/g,''),c=String(s.code||'');return p.endsWith(d)||c.endsWith(d)});
   k.d='';if(!L.length){k.msg={kind:'err',text:'등록된 번호가 없어요. 다시 눌러주세요'};render();kioskTimer();return}
   if(L.length>1){k.msg={kind:'pick',pick:L};render();return}kioskDo(L[0].id)}
 function kioskDo(sid){const r=atToggle(sid,'kiosk');UI.kiosk.msg={kind:r.kind,name:r.name,t:r.t,mins:atMins(r.a)};render();kioskTimer();
@@ -1773,7 +1774,8 @@ function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_log
    학생 화면
    ========================================================= */
 let UI={};
-function render(){ ttTipHide(); if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} ME.role==='student'?studentView():staffView(); navTrack(); }
+function render(){ ttTipHide(); if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} if(ME.role==='student'&&stu(ME.id).grad)return gradView(); ME.role==='student'?studentView():staffView(); navTrack(); }
+function gradView(){const s=stu(ME.id);$('#app').innerHTML=`<div class="login"><div class="login-box" style="text-align:center"><img class="logo" src="logo.png" alt="포워드 영어학원"><div style="font-size:56px;margin:8px 0">🎓</div><h1 class="jua" style="font-size:26px">${esc(s.name)}, 졸업 축하해요!</h1><p class="sub" style="margin:12px 0 22px;line-height:1.7">그동안 포워드에서 정말 수고 많았어요.<br>앞으로의 길도 늘 응원할게요 🐾</p><button class="btn btn-navy" onclick="logout()">닫기</button></div></div>`}
 function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
 function studentView(){
@@ -2055,7 +2057,7 @@ function moveSess(id){
 }
 function cancelSess(id){const ws=UI.ttw||wkStart(TODAY);DB.C.push({id:'c'+uid(),kind:'cancel',of:id,week:ws});save();closeModal();render();toast(`${lbl(ws)} 주만 휴강으로 바꿨어요`)}
 
-function ssList(){const L=DB.S.slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>!UI.ss.q||s.name.includes(UI.ss.q));
+function ssList(){const L=liveS().sort((a,b)=>a.name<b.name?-1:1).filter(s=>!UI.ss.q||s.name.includes(UI.ss.q));
   const box=$('#ss-list');if(!box)return;box.innerHTML=L.map(s=>`<button class="s ${UI.ss.sids.includes(s.id)?'on':''}" onclick="const i=UI.ss.sids.indexOf('${s.id}');if(i>=0)UI.ss.sids.splice(i,1);else UI.ss.sids.push('${s.id}');ssList()">${UI.ss.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('')||'<span class="muted" style="font-size:13px">등록된 학생이 없어요. 학생 관리에서 먼저 등록해 주세요.</span>';
   const c=$('#ss-cnt');if(c)c.textContent=UI.ss.sids.length+'명'}
 function saveSess(id){
@@ -2179,8 +2181,8 @@ function occurrences(from,to){
   const out=[];const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
   for(let d=from;d<=to;d=addD(d,1)){
     const ws=wkStart(d),wd=pd(d).getDay();
-    weekSess(ws).filter(c=>!c._off&&c.day===wd).forEach(c=>{if(d===TODAY&&toMin(c.end)>nowM)return;(c.sids||[]).forEach(sid=>{if(stu(sid))out.push({sid,date:d,tid:c.tid,cname:c.name,time:c.start})})});
-    DB.S.forEach(s=>{if(sessOf(s.id).length||d===TODAY)return;const days=Array.isArray(s.days)?s.days:(cls(s.cid)&&!isSess(cls(s.cid))?cls(s.cid).days||[]:[]);if(days.includes(wd)&&!out.some(o=>o.sid===s.id&&o.date===d))out.push({sid:s.id,date:d,tid:sTid(s),cname:'',time:''})});
+    weekSess(ws).filter(c=>!c._off&&c.day===wd).forEach(c=>{if(d===TODAY&&toMin(c.end)>nowM)return;(c.sids||[]).forEach(sid=>{if(act(stu(sid)))out.push({sid,date:d,tid:c.tid,cname:c.name,time:c.start})})});
+    liveS().forEach(s=>{if(sessOf(s.id).length||d===TODAY)return;const days=Array.isArray(s.days)?s.days:(cls(s.cid)&&!isSess(cls(s.cid))?cls(s.cid).days||[]:[]);if(days.includes(wd)&&!out.some(o=>o.sid===s.id&&o.date===d))out.push({sid:s.id,date:d,tid:sTid(s),cname:'',time:''})});
   }
   return out;
 }
@@ -2191,10 +2193,10 @@ function missingFor(sid){return TODAY<CARE_START?[]:occurrences(careFrom(),TODAY
 function careBoard(){
   UI.cbOpen=UI.cbOpen||{};
   const occ=TODAY<CARE_START?[]:occurrences(careFrom(),TODAY);
-  const ts=DB.T.filter(t=>occ.some(o=>o.tid===t.id)||DB.S.some(s=>sTid(s)===t.id));
+  const ts=DB.T.filter(t=>occ.some(o=>o.tid===t.id)||liveS().some(s=>sTid(s)===t.id));
   if(!ts.length)return '';
   const rows=ts.map(t=>{const o=occ.filter(x=>x.tid===t.id),nl=o.filter(x=>!hasLog(x.sid,x.date)),nh=o.filter(x=>!hasHW(x.sid,x.date));
-    const studs=DB.S.filter(s=>sTid(s)===t.id||sessOf(s.id).some(c=>c.tid===t.id)),pc=studs.filter(s=>pcLate(s.id));
+    const studs=liveS().filter(s=>sTid(s)===t.id||sessOf(s.id).some(c=>c.tid===t.id)),pc=studs.filter(s=>pcLate(s.id));
     return {t,o,nl,nh,studs,pc,bad:nl.length+nh.length+pc.length}});
   return `<div class="card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><h3 class="sec" style="margin:0">📋 강사별 학생 관리 현황 <span class="muted" style="font-size:12.5px;font-weight:400">최근 7일 수업 기준 · 모든 선생님이 함께 봐요</span></h3></div>
   ${TODAY<CARE_START?`<div class="onebox" style="margin-top:8px">🌱 이번 주는 적응 기간이에요. <b>${lbl(CARE_START)}부터</b> 일지·숙제 경고를 집계하고, 학부모 연락 2주 경고는 그날부터 2주 뒤에 떠요. 미리 써두면 그대로 기록돼요.</div>`:''}
@@ -2237,7 +2239,7 @@ function vdUrl(i,v){UI.mdirty=true;const urls=(v.match(/https?:\/\/\S+/g)||[]).f
   const base=UI.vd.rows[i],p0=+base.p||1,add=urls.map((u,k)=>({u:base.u,p:String(p0+k),url:u}));
   UI.vd.rows.splice(i,1,...add);vdRows();toast(`영상 ${urls.length}개로 나눴어요`)}
 function vdTitle(b,u,p){return [b,u?u+'과':'',p?p+'번':''].filter(Boolean).join(' ')}
-function vdList(){const box=$('#vd-list');if(!box)return;const L=DB.S.slice().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,UI.vd.q));
+function vdList(){const box=$('#vd-list');if(!box)return;const L=liveS().sort((a,b)=>a.name<b.name?-1:1).filter(s=>stuMatch(s,UI.vd.q));
   box.innerHTML=L.map(s=>`<button class="s ${UI.vd.sids.includes(s.id)?'on':''}" onclick="const i=UI.vd.sids.indexOf('${s.id}');if(i>=0)UI.vd.sids.splice(i,1);else UI.vd.sids.push('${s.id}');vdList()">${UI.vd.sids.includes(s.id)?'✓ ':''}${esc(s.name)} <span style="opacity:.6;font-weight:400">${esc(s.grade||'')}</span></button>`).join('');
   const c=$('#vd-cnt');if(c)c.textContent=UI.vd.sids.length+'명'}
 function saveVideo(){
@@ -2644,13 +2646,13 @@ function tPeople(){
   const ss=all.filter(s=>UI.pf==='all'||(UI.pf==='risk'?risk(s.id).lv:sTid(s)===UI.pf)).sort((a,b)=>(risk(b.id).why.length-risk(a.id).why.length)||(a.name<b.name?-1:1));
   const rate=sid=>{const ts=DB.tasks.filter(t=>t.sid===sid&&t.date<=TODAY&&t.date>=addD(TODAY,-13));return ts.length?Math.round(ts.filter(t=>t.status==='ok'||t.status==='sub').length/ts.length*100):null};
   return `<div class="ph"><div><h2 class="jua">학생 관리</h2><p>학생 ${all.length}명 · 이름을 누르면 상담 일지와 상세 정보를 볼 수 있어요</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="bulkAdd()">📋 여러 명 한 번에 등록</button><button class="btn btn-navy" onclick="editStu()">+ 학생 등록</button></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${isOwner()?`<button class="btn btn-ghost" onclick="gradPick()">🎓 졸업 처리</button>`:''}<button class="btn btn-ghost" onclick="bulkAdd()">📋 여러 명 한 번에 등록</button><button class="btn btn-navy" onclick="editStu()">+ 학생 등록</button></div></div>
   <div class="chips-sel" style="margin-bottom:14px"><button class="${UI.pf==='all'?'on':''}" onclick="UI.pf='all';render()">전체 ${all.length}</button><button class="${UI.pf==='risk'?'on':''}" onclick="UI.pf='risk';render()" style="${UI.pf==='risk'?'':'color:var(--red)'}">⚠️ 주의 학생 ${all.filter(s=>risk(s.id).lv).length}</button>${ts.map(t=>`<button class="${UI.pf===t.id?'on':''}" onclick="UI.pf='${t.id}';render()">🧑‍🏫 ${esc(t.name)}</button>`).join('')}</div>
   ${ss.length?`<div class="tbwrap"><table class="tb ptab"><tr><th>이름</th><th>주의</th><th>학교 · 학년</th><th>담당 · 수업 요일</th><th>학생코드</th><th>2주 제출률</th><th>콩떡이</th><th>학생 / 학부모 연락처</th><th></th></tr>
   ${ss.map(s=>{const r=rate(s.id),d=petDays(s.id),n=cnote(s.id);return `<tr><td><button class="linkb" onclick="UI.pv='${s.id}';render();scrollTo(0,0)">${esc(s.name)}</button>${n.logs.length?`<div class="muted" style="font-size:11.5px">상담 ${n.logs.length}회</div>`:''}</td><td>${riskBadge(s.id)||'<span class="muted">-</span>'}${riskWhy(s.id)}</td><td>${esc(s.school)} ${esc(s.grade)}</td><td style="font-size:13px">${esc(sLabel(s))}</td><td style="font-family:monospace">${esc(s.code)}</td><td>${r===null?'-':`<div style="display:flex;align-items:center;gap:8px"><div class="prog" style="width:70px;flex:none"><i style="width:${r}%;background:${r>=80?'var(--sage)':r>=50?'var(--butter)':'var(--peach)'}"></i></div>${r}%</div>`}</td><td>${MOODICON[mood(d)]} Lv.${pet(s.id).lv}</td><td style="font-size:13px">${esc(s.phone||'-')}<br><span class="muted">${esc(s.parent||'-')}</span></td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="UI.pv='${s.id}';render();scrollTo(0,0)">📋 상담 일지</button> <button class="btn btn-ghost btn-sm" onclick="editStu('${s.id}')">수정</button></td></tr>`}).join('')}
   </table></div>`:`<div class="empty"><div class="e">🐾</div>${all.length?'조건에 맞는 학생이 없어요':'아직 학생이 없어요. 오른쪽 위 <b>+ 학생 등록</b>을 눌러 시작하세요.'}</div>`}
   ${isOwner()?`<div class="card" style="margin-top:20px"><div style="display:flex;justify-content:space-between;align-items:center"><h3 class="jua" style="color:var(--ink);font-size:19px">강사 관리</h3><button class="btn btn-soft btn-sm" onclick="addTch()">+ 강사 추가</button></div>
-      ${DB.T.map(t=>`<div class="list-row"><span style="font-size:20px">${t.role==='owner'?'👑':'🧑‍🏫'}</span><div style="flex:1"><b style="color:var(--ink)">${esc(t.name)}</b><div class="muted" style="font-size:12.5px">${t.role==='owner'?'원장':'강사'} · 담당 학생 ${DB.S.filter(s=>sTid(s)===t.id).length}명</div></div><button class="btn btn-ghost btn-sm" onclick="editTch('${t.id}')">수정</button></div>`).join('')}</div>
+      ${DB.T.map(t=>`<div class="list-row"><span style="font-size:20px">${t.role==='owner'?'👑':'🧑‍🏫'}</span><div style="flex:1"><b style="color:var(--ink)">${esc(t.name)}</b><div class="muted" style="font-size:12.5px">${t.role==='owner'?'원장':'강사'} · 담당 학생 ${liveS().filter(s=>sTid(s)===t.id).length}명</div></div><button class="btn btn-ghost btn-sm" onclick="editTch('${t.id}')">수정</button></div>`).join('')}</div>
   <div class="card" style="margin-top:16px;border-color:var(--peach)"><h3 class="jua" style="color:var(--ink);font-size:19px">새 학년 정리</h3><p class="muted" style="font-size:13.5px;margin:4px 0 12px">졸업한 학생 등 모든 학생·숙제 기록을 한 번에 지울 수 있어요. 되돌릴 수 없어요.</p><button class="btn btn-warn btn-sm" onclick="resetAll(this)">모든 데이터 지우고 처음부터 시작</button></div>`:''}`;
 }
 /* ----- 상담 일지 ----- */
@@ -2958,6 +2960,17 @@ function editTch(id){
   modal(`<h3 class="jua">${t.role==='owner'?'원장':'강사'} 정보 수정</h3><label class="lb">이름 (로그인할 때 쓰는 이름)</label><input class="inp" id="et-n" value="${esc(t.name)}"><label class="lb">새 비밀번호 (바꿀 때만 입력)</label><input class="inp" id="et-p" type="password" placeholder="그대로 두려면 비워두세요" autocomplete="new-password">
   <div class="btns">${t.role!=='owner'?`<button class="btn btn-warn" onclick="if(DB.S.some(s=>sTid(s)==='${id}')){toast('담당 학생을 다른 선생님께 먼저 옮겨 주세요')}else if(this.dataset.c){DB.T=DB.T.filter(x=>x.id!=='${id}');save();closeModal();render();toast('삭제했어요')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="const n=$('#et-n').value.trim(),p=$('#et-p').value;if(!n)return;const x=tch('${id}');x.name=n;if(p)x.pw=p;save();closeModal();render();toast('저장했어요')">저장</button></div>`);
 }
+/* ----- 졸업 처리 ----- */
+function gradPick(){const L=liveS().sort((a,b)=>(a.grade||'')<(b.grade||'')?1:(a.grade||'')>(b.grade||'')?-1:a.name<b.name?-1:1);UI.gp=new Set(L.filter(s=>/고\s*3/.test(s.grade||'')).map(s=>s.id));
+  const gs=DB.S.filter(s=>s.grad).sort((a,b)=>a.name<b.name?-1:1);
+  modal(`<h3 class="jua">🎓 졸업 처리</h3><p class="muted" style="font-size:13.5px;margin:4px 0 12px">졸업한 학생은 학생 목록·시간표·로그인에서 빠지고, 숙제·성적·상담 기록은 그대로 보관돼요. 아래에서 언제든 다시 살릴 수 있어요.</p>
+  <div style="max-height:300px;overflow:auto;display:grid;gap:6px">${L.map(s=>`<label style="display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px"><input type="checkbox" ${UI.gp.has(s.id)?'checked':''} onchange="this.checked?UI.gp.add('${s.id}'):UI.gp.delete('${s.id}')"><b>${esc(s.name)}</b><span class="muted" style="font-size:12.5px">${esc([s.school,s.grade].filter(Boolean).join(' '))}</span></label>`).join('')}</div>
+  ${gs.length?`<h4 style="margin:16px 0 6px">졸업생 ${gs.length}명</h4><div style="display:grid;gap:6px">${gs.map(s=>`<div style="display:flex;gap:10px;align-items:center;padding:6px 10px;background:var(--bg);border-radius:12px"><b>${esc(s.name)}</b><span class="muted" style="font-size:12.5px">${esc(s.grade||'')} · ${esc(s.grad)} 졸업</span><button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="ungrad('${s.id}')">다시 살리기</button></div>`).join('')}</div>`:''}
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" onclick="gradDo()">선택한 학생 졸업</button></div>`)}
+function gradDo(){const ids=[...(UI.gp||[])].filter(id=>act(stu(id)));if(!ids.length){toast('학생을 골라주세요');return}
+  ids.forEach(id=>{const s=stu(id);s.grad=TODAY;s.gradSess=DB.C.filter(c=>isSess(c)&&(c.sids||[]).includes(id)).map(c=>c.id);s.gradSess.forEach(cid=>{const c=cls(cid);c.sids=c.sids.filter(x=>x!==id)})});
+  save();closeModal();render();toast(`${ids.length}명 졸업 처리했어요 🎓`)}
+function ungrad(id){const s=stu(id);if(!s)return;(s.gradSess||[]).forEach(cid=>{const c=cls(cid);if(c&&!(c.sids||[]).includes(id))c.sids=(c.sids||[]).concat(id)});delete s.grad;delete s.gradSess;save();render();gradPick();toast(s.name+' 학생을 다시 살렸어요')}
 function resetAll(b){
   if(!b.dataset.c){b.dataset.c=1;b.textContent='정말 전부 지울까요? 한 번 더 누르세요';return}
   const me=tch(ME.id);

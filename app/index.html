@@ -666,10 +666,10 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],WB:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
 const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS'];
-function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
-function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
+function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});(db.LS||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
+function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d);else if(id.startsWith('LS_'))db.LS.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
   if(!rows||!rows.length)return false;
   const m=toRows(DB);
@@ -1768,7 +1768,7 @@ async function pushResync(){try{if(!ONLINE||!TOKEN||!ME||!('serviceWorker' in na
   await fnCall('sub',{token:TOKEN,sub:sub.toJSON()})}catch(e){}}
 function pushOff(tk){try{localStorage.removeItem('fw_push')}catch(e){}if(!('serviceWorker' in navigator)||!FN_URL)return;navigator.serviceWorker.getRegistration('/app/').then(r=>r&&r.pushManager.getSubscription()).then(sub=>{if(!sub)return;fnCall('unsub',{token:tk,endpoint:sub.endpoint}).catch(()=>{}).then(()=>sub.unsubscribe())}).catch(()=>{})}
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.fwPush&&typeof pullNow==='function')pullNow()});
-function logout(){if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
+function logout(){{const b=document.getElementById('lsbar');if(b){b.querySelector('audio').pause();b.style.display='none'}LSP.id=null}if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
 
 /* =========================================================
    학생 화면
@@ -1780,16 +1780,16 @@ function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
 function studentView(){
   const s=stu(ME.id); UI.st=UI.st||'today';
-  const nav=[['today','📅','오늘'],['timer','⏱️','타이머'],['voca','✏️','단어'],['score','📊','성적'],['note','✉️','쪽지']];
+  const nav=[['today','📅','오늘'],['timer','⏱️','타이머'],['voca','✏️','단어'],['listen','🎧','듣기'],['score','📊','성적'],['note','✉️','쪽지']];
   let body='';
-  if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else if(UI.st==='note')body=sNoteTab(s);else if(UI.st==='timer')body=sTimer(s);else body=sQA(s);
+  if(UI.st==='today')body=sToday(s);else if(UI.st==='voca')body=sVoca(s);else if(UI.st==='score')body=sScore(s);else if(UI.st==='note')body=sNoteTab(s);else if(UI.st==='timer')body=sTimer(s);else if(UI.st==='listen')body=sListen(s);else body=sQA(s);
   if(UI.st==='qa'){UI.st='note';UI.q=null}
   const chatting=false;
   if(UI.st==='note'&&ONLINE&&!UI.kpoll){UI.kpoll=setInterval(()=>{if(UI.st==='note'&&ME&&ME.role==='student'&&document.visibilityState==='visible')refresh()},8000)}
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
     <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
-    ${chatting?'':`<div class="bnav"><div class="in" style="--n:5">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
+    ${chatting?'':`<div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
 const KIND={hw:['📸','var(--navy-soft)'],voca:['✏️','#EFE8FB']};
 const STAT={todo:['할 일','c-todo'],sub:['확인 중','c-sub'],ok:['완료','c-ok'],redo:['다시 제출','c-redo']};
@@ -1922,10 +1922,10 @@ function staffView(){
   const me=tch(ME.id); UI.tv=UI.tv||'home';
   if(UI.tv==='qa')UI.tv='msg';
   if(UI.kiosk){$('#app').innerHTML=kioskView();return}
-  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['att','⏱️','공부 시간',0],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
+  const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['listen','🎧','듣기'],['att','⏱️','공부 시간',0],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()]];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
-  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt}[UI.tv]();
+  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,listen:tListen}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
@@ -2177,6 +2177,54 @@ function careSection(sid){
     ${pcs.slice(0,4).map(p=>`<div class="clog"><div class="h"><span class="chip c-todo">${esc(p.how)}</span><b>${lbl(p.date)}</b><span class="muted">${esc((tch(p.by)||{}).name||'')}</span>${p.by===ME.id||isOwner()?`<button class="x" onclick="if(this.dataset.c){DB.PC=DB.PC.filter(x=>x.id!=='${p.id}');save();render()}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}</div><div class="t" style="font-size:13.5px">${esc(p.text)}</div></div>`).join('')||'<div class="empty" style="padding:16px">아직 연락 기록이 없어요<br><span style="font-size:12.5px">2주 넘게 연락이 없으면 위험 표시가 떠요</span></div>'}
   </div></div>`;
 }
+/* ----- 듣기 (모의고사·수능 듣기 mp3) ----- */
+const LS_GR=['전체','고1','고2','고3','중1','중2','중3'];
+const lsFor=s=>(DB.LS||[]).filter(x=>!x.gr||x.gr==='전체'||String(s.grade||'').includes(x.gr)).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
+function lsDone(id){try{return localStorage.getItem('fw_ls_'+(ME&&ME.id)+'_'+id)==='1'}catch(e){return false}}
+function lsRows(list,staff){return list.map(x=>`<div class="clog" style="display:flex;align-items:center;gap:10px"><button class="btn ${LSP.id===x.id?'btn-navy':'btn-ghost'} btn-sm" onclick="lsPlay('${x.id}')">${LSP.id===x.id?'🔊':'▶'}</button><div style="flex:1;min-width:0"><b style="color:var(--ink)">${esc(x.title)}</b>${!staff&&lsDone(x.id)?' <span class="chip c-ok">들었어요</span>':''}<div class="muted" style="font-size:12.5px">${esc(x.gr||'전체')} · ${esc((x.at||'').slice(0,10))}${staff?' · '+esc((tch(x.by)||{}).name||''):''}</div></div>${staff?`<button class="x" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer" onclick="if(this.dataset.c){lsDel('${x.id}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}</div>`).join('')}
+function sListen(s){const L=lsFor(s);
+  return `<h2 class="jua" style="margin:6px 0 4px">🎧 듣기</h2><p class="muted" style="font-size:13.5px;margin-bottom:8px">선생님이 올린 듣기 파일이에요. ▶를 누르면 아래에서 재생돼요. 속도도 바꿀 수 있어요.</p>
+  ${L.length?lsRows(L,false):'<div class="empty">아직 올라온 듣기가 없어요 🎧</div>'}`}
+function tListen(){const L=(DB.LS||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
+  return `<div class="ph"><div><h2 class="jua">🎧 듣기</h2><p>모의고사·수능 듣기 mp3를 올리면 그 학년 학생들 앱의 🎧 듣기 탭에 바로 떠요</p></div><button class="btn btn-navy" onclick="lsAdd()">+ 듣기 올리기</button></div>
+  <div class="card">${L.length?lsRows(L,true):'<div class="empty" style="padding:16px">아직 올린 듣기가 없어요</div>'}</div>`}
+function lsAdd(){UI.la={gr:'전체',file:null};
+  modal(`<h3 class="jua">🎧 듣기 올리기</h3>
+  <label class="lb">제목 *</label><input class="inp" id="la-t" placeholder="예) 2025 고1 11월 모의고사 듣기">
+  <label class="lb">들을 학년</label><div class="chips-sel">${LS_GR.map(g=>`<button class="${g==='전체'?'on':''}" onclick="UI.la.gr='${g}';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">${g}</button>`).join('')}</div>
+  <label class="lb">mp3 파일 *</label><button class="btn btn-ghost" id="la-f" onclick="lsPick()">📁 파일 고르기</button>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="la-n" checked> 해당 학생들에게 알림 보내기</label>
+  <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" id="la-go" onclick="lsSave()">올리기</button></div>`)}
+function lsPick(){const f=document.createElement('input');f.type='file';f.accept='audio/*,.mp3,.m4a';f.onchange=()=>{const x=f.files[0];if(!x)return;if(x.size>45*1024*1024){toast('파일이 너무 커요 (45MB까지)');return}UI.la.file=x;$('#la-f').textContent='🎵 '+x.name+' ('+(x.size/1048576).toFixed(1)+'MB)';const t=$('#la-t');if(t&&!t.value.trim())t.value=x.name.replace(/\.[^.]+$/,'')};f.click()}
+async function lsSave(){const t=$('#la-t').value.trim(),f=UI.la.file;if(!t){toast('제목을 적어주세요');return}if(!f){toast('mp3 파일을 골라주세요');return}
+  const b=$('#la-go');b.disabled=true;b.textContent='올리는 중… 잠시만요';
+  let url;try{url=await upAudio(f)}catch(e){b.disabled=false;b.textContent='올리기';toast('파일 올리기에 실패했어요. 다시 시도해 주세요');return}
+  DB.LS=DB.LS||[];const x={id:'LS_'+uid(),title:t,gr:UI.la.gr,url,at:nowStr(),by:ME.id,size:f.size};DB.LS.push(x);
+  if($('#la-n').checked)notify(liveS().filter(s=>lsFor(s).some(y=>y.id===x.id)).map(s=>s.id),'🎧 새 듣기가 올라왔어요',t);
+  save();closeModal();render();toast('듣기를 올렸어요 🎧')}
+async function upAudio(file){
+  if(!ONLINE)return URL.createObjectURL(file);
+  const ext=(file.name.match(/\.(mp3|m4a|wav|aac|ogg)$/i)||['.mp3'])[0].toLowerCase();
+  const name=FOLDER+'/ls_'+Date.now().toString(36)+uid()+ext;
+  const r=await fetch(SB_URL+'/storage/v1/object/hw/'+name,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':file.type||'audio/mpeg'},body:file});
+  if(!r.ok)throw new Error('upload');
+  return SB_URL+'/storage/v1/object/public/hw/'+name;
+}
+function lsDel(id){if(LSP.id===id)lsClose();DB.LS=(DB.LS||[]).filter(x=>x.id!==id);save();render();toast('삭제했어요')}
+/* 화면이 새로 그려져도 끊기지 않는 고정 플레이어 */
+const LSP={id:null,rate:1};
+function lsBar(){let b=document.getElementById('lsbar');if(!b){b=document.createElement('div');b.id='lsbar';b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));width:min(560px,calc(100% - 20px));background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:10px 12px;z-index:40;display:none';
+  b.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b id="lsbar-t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:14px"></b><button class="btn btn-ghost btn-sm" onclick="lsSeek(-5)">⏪5초</button><button class="btn btn-ghost btn-sm" onclick="lsSeek(5)">5초⏩</button><button class="btn btn-ghost btn-sm" id="lsbar-r" onclick="lsRate()">1.0x</button><button class="btn btn-ghost btn-sm" onclick="lsClose()">✕</button></div><audio id="lsbar-a" controls preload="none" style="width:100%"></audio>';
+  document.body.appendChild(b);const a=b.querySelector('audio');
+  a.addEventListener('ended',()=>{try{localStorage.setItem('fw_ls_'+(ME&&ME.id)+'_'+LSP.id,'1')}catch(e){}if(ME&&ME.role==='student'&&UI.st==='listen'&&!busyTyping())render()});
+  a.addEventListener('timeupdate',()=>{if(a.duration&&a.currentTime/a.duration>0.9)try{localStorage.setItem('fw_ls_'+(ME&&ME.id)+'_'+LSP.id,'1')}catch(e){}})}
+  return b}
+function lsPlay(id){const x=(DB.LS||[]).find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
+  if(LSP.id!==id){LSP.id=id;a.src=x.url;b.querySelector('#lsbar-t').textContent='🎧 '+x.title}
+  b.style.display='block';a.playbackRate=LSP.rate;a.play().catch(()=>{});render()}
+function lsSeek(n){const a=document.getElementById('lsbar-a');if(a)a.currentTime=Math.max(0,a.currentTime+n)}
+function lsRate(){const R=[1,1.1,1.2,0.8,0.9];LSP.rate=R[(R.indexOf(LSP.rate)+1)%R.length];const a=document.getElementById('lsbar-a');if(a)a.playbackRate=LSP.rate;document.getElementById('lsbar-r').textContent=LSP.rate.toFixed(1)+'x'}
+function lsClose(){const b=document.getElementById('lsbar');if(b){const a=b.querySelector('audio');a.pause();b.style.display='none'}LSP.id=null;if(ME)render()}
 /* 수업 일지 누적 보기 */
 function logAll(sid){
   const s=stu(sid),all=DB.L.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);

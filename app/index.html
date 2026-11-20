@@ -666,8 +666,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],WB:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],WB:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1595,8 +1595,8 @@ function kTid(k){return k.tid||k.by}
 function kFrom(k){return k.from||'t'}
 function kRows(sid,tid){return (DB.K||[]).filter(k=>k.sid===sid&&kTid(k)===tid).sort((a,b)=>(a.at||'')<(b.at||'')?-1:(a.at||'')>(b.at||'')?1:0)}
 function kKey(sid,tid){return 'fw_kseen2_'+ME.id+'_'+sid+'_'+tid}
-function kSeenAt(sid,tid){try{return localStorage.getItem(kKey(sid,tid))||''}catch(e){return ''}}
-function kMarkSeen(sid,tid){const k=seenMax(kRows(sid,tid));if(k&&k>kSeenAt(sid,tid))try{localStorage.setItem(kKey(sid,tid),k)}catch(e){}}
+function kSeenAt(sid,tid){let a='';try{a=localStorage.getItem(kKey(sid,tid))||''}catch(e){}const b=rsGet('k:'+sid+'_'+tid);return a>b?a:b}
+function kMarkSeen(sid,tid){const k=seenMax(kRows(sid,tid));if(!k)return;if(k>kSeenAt(sid,tid))try{localStorage.setItem(kKey(sid,tid),k)}catch(e){}rsSet('k:'+sid+'_'+tid,k)}
 function kUnread(sid,tid){const me=ME.role==='student'?'s':'t',ls=kSeenAt(sid,tid);return kRows(sid,tid).filter(k=>kFrom(k)!==me&&(k.at+'|'+k.id)>ls).length}
 function kUnreadStu(sid){return sKRooms(sid).reduce((n,t)=>{if(UI.st==='note'&&UI.kt===t){kMarkSeen(sid,t);return n}return n+kUnread(sid,t)},0)}
 function kUnreadStaff(){return (DB.K||[]).filter(k=>kTid(k)===ME.id).map(k=>k.sid).filter((v,i,a)=>a.indexOf(v)===i).reduce((n,sid)=>{if(UI.tv==='msg'&&UI.mr==='k:'+sid){kMarkSeen(sid,ME.id);return n}return n+kUnread(sid,ME.id)},0)}
@@ -1657,9 +1657,13 @@ function roomOf(a,b){return 'dm:'+[a,b].sort().join('|')}
 function roomMsgs(room){return (DB.M||[]).filter(m=>m.room===room).sort((a,b)=>(a.at||'')<(b.at||'')?-1:(a.at||'')>(b.at||'')?1:0)}
 function myRooms(){const me=ME.id;return [{id:'all',name:'👥 전체방',sub:'모든 선생님'}].concat(staffList().filter(t=>t.id!==me).map(t=>({id:roomOf(me,t.id),name:tLabel(t),sub:'1:1',tid:t.id})))}
 function seenKey(room){return 'fw_seen_'+ME.id+'_'+room}
-function lastSeen(room){try{return localStorage.getItem(seenKey(room))||''}catch(e){return ''}}
+function lastSeen(room){let a='';try{a=localStorage.getItem(seenKey(room))||''}catch(e){}const b=rsGet('m:'+room);return a>b?a:b}
+/* 읽음 기록: 이 기기(localStorage) + 서버(RS, 내 기기끼리 공유) 중 더 최근 것 */
+function rsRec(){DB.RS=DB.RS||[];return ME?DB.RS.find(x=>x.id===ME.id):null}
+function rsGet(k){const r=rsRec();return (r&&r.m&&r.m[k])||''}
+function rsSet(k,v){if(!ME||!v||v<=rsGet(k))return;let r=rsRec();if(!r){r={id:ME.id,sid:ME.id,m:{}};DB.RS.push(r)}r.m=Object.assign({},r.m,{[k]:v});save()}
 function seenMax(rows){return rows.reduce((m,x)=>{const k=(x.at||'')+'|'+x.id;return k>m?k:m},'')}
-function markSeen(room){const k=seenMax(roomMsgs(room));if(k&&k>lastSeen(room))try{localStorage.setItem(seenKey(room),k)}catch(e){}}
+function markSeen(room){const k=seenMax(roomMsgs(room));if(!k)return;if(k>lastSeen(room))try{localStorage.setItem(seenKey(room),k)}catch(e){}rsSet('m:'+room,k)}
 function roomUnread(room){const ls=lastSeen(room);return roomMsgs(room).filter(m=>m.by!==ME.id&&(m.at+'|'+m.id)>ls).length}
 function msgUnread(){if(!ME||ME.role==='student')return 0;DB.M=DB.M||[];return myRooms().reduce((n,r)=>{if(UI.tv==='msg'&&UI.mr===r.id){markSeen(r.id);return n}return n+roomUnread(r.id)},0)}
 function tMsg(){

@@ -1768,7 +1768,7 @@ async function pushResync(){try{if(!ONLINE||!TOKEN||!ME||!('serviceWorker' in na
   await fnCall('sub',{token:TOKEN,sub:sub.toJSON()})}catch(e){}}
 function pushOff(tk){try{localStorage.removeItem('fw_push')}catch(e){}if(!('serviceWorker' in navigator)||!FN_URL)return;navigator.serviceWorker.getRegistration('/app/').then(r=>r&&r.pushManager.getSubscription()).then(sub=>{if(!sub)return;fnCall('unsub',{token:tk,endpoint:sub.endpoint}).catch(()=>{}).then(()=>sub.unsubscribe())}).catch(()=>{})}
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.fwPush&&typeof pullNow==='function')pullNow()});
-function logout(){{const b=document.getElementById('lsbar');if(b){b.querySelector('audio').pause();b.style.display='none'}LSP.id=null}if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
+function logout(){{const b=document.getElementById('lsbar');if(b){b.querySelector('audio').pause();b.style.display='none';document.body.style.paddingBottom=''}LSP.id=null}if(ONLINE&&TOKEN){const t=TOKEN;pushNow().then(()=>rpc('fw_logout',{p_token:t}).catch(()=>{}));TOKEN=null;DB=emptyDB();SNAP={};SINCE=null}ME=null;store.del(SKEY);LG.err='';render()}
 
 /* =========================================================
    학생 화면
@@ -2221,10 +2221,10 @@ function lsBar(){let b=document.getElementById('lsbar');if(!b){b=document.create
   return b}
 function lsPlay(id){const x=(DB.LS||[]).find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
   if(LSP.id!==id){LSP.id=id;a.src=x.url;b.querySelector('#lsbar-t').textContent='🎧 '+x.title}
-  b.style.display='block';a.playbackRate=LSP.rate;a.play().catch(()=>{});render()}
+  b.style.display='block';document.body.style.paddingBottom='150px';a.playbackRate=LSP.rate;a.play().catch(()=>{});render()}
 function lsSeek(n){const a=document.getElementById('lsbar-a');if(a)a.currentTime=Math.max(0,a.currentTime+n)}
 function lsRate(){const R=[1,1.1,1.2,0.8,0.9];LSP.rate=R[(R.indexOf(LSP.rate)+1)%R.length];const a=document.getElementById('lsbar-a');if(a)a.playbackRate=LSP.rate;document.getElementById('lsbar-r').textContent=LSP.rate.toFixed(1)+'x'}
-function lsClose(){const b=document.getElementById('lsbar');if(b){const a=b.querySelector('audio');a.pause();b.style.display='none'}LSP.id=null;if(ME)render()}
+function lsClose(){const b=document.getElementById('lsbar');if(b){const a=b.querySelector('audio');a.pause();b.style.display='none'}document.body.style.paddingBottom='';LSP.id=null;if(ME)render()}
 /* 수업 일지 누적 보기 */
 function logAll(sid){
   const s=stu(sid),all=DB.L.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);

@@ -666,8 +666,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],FX:[],FR:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS','FX','FR'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],FX:[],FR:[],FC:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS','FX','FR','FC'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});(db.LS||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d);else if(id.startsWith('LS_'))db.LS.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1789,7 +1789,7 @@ function studentView(){
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
     <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
-    ${chatting?'':`<div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;UI.frv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
+    ${chatting?'':`<div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;UI.frv=null;UI.fcv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
 const KIND={hw:['📸','var(--navy-soft)'],voca:['✏️','#EFE8FB']};
 const STAT={todo:['할 일','c-todo'],sub:['확인 중','c-sub'],ok:['완료','c-ok'],redo:['다시 제출','c-redo']};
@@ -1848,6 +1848,7 @@ function examScore(e,sid){const a=e.res[sid];if(!a)return null;let c=0;e.key.for
 function sScore(s){
   if(UI.xt&&xGet(UI.xt))return sXView(xGet(UI.xt));UI.xt=null;
   if(UI.frv){const v=sFocusView(UI.frv);if(v)return v}
+  if(UI.fcv){const v=sCheckView(UI.fcv);if(v)return v}
   const ex=DB.E.filter(e=>e.res[s.id]).sort((a,b)=>a.date<b.date?-1:1);
   const recs=DB.R.filter(r=>r.sid===s.id&&!r.voca);
   if(UI.exam){const e=DB.E.find(x=>x.id===UI.exam),sc=examScore(e,s.id),a=e.res[s.id];
@@ -1858,7 +1859,7 @@ function sScore(s){
     <p class="muted" style="font-size:12.5px;margin-top:10px">❌ 옆 숫자는 정답 번호예요. 틀린 문제는 💬 질문으로 바로 물어보세요.</p>
     <button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="newQ('${esc(e.title)} 질문')">✉️ 이 시험 선생님께 묻기</button></div>`}
   const mx=ex.slice(-6);
-  return `${sXList(s)}${sFocus(s)}<div class="card" style="margin-top:14px"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
+  return `${sXList(s)}${sCheck(s)}${sFocus(s)}<div class="card" style="margin-top:14px"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
     ${mx.length?`<div class="chart">${mx.map(e=>{const p=examScore(e,s.id).pct;return `<div class="col"><b>${p}</b><i style="height:${Math.max(6,p)}%;background:${p>=80?'var(--sage)':p>=60?'var(--butter)':'var(--peach)'}"></i></div>`}).join('')}</div><div class="chart-l">${mx.map(e=>`<span>${esc(e.title)}</span>`).join('')}</div>`:'<div class="empty">아직 시험 기록이 없어요</div>'}</div>
   <div class="sec-t"><h3 class="jua">학원 시험</h3></div>
   ${ex.slice().reverse().map(e=>{const sc=examScore(e,s.id);return `<button class="exam" onclick="UI.exam='${e.id}';render()"><div style="flex:1"><b style="color:var(--ink)">${esc(e.title)}</b><div class="muted" style="font-size:12.5px">${esc(e.date)} · 틀린 문제 ${sc.n-sc.c}개 보기 ›</div></div><div class="sc">${sc.pct}<small style="font-size:14px">점</small></div></button>`}).join('')||'<div class="empty">아직 없어요</div>'}
@@ -2331,7 +2332,7 @@ function frSave(fxid,rid){const x=DB.FX.find(y=>y.id===fxid),a=UI.fr.ans,miss=a.
   DB.FR=DB.FR||[];if(who.sid&&frOf(fxid).some(r=>r.sid===who.sid&&r.id!==rid)){toast('이 학생은 이미 입력돼 있어요. 표에서 수정을 눌러 주세요');return}
   const o=Object.assign({},frSnap(x),who,{ans:a.map(v=>v===''?0:+v)},frScore(x,a.map(v=>v===''?0:+v)));
   let r=rid&&DB.FR.find(y=>y.id===rid);if(r)Object.assign(r,o,{upd:nowStr()});else{r=Object.assign({id:'fr'+uid(),by:ME.id,at:nowStr()},o);DB.FR.push(r)}
-  frRestat(fxid);frLink();save();closeModal();render();toast(`${who.name} ${r.score}점 · ${r.grd}등급 저장했어요`)}
+  frRestat(fxid);frLink();fcLink();save();closeModal();render();toast(`${who.name} ${r.score}점 · ${r.grd}등급 저장했어요`)}
 function frDel(rid){const r=DB.FR.find(y=>y.id===rid);DB.FR=DB.FR.filter(y=>y.id!==rid);if(r)frRestat(r.fx);save();closeModal();render()}
 
 /* ----- 리포트 (화면 + 인쇄 A4 한 장) ----- */
@@ -2372,6 +2373,93 @@ function sFocus(s){const L=(DB.FR||[]).filter(r=>r.sid===s.id).sort((a,b)=>a.dat
   return `<div class="sec-t"><h3 class="jua">🎯 F:OCUS 주간 모의고사</h3></div>${L.map(r=>`<button class="exam" onclick="UI.frv='${r.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">${esc(r.title)}</b><div class="muted" style="font-size:12.5px">${esc(r.date)} · ${r.grd}등급 · 리포트 보기 ›</div></div><div class="sc">${r.score}<small style="font-size:14px">점</small></div></button>`).join('')}`}
 function sFocusView(rid){const r=(DB.FR||[]).find(y=>y.id===rid);if(!r){UI.frv=null;return null}
   return `<style>${FR_CSS}.fr-top{grid-template-columns:1fr 1fr}.fr-mini{grid-column:1/-1}</style><button class="btn btn-ghost btn-sm" onclick="UI.frv=null;render()">← 성적으로</button><div class="card" style="margin-top:12px">${frReportBody(r)}</div><button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="frPrint('${r.id}')">🖨 리포트 저장·인쇄</button>`}
+/* =========================================================
+   F:CHECK 입학 진단 테스트 — 54문항·100점, 영역·난이도별 진단, 인쇄 리포트
+   FC = 응시 결과 (등록 학생은 본인만 보임, 신규 응시자는 sid 없이 보관 → 등록되면 자동 연결)
+   ========================================================= */
+const FC_WORDS=['borrow','decide','environment','village','dangerous','remember','healthy','explain','culture','invite','prevent','abundant','opportunity','reduce','achieve','influence','essential','recognize','consume','previous','reluctant','ambiguous','verify','subtle','inevitable','compensate','deteriorate','phenomenon','contradict','meticulous'];
+const FC_MEAN=['빌리다','결정하다','환경','마을','위험한','기억하다','건강한','설명하다','문화','초대하다','막다, 예방하다','풍부한','기회','줄이다','성취하다','영향(을 미치다)','필수적인','알아보다, 인식하다','소비하다','이전의','꺼리는','모호한','확인하다, 입증하다','미묘한','불가피한','보상하다','악화되다','현상','반박하다, 모순되다','꼼꼼한'];
+const FC_AREAS=['단어','구조분석','문법','영어독해','언어력'], FC_LV=['기초','중급','심화'];
+// [영역, 난이도(0기초 1중급 2심화), 배점, 정답(객관식 번호 | 서술형 모범답안 문자열)]
+const FC_Q=(()=>{const q={};for(let i=1;i<=30;i++)q[i]=['단어',i<=10?0:i<=20?1:2,1,null];
+  Object.assign(q,{31:['구조분석',0,2,4],32:['구조분석',1,2,1],33:['구조분석',2,4,'(a) 전치사 (b) 부사 (c) 동사 (d) 형용사 (e) 대명사(관계대명사)'],34:['구조분석',0,2,2],35:['구조분석',1,2,5],36:['구조분석',1,2,1],37:['구조분석',2,2,3],38:['구조분석',1,2,5],39:['구조분석',2,3,'주어: The number / 동사: has increased'],40:['구조분석',2,3,'실험이 여러 번 실패하고 나서야 비로소 연구자들은 무엇이 잘못되었는지 깨달았다.'],
+  41:['문법',0,4,2],42:['문법',1,4,4],43:['문법',2,4,3],44:['문법',2,4,'If I had known the truth, I could have helped her.'],
+  45:['영어독해',0,3,3],46:['영어독해',1,3,5],47:['영어독해',1,3,1],48:['영어독해',2,3,2],49:['영어독해',2,3,3],50:['영어독해',2,3,4],
+  51:['언어력',0,3,1],52:['언어력',0,3,4],53:['언어력',1,3,2],54:['언어력',2,3,5]});return q})();
+const FC_MC=Object.keys(FC_Q).map(Number).filter(n=>n>30&&typeof FC_Q[n][3]==='number');
+const FC_SUB=Object.keys(FC_Q).map(Number).filter(n=>typeof FC_Q[n][3]==='string');
+const FC_TIP={'단어':'수준별 필수 어휘를 매일 30개씩, 뜻 쓰기 시험으로 확인하기','구조분석':'문장의 주어·동사부터 찾는 구문 분석 훈련(CORE 구문독해)','문법':'수일치·관계사·가정법 등 핵심 어법을 문장 속에서 확인하기','영어독해':'글의 목적·요지 같은 대의 파악 유형부터 단계적으로 연습','언어력':'국어 어휘력과 논리 추론 — 지문을 정확히 읽는 힘 기르기'};
+const FC_LVDESC=['LEVEL 1 · 기초 (중1~중2 수준)','LEVEL 2 · 중급 (중3~고1 수준)','LEVEL 3 · 심화 (고2~고3 수준)'];
+/* 점수 계산: v=단어 정오(30, true=정답), mc={번호:학생답}, sub={번호:부분점수} */
+function fcCalc(r){const area={},lv=[{g:0,p:0},{g:0,p:0},{g:0,p:0}],wrong=[];FC_AREAS.forEach(a=>area[a]={g:0,p:0});let sc=0;
+  for(let n=1;n<=54;n++){const [a,l,p,k]=FC_Q[n];let got=0;
+    if(n<=30)got=r.v[n-1]?p:0;else if(typeof k==='number')got=+r.mc[n]===k?p:0;else got=Math.max(0,Math.min(p,+r.sub[n]||0));
+    sc+=got;area[a].g+=got;area[a].p+=p;lv[l].g+=got;lv[l].p+=p;if(got<p)wrong.push(n)}
+  const rate=x=>x.p?Math.round(x.g/x.p*100):0,L=lv.map(rate);
+  const level=L[2]>=70&&L[1]>=80?2:L[1]>=70&&L[0]>=80?1:0;
+  return {score:Math.round(sc*10)/10,area:FC_AREAS.map(a=>({a,g:area[a].g,p:area[a].p,r:rate(area[a])})),lv:L,level,wrong}}
+function fcName(r){const s=r.sid&&stu(r.sid);return s?s.name:(r.name||'')}
+function fcLink(){let n=0;(DB.FC||[]).forEach(r=>{if(r.sid||!r.name||!r.ph4)return;
+  const m=liveS().filter(s=>s.name===r.name&&(last4(s.phone)===r.ph4||last4(s.parent)===r.ph4));
+  if(m.length===1){r.sid=m[0].id;r.linkedAt=nowStr();n++}});if(n)save();return n}
+/* ----- 선생님: 채점·성적 안 F:CHECK 칸 ----- */
+function fcSection(){fcLink();DB.FC=DB.FC||[];const L=DB.FC.slice().sort((a,b)=>(a.date+a.at)<(b.date+b.at)?1:-1);
+  return `<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><h3 class="jua" style="margin:0;color:var(--ink);font-size:20px">📋 F:CHECK 입학 진단 테스트</h3><p class="muted" style="font-size:13px;margin-top:2px">답만 넣으면 영역·난이도별 진단과 인쇄용 리포트가 자동으로 나와요 · 54문항 100점</p></div><button class="btn btn-navy btn-sm" onclick="fcNew()">+ 응시 결과 입력</button></div>
+  ${L.length?`<div class="tbwrap" style="margin-top:10px"><table class="tb"><tr><th>날짜</th><th>이름</th><th>학교·학년</th><th>점수</th><th>진단</th><th></th></tr>${L.map(r=>{const s=r.sid&&stu(r.sid);return `<tr><td>${esc(r.date)}</td><td><b style="color:var(--ink)">${esc(fcName(r))}</b>${r.sid?'':' <span class="chip c-todo" title="같은 이름·휴대폰 뒷번호로 학생 등록하면 자동 연결돼요">미등록</span>'}</td><td class="muted" style="font-size:12.5px">${esc([s?s.school:r.school,s?s.grade:r.grade].filter(Boolean).join(' '))}</td><td><b>${r.score}</b></td><td style="font-size:12.5px">LEVEL ${r.level+1}</td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="fcPrint('${r.id}')">🖨 리포트</button> <button class="btn btn-ghost btn-sm" onclick="fcNew('${r.id}')">수정</button></td></tr>`}).join('')}</table></div>`:'<div class="empty" style="padding:14px">입학 테스트를 본 학생의 답을 입력해 보세요</div>'}</div>`}
+function fcNew(id){const old=id&&DB.FC.find(r=>r.id===id),L=liveS().sort((a,b)=>a.name<b.name?-1:1);
+  UI.fc={v:old?old.v.slice():Array(30).fill(true),mc:old?Object.assign({},old.mc):{},sub:old?Object.assign({},old.sub):{},guest:old?!old.sid:true};
+  const vb=i=>`<button type="button" class="fcv" data-i="${i}" onclick="UI.fc.v[${i}]=!UI.fc.v[${i}];this.classList.toggle('x',!UI.fc.v[${i}]);fcLive()" title="${esc(FC_MEAN[i])}" style="padding:6px 4px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:12px;cursor:pointer;text-align:left"><b>${i+1}</b> ${esc(FC_WORDS[i])}</button>`;
+  modal(`<style>.fcv.x{background:#FBE3E3!important;border-color:#E3A3A3!important;text-decoration:line-through}</style><h3 class="jua">📋 F:CHECK 응시 결과 ${old?'수정':'입력'}</h3>
+  <div class="chips-sel" style="margin-top:6px"><button class="${UI.fc.guest?'on':''}" onclick="UI.fc.guest=true;$('#fc-reg').style.display='none';$('#fc-gst').style.display='block';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">신규 응시자 (아직 미등록)</button><button class="${UI.fc.guest?'':'on'}" onclick="UI.fc.guest=false;$('#fc-reg').style.display='block';$('#fc-gst').style.display='none';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">등록된 학생</button></div>
+  <div id="fc-gst" style="display:${UI.fc.guest?'block':'none'}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="lb">이름 *</label><input class="inp" id="fc-n" value="${esc(old&&!old.sid?old.name:'')}"></div><div><label class="lb">학생 또는 학부모 휴대폰 *</label><input class="inp" id="fc-p" inputmode="tel" placeholder="010-0000-0000" value="${esc(old&&!old.sid?old.phone||'':'')}"></div><div><label class="lb">학교</label><input class="inp" id="fc-sc" value="${esc(old&&!old.sid?old.school||'':'')}"></div><div><label class="lb">학년</label><input class="inp" id="fc-gr" value="${esc(old&&!old.sid?old.grade||'':'')}"></div></div>
+  <p class="muted" style="font-size:12.5px;margin-top:6px">나중에 같은 이름 + 휴대폰 뒷번호로 학생 등록하면 이 결과가 자동으로 그 학생 앱 성적 탭에 들어가요.</p></div>
+  <div id="fc-reg" style="display:${UI.fc.guest?'none':'block'}"><label class="lb">학생</label><select class="inp" id="fc-s"><option value="">학생 고르기</option>${L.map(s=>`<option value="${s.id}" ${old&&old.sid===s.id?'selected':''}>${esc(s.name)} · ${esc([s.school,s.grade].filter(Boolean).join(' '))}</option>`).join('')}</select></div>
+  <label class="lb">응시 날짜</label><input class="inp" type="date" id="fc-d" value="${old?old.date:TODAY}" style="max-width:200px">
+  <h4 style="margin:16px 0 4px;color:var(--ink)">I. 단어 (1~30) <span class="muted" style="font-size:12.5px;font-weight:400">틀린 단어만 눌러서 빨갛게 표시하세요 · 뜻은 단어에 손가락을 대면 보여요</span></h4>
+  ${[0,1,2].map(l=>`<div class="muted" style="font-size:12px;margin:6px 0 3px">LEVEL ${l+1}</div><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px">${Array.from({length:10},(_,j)=>vb(l*10+j)).join('')}</div>`).join('')}
+  <h4 style="margin:16px 0 4px;color:var(--ink)">II~V. 객관식 학생 답 <span class="muted" style="font-size:12.5px;font-weight:400">${FC_MC.length}문항 · 순서대로 붙여넣어도 돼요</span></h4>
+  <input class="inp" placeholder="예) 41255… (31,32,34,35,36,37,38,41,42,43,45~54 순서)" oninput="const d=this.value.replace(/[①-⑤]/g,c=>'①②③④⑤'.indexOf(c)+1).replace(/[^1-5]/g,'');FC_MC.forEach((n,i)=>{if(d[i])UI.fc.mc[n]=d[i]});fcMcGrid()">
+  <div class="kgrid" id="fc-mc" style="margin-top:8px"></div>
+  <h4 style="margin:16px 0 4px;color:var(--ink)">서술형 점수 <span class="muted" style="font-size:12.5px;font-weight:400">부분 점수 가능</span></h4>
+  ${FC_SUB.map(n=>`<div style="display:grid;grid-template-columns:52px 90px 1fr;gap:8px;align-items:center;margin:5px 0"><b>${n}번</b><span><input class="inp" style="width:56px;display:inline-block;padding:8px" type="number" min="0" max="${FC_Q[n][2]}" step="0.5" value="${UI.fc.sub[n]!=null?UI.fc.sub[n]:''}" oninput="UI.fc.sub[${n}]=this.value;fcLive()"> / ${FC_Q[n][2]}</span><span class="muted" style="font-size:12px">${esc(FC_Q[n][3])}</span></div>`).join('')}
+  <label class="lb">선생님 한마디 (리포트에 들어가요 · 비워도 돼요)</label><textarea class="inp" id="fc-m" rows="2" placeholder="예) 단어 기초는 탄탄해요. 문장 구조를 잡으면 독해가 빠르게 올라올 거예요.">${esc(old&&old.memo||'')}</textarea>
+  <div id="fc-live" style="margin-top:10px;font-weight:700;color:var(--ink)"></div>
+  <div class="btns">${old?`<button class="btn btn-warn" onclick="if(this.dataset.c){fcDel('${id}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="fcSave('${id||''}')">채점하고 저장</button></div>`);
+  document.querySelectorAll('.fcv').forEach(b=>b.classList.toggle('x',!UI.fc.v[+b.dataset.i]));fcMcGrid()}
+function fcMcGrid(){$('#fc-mc').innerHTML=FC_MC.map(n=>{const v=UI.fc.mc[n]||'',k=FC_Q[n][3],bg=v===''?'':+v===k?'#E6F2E8':'#FBE3E3';return `<label><small>${n}</small><input class="ko" maxlength="1" inputmode="numeric" style="background:${bg}" value="${v}" oninput="this.value=this.value.replace(/[^1-5]/g,'');UI.fc.mc[${n}]=this.value;this.style.background=this.value===''?'':(+this.value===${k}?'#E6F2E8':'#FBE3E3');if(this.value){const x=this.parentNode.nextElementSibling;if(x)x.querySelector('input').focus()}fcLive()"></label>`}).join('');fcLive()}
+function fcLive(){const r=fcCalc(UI.fc),el=$('#fc-live');if(el)el.textContent=`지금 ${r.score}점 · 단어 ${UI.fc.v.filter(Boolean).length}/30 · 진단 LEVEL ${r.level+1}`}
+function fcSave(id){const f=UI.fc,miss=FC_MC.filter(n=>!f.mc[n]);
+  if(miss.length&&!confirm(`객관식 ${miss.join(', ')}번이 비어 있어요. 틀린 걸로 채점할까요?`))return;
+  let who;if(f.guest){const n=$('#fc-n').value.trim(),p=$('#fc-p').value.trim();if(!n||!last4(p)){toast('이름과 휴대폰 번호를 넣어주세요');return}who={sid:null,name:n,phone:p,ph4:last4(p),school:$('#fc-sc').value.trim(),grade:$('#fc-gr').value.trim()}}
+  else{const sid=$('#fc-s').value;if(!sid){toast('학생을 골라주세요');return}const s=stu(sid);who={sid,name:s.name,phone:'',ph4:'',school:s.school||'',grade:s.grade||''}}
+  const o=Object.assign({date:$('#fc-d').value||TODAY,v:f.v.slice(),mc:Object.assign({},f.mc),sub:Object.assign({},f.sub),memo:$('#fc-m').value.trim()},who);Object.assign(o,fcCalc(o));
+  DB.FC=DB.FC||[];let r=id&&DB.FC.find(x=>x.id===id);if(r)Object.assign(r,o,{upd:nowStr()});else{r=Object.assign({id:'fc'+uid(),by:ME.id,at:nowStr()},o);DB.FC.push(r)}
+  fcLink();save();closeModal();render();toast(`${who.name} ${r.score}점 · LEVEL ${r.level+1} 저장했어요`)}
+function fcDel(id){DB.FC=DB.FC.filter(x=>x.id!==id);save();closeModal();render()}
+/* ----- 진단 리포트 ----- */
+function fcComment(r){const A=r.area.slice(),best=A.slice().sort((a,b)=>b.r-a.r)[0],weak=A.slice().sort((a,b)=>a.r-b.r)[0];
+  let t=`F:CHECK 입학 진단 결과 ${r.score}점으로, 현재 ${FC_LVDESC[r.level]}에 해당합니다.`;
+  t+=` 난이도별 정답률은 기초 ${r.lv[0]}% · 중급 ${r.lv[1]}% · 심화 ${r.lv[2]}%예요.`;
+  if(weak.r<100)t+=` 가장 강한 영역은 ${best.a}(${best.r}%), 먼저 보완할 영역은 ${weak.a}(${weak.r}%)입니다. 첫 수업에서는 '${FC_TIP[weak.a]}'부터 시작할게요.`;
+  else t+=' 모든 영역이 고르게 탄탄해요. 심화 과정으로 바로 시작할 수 있어요.';return t}
+function fcReportBody(r){const s=r.sid&&stu(r.sid),info=[s?s.school:r.school,s?s.grade:r.grade].filter(Boolean).join(' ');
+  const bar=(l,g,p,rt,c)=>`<div class="fr-bar"><span>${l}</span><i><u style="width:${rt}%;background:${c||(rt>=80?'#7A9B80':rt>=60?'#D9A441':'#C96B6B')}"></u></i><b>${rt}%</b><small>${g}/${p}</small></div>`;
+  const wrongMC=r.wrong.filter(n=>n>30);const vw=r.wrong.filter(n=>n<=30);
+  return `<div class="fr-r"><div class="fr-h"><div><div class="fr-brand">F:CHECK <span>ENTRANCE DIAGNOSTIC</span></div><div class="fr-sub">포워드 영어학원 · 입학 진단 테스트 · ${esc(r.date)}</div></div><div class="fr-who"><b>${esc(fcName(r))}</b><span>${esc(info)}</span></div></div>
+  <div class="fr-top"><div class="fr-big"><small>총점</small><b>${r.score}</b><em>/ 100</em></div><div class="fr-big"><small>진단 레벨</small><b>${r.level+1}</b><em>LEVEL</em></div>
+  <div class="fr-mini"><div><small>현재 수준</small><b style="font-size:13.5px">${esc(FC_LVDESC[r.level].split(' · ')[1])}</b></div><div><small>단어</small><b>${r.v.filter(Boolean).length} / 30</b></div><div><small>기초 · 중급 · 심화</small><b>${r.lv.join(' · ')}%</b></div><div><small>틀린 문항</small><b>${r.wrong.length} / 54</b></div></div></div>
+  <h4>영역별 점수</h4><div class="fr-bars">${r.area.map(a=>bar(a.a,a.g,a.p,a.r)).join('')}</div>
+  <h4>난이도별 정답률</h4><div class="fr-bars">${FC_LV.map((l,i)=>bar(l+(i===0?' (중1~2)':i===1?' (중3~고1)':' (고2~3)'),'','',r.lv[i],'#1F3A5F')).join('')}</div>
+  <h4>다시 볼 문항</h4><p class="fr-p" style="font-size:12.5px">${vw.length?`<b>단어</b> ${vw.map(n=>esc(FC_WORDS[n-1])).join(', ')}<br>`:''}${wrongMC.length?`<b>문항</b> ${wrongMC.map(n=>`${n}번(${FC_Q[n][0]}·${FC_LV[FC_Q[n][1]]})`).join(', ')}`:''}${!r.wrong.length?'모든 문항을 맞혔어요 🎉':''}</p>
+  <h4>진단 코멘트</h4><p class="fr-p">${esc(fcComment(r))}${r.memo?`<br><br><b>선생님 한마디</b> ${esc(r.memo)}`:''}</p>
+  <div class="fr-f">Forward, For the World. · 포워드 영어학원 053-716-0859</div></div>`.replace(/<small>\/<\/small>/g,'<small></small>')}
+function fcPrint(id){const r=DB.FC.find(x=>x.id===id);if(!r)return;const w=window.open('','_blank');if(!w){toast('팝업이 막혀 있어요. 팝업을 허용해 주세요');return}
+  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>F:CHECK ${esc(fcName(r))}</title><style>body{margin:0;padding:18px;background:#fff}${FR_CSS}.fr-bar{grid-template-columns:110px 1fr 44px 40px}</style></head><body>${fcReportBody(r)}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
+/* 학생 앱 성적 탭 */
+function sCheck(s){const L=(DB.FC||[]).filter(r=>r.sid===s.id);if(!L.length)return '';
+  return `<div class="sec-t"><h3 class="jua">📋 F:CHECK 입학 진단</h3></div>${L.map(r=>`<button class="exam" onclick="UI.fcv='${r.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">입학 진단 테스트</b><div class="muted" style="font-size:12.5px">${esc(r.date)} · LEVEL ${r.level+1} · 리포트 보기 ›</div></div><div class="sc">${r.score}<small style="font-size:14px">점</small></div></button>`).join('')}`}
+function sCheckView(id){const r=(DB.FC||[]).find(x=>x.id===id);if(!r){UI.fcv=null;return null}
+  return `<style>${FR_CSS}.fr-top{grid-template-columns:1fr 1fr}.fr-mini{grid-column:1/-1}.fr-bar{grid-template-columns:96px 1fr 40px 36px}</style><button class="btn btn-ghost btn-sm" onclick="UI.fcv=null;render()">← 성적으로</button><div class="card" style="margin-top:12px">${fcReportBody(r)}</div><button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="fcPrint('${r.id}')">🖨 리포트 저장·인쇄</button>`}
 /* 수업 일지 누적 보기 */
 function logAll(sid){
   const s=stu(sid),all=DB.L.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);
@@ -2772,6 +2860,7 @@ function tExam(){
   if(UI.fx) return fxView(UI.fx);
   const mine=myStudents().map(s=>s.id), ex=DB.E.filter(e=>isOwner()||e.by===ME.id||exS(e).some(s=>mine.includes(s.id))).sort((a,b)=>a.date<b.date?1:-1);
   return `<div class="ph"><div><h2 class="jua">채점 · 성적</h2><p>정답만 넣어두면 학생 답을 입력하는 순간 자동으로 채점돼요</p></div><button class="btn btn-navy" onclick="newExam()">+ 새 시험 만들기</button></div>
+  ${fcSection()}
   ${fxSection()}
   ${tXSection()}
   ${ex.length?`<div class="tbwrap"><table class="tb"><tr><th>시험</th><th>대상</th><th>날짜</th><th>문항</th><th>채점</th><th>평균</th><th></th></tr>${ex.map(e=>{const ss=exS(e),gr=ss.filter(s=>e.res[s.id]),avg=gr.length?Math.round(gr.reduce((a,s)=>a+examScore(e,s.id).pct,0)/gr.length):'-';return `<tr style="cursor:pointer" onclick="UI.exam='${e.id}';render()"><td><b style="color:var(--ink)">${esc(e.title)}</b></td><td>${ss.length}명</td><td>${esc(e.date)}</td><td>${e.key.length}</td><td>${gr.length}/${ss.length}명</td><td><b>${avg}${avg==='-'?'':'점'}</b></td><td><span class="btn btn-ghost btn-sm">채점하기 ›</span></td></tr>`}).join('')}</table></div>`:'<div class="empty"><div class="e">📝</div>아직 만든 시험이 없어요</div>'}`;
@@ -3108,7 +3197,7 @@ function saveStu(id){
   const o={name,school:v('s'),grade:v('g'),tid:$('#es-t').value,days:readDays('es-days'),time:v('tm'),reg:v('r'),code,parent:v('p'),phone:v('ph')};
   let nid=id;
   if(id){const s=stu(id);delete s.cid;Object.assign(s,o)}else{nid='s'+uid();DB.S.push(Object.assign({id:nid},o));if(UI.regInq){consultToStu(UI.regInq,nid);UI.regInq=null}}
-  frLink();save();closeModal();
+  frLink();fcLink();save();closeModal();
   if(!id){const vis=myStudents().some(x=>x.id===nid);UI.tv='people';UI.pv=vis?nid:null;render();scrollTo(0,0);toast(vis?`${name} 학생 등록 완료 · 코드 ${code} · 상담 내용을 남겨 보세요`:`${name} 학생 등록 완료 · 코드 ${code} · ${(tch(o.tid)||{name:''}).name} 선생님 담당으로 넣었어요`)}
   else{render();toast('저장했어요')}
 }
@@ -3136,7 +3225,7 @@ function saveBulk(){
     if(other){clash.push({name,code,with:other.name});code=code+'1';}
     const s={id:'s'+uid(),name,school,grade,phone,parent,tid:findT(tn),days:dd,reg:TODAY,code};DB.S.push(s);added.push(s);
   });
-  frLink();save();
+  frLink();fcLink();save();
   modal(`<h3 class="jua">${added.length}명 등록 · ${updated.length}명 정보 갱신 🎉</h3><p class="muted" style="font-size:13.5px;margin:4px 0 10px">학생코드 = ${codeYear()} + 학생 휴대폰 뒷번호 4자리</p>
   ${clash.length?`<div style="background:var(--peach-soft);color:var(--red);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:10px">⚠️ 휴대폰 뒷번호가 겹쳐서 코드 끝에 1을 붙였어요: ${clash.map(c=>esc(c.name)+' ('+esc(c.with)+'와 겹침)').join(', ')}</div>`:''}
   ${added.length?`<div class="tbwrap"><table class="tb"><tr><th>이름</th><th>학생코드</th></tr>${added.map(s=>`<tr><td>${esc(s.name)}</td><td style="font-family:monospace;font-weight:700">${s.code}</td></tr>`).join('')}</table></div>`:''}

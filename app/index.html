@@ -666,8 +666,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],FX:[],FR:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS','FX','FR'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});(db.LS||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d);else if(id.startsWith('LS_'))db.LS.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -1789,7 +1789,7 @@ function studentView(){
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학생 화면</div>'}<div class="s-wrap">
     <div class="s-top"><div class="who"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div><b>${esc(s.name)}</b><small>${esc(s.school)} ${esc(s.grade)}</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
     ${body}</div>
-    ${chatting?'':`<div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
+    ${chatting?'':`<div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l])=>`<button class="${UI.st===k?'on':''}" onclick="UI.st='${k}';UI.q=null;UI.kt=null;UI.frv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${k==='qa'&&unreadS(s.id)?`<span class="badge">${unreadS(s.id)}</span>`:''}${k==='note'&&kUnreadStu(s.id)?`<span class="badge">${kUnreadStu(s.id)}</span>`:''}</button>`).join('')}</div></div>`}`;
 }
 const KIND={hw:['📸','var(--navy-soft)'],voca:['✏️','#EFE8FB']};
 const STAT={todo:['할 일','c-todo'],sub:['확인 중','c-sub'],ok:['완료','c-ok'],redo:['다시 제출','c-redo']};
@@ -1847,6 +1847,7 @@ const nObj=e=>e.key.filter(k=>typeof k!=='string').length;
 function examScore(e,sid){const a=e.res[sid];if(!a)return null;let c=0;e.key.forEach((k,i)=>{if(qok(e,a,i))c++});return {c,n:e.key.length,pct:Math.round(c/e.key.length*100)}}
 function sScore(s){
   if(UI.xt&&xGet(UI.xt))return sXView(xGet(UI.xt));UI.xt=null;
+  if(UI.frv){const v=sFocusView(UI.frv);if(v)return v}
   const ex=DB.E.filter(e=>e.res[s.id]).sort((a,b)=>a.date<b.date?-1:1);
   const recs=DB.R.filter(r=>r.sid===s.id&&!r.voca);
   if(UI.exam){const e=DB.E.find(x=>x.id===UI.exam),sc=examScore(e,s.id),a=e.res[s.id];
@@ -1857,7 +1858,7 @@ function sScore(s){
     <p class="muted" style="font-size:12.5px;margin-top:10px">❌ 옆 숫자는 정답 번호예요. 틀린 문제는 💬 질문으로 바로 물어보세요.</p>
     <button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="newQ('${esc(e.title)} 질문')">✉️ 이 시험 선생님께 묻기</button></div>`}
   const mx=ex.slice(-6);
-  return `${sXList(s)}<div class="card"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
+  return `${sXList(s)}${sFocus(s)}<div class="card" style="margin-top:14px"><h3 class="jua" style="color:var(--ink);font-size:20px">점수 흐름</h3>
     ${mx.length?`<div class="chart">${mx.map(e=>{const p=examScore(e,s.id).pct;return `<div class="col"><b>${p}</b><i style="height:${Math.max(6,p)}%;background:${p>=80?'var(--sage)':p>=60?'var(--butter)':'var(--peach)'}"></i></div>`}).join('')}</div><div class="chart-l">${mx.map(e=>`<span>${esc(e.title)}</span>`).join('')}</div>`:'<div class="empty">아직 시험 기록이 없어요</div>'}</div>
   <div class="sec-t"><h3 class="jua">학원 시험</h3></div>
   ${ex.slice().reverse().map(e=>{const sc=examScore(e,s.id);return `<button class="exam" onclick="UI.exam='${e.id}';render()"><div style="flex:1"><b style="color:var(--ink)">${esc(e.title)}</b><div class="muted" style="font-size:12.5px">${esc(e.date)} · 틀린 문제 ${sc.n-sc.c}개 보기 ›</div></div><div class="sc">${sc.pct}<small style="font-size:14px">점</small></div></button>`}).join('')||'<div class="empty">아직 없어요</div>'}
@@ -1928,7 +1929,7 @@ function staffView(){
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,listen:tListen}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
-      <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
+      <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;UI.fx=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
       <button class="out" onclick="logout()">로그아웃 →</button></aside>
     <main class="main"><div class="m-top"><img src="logo.png" alt="" style="cursor:pointer" onclick="goHome()"><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="changePw()">🔑</button><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>${body}</main></div>`;
   if(UI.tv==='qa'&&UI.q){const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight}
@@ -2251,6 +2252,126 @@ function mockTick(){if(!ME||ME.role!=='student')return;const m=mockGet(),b=docum
     modal(`<div style="text-align:center"><div style="font-size:54px">⏰</div><h3 class="jua" style="font-size:24px;margin:6px 0">${MOCK_MIN}분 끝!</h3><p style="font-size:15px;line-height:1.7">펜 내려놓기 ✋<br><span class="muted" style="font-size:13.5px">${esc(m.title||'')}<br>채점하고 틀린 문제는 꼭 다시 봐요. 수고했어요 🐾</span></p></div><div class="btns"><button class="btn btn-navy" onclick="closeModal()">확인</button></div>`);return}
   const t=Math.ceil(left/1000),el=b.querySelector('#lsbar-mt');el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');el.style.color=left<5*60000?'var(--red)':'var(--ink)'}
 setInterval(mockTick,1000);
+/* =========================================================
+   F:OCUS 주간 모의고사 — 수능식 배점·등급·유형 분석·인쇄 리포트
+   FX = 회차(정답·배점·유형, 선생님만), FR = 학생 결과(학생 본인만 보임, 미등록 학생은 sid 없이 보관)
+   ========================================================= */
+const FX_TYPES=['듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기','듣기',
+  '목적','심경','주장','함축 의미','요지','주제','제목','도표','내용 일치','실용문','실용문','어법','어휘','빈칸','빈칸','빈칸','빈칸','무관한 문장','순서','순서','문장 삽입','문장 삽입','요약','장문(제목)','장문(어휘)','장문(순서)','장문(지칭)','장문(내용)'];
+const FX_GROUPS=[['듣기',1,17],['대의 파악',18,24],['세부 정보',25,28],['어법·어휘',29,30],['빈칸',31,34],['간접 쓰기',35,39],['요약',40,40],['장문',41,45]];
+const FX_TIP={'듣기':'매일 듣기 1회분을 받아쓰기·쉐도잉으로 복습','대의 파악':'첫·마지막 문장과 반복 키워드로 글의 중심 잡기','세부 정보':'선지와 본문을 한 줄씩 대조하며 근거 표시하기','어법·어휘':'수일치·관계사·준동사 등 빈출 어법 포인트 정리','빈칸':'빈칸 앞뒤 논리 관계와 재진술 표현 찾기','간접 쓰기':'지시어·연결어 단서로 순서·위치 잡기','요약':'요약문 키워드를 본문의 재진술과 연결하기','장문':'시간 배분 연습과 문단 흐름 파악'};
+const FX_3PT=[18,21,24,29,31,32,33,34,37,39].map(n=>n); // 기본 3점 문항(회차마다 바꿀 수 있어요)
+const fxGrade=p=>p>=90?1:p>=80?2:p>=70?3:p>=60?4:p>=50?5:p>=40?6:p>=30?7:p>=20?8:9;
+function fxList(){DB.FX=DB.FX||[];return DB.FX.slice().sort((a,b)=>(b.no||0)-(a.no||0)||(a.date<b.date?1:-1))}
+function frOf(fxid){DB.FR=DB.FR||[];return DB.FR.filter(r=>r.fx===fxid)}
+function frName(r){const s=r.sid&&stu(r.sid);return s?s.name:(r.name||'')}
+function frScore(fx,ans){let sc=0;const wrong=[];fx.key.forEach((k,i)=>{if(+ans[i]===+k)sc+=fx.pts[i];else wrong.push(i+1)});return {score:sc,grd:fxGrade(sc),wrong}}
+function frGroups(r){return FX_GROUPS.map(([g,a,b])=>{let n=0,c=0;for(let q=a;q<=b;q++){n++;if(!r.wrong.includes(q))c++}return {g,n,c,p:Math.round(c/n*100)}})}
+/* 회차 통계(평균·석차)를 결과마다 저장해 둬요 — 학생은 다른 학생 기록을 못 보니까 */
+function frRestat(fxid){const L=frOf(fxid);if(!L.length)return;const avg=Math.round(L.reduce((a,r)=>a+r.score,0)/L.length*10)/10;
+  L.forEach(r=>{const rank=1+L.filter(x=>x.score>r.score).length;if(!r.st||r.st.avg!==avg||r.st.rank!==rank||r.st.n!==L.length)r.st={avg,rank,n:L.length}})}
+/* 미등록으로 본 학생 → 같은 이름 + 휴대폰 뒷4자리 학생이 등록되면 자동 연결 */
+function frLink(){let n=0;(DB.FR||[]).forEach(r=>{if(r.sid||!r.name||!r.ph4)return;
+  const m=liveS().filter(s=>s.name===r.name&&(last4(s.phone)===r.ph4||last4(s.parent)===r.ph4));
+  if(m.length===1){r.sid=m[0].id;r.linkedAt=nowStr();n++}});if(n)save();return n}
+
+/* ----- 선생님: 채점·성적 안 F:OCUS 칸 ----- */
+function fxSection(){if(!isOwner()&&ME.role!=='teacher')return '';frLink();const L=fxList();
+  return `<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><h3 class="jua" style="margin:0;color:var(--ink);font-size:20px">🎯 F:OCUS 주간 모의고사</h3><p class="muted" style="font-size:13px;margin-top:2px">정답·3점 문항만 넣으면 원점수·등급·유형 분석·인쇄 리포트까지 자동이에요</p></div><button class="btn btn-navy btn-sm" onclick="fxNew()">+ 회차 만들기</button></div>
+  ${L.length?`<div class="tbwrap" style="margin-top:10px"><table class="tb"><tr><th>회차</th><th>대상</th><th>날짜</th><th>응시</th><th>평균</th></tr>${L.map(x=>{const R=frOf(x.id),avg=R.length?Math.round(R.reduce((a,r)=>a+r.score,0)/R.length):'-';return `<tr style="cursor:pointer" onclick="UI.fx='${x.id}';render();scrollTo(0,0)"><td><b style="color:var(--ink)">${esc(x.title)}</b></td><td>${esc(x.gr||'')}</td><td>${esc(x.date)}</td><td>${R.length}명</td><td>${avg}</td></tr>`}).join('')}</table></div>`:'<div class="empty" style="padding:14px">첫 회차를 만들어 보세요</div>'}</div>`}
+function fxNew(id){const old=id&&DB.FX.find(x=>x.id===id),nx=old?old.no:(Math.max(0,...(DB.FX||[]).map(x=>x.no||0))+1);
+  UI.fxk={key:old?old.key.slice():Array(45).fill(''),p3:old?old.pts.map((p,i)=>p===3?i+1:0).filter(Boolean):FX_3PT.slice()};
+  modal(`<h3 class="jua">🎯 F:OCUS ${old?'회차 수정':'회차 만들기'}</h3>
+  <div style="display:grid;grid-template-columns:90px 1fr 1fr;gap:10px"><div><label class="lb">회차</label><input class="inp" id="fx-no" type="number" min="1" value="${nx}"></div><div><label class="lb">날짜</label><input class="inp" id="fx-d" type="date" value="${old?old.date:TODAY}"></div><div><label class="lb">대상</label><select class="inp" id="fx-g">${['고1','고2','고3','고1·고2','전체'].map(g=>`<option ${old&&old.gr===g?'selected':''}>${g}</option>`).join('')}</select></div></div>
+  <label class="lb">정답 45개 한 번에 붙여넣기 <span class="muted" style="font-weight:400">(예: 3524135241… 숫자만, 띄어쓰기 상관없어요)</span></label>
+  <input class="inp" id="fx-paste" placeholder="다른 곳에서 만든 정답을 그대로 붙여 넣으세요" oninput="fxPaste(this.value)">
+  <div class="muted" style="font-size:12.5px;margin:10px 0 4px">정답 칸 · 번호를 누르면 <b style="color:var(--red)">3점</b> 문항으로 바뀌어요 (기본 3점 문항이 표시돼 있어요)</div>
+  <div class="kgrid" id="fx-grid"></div><div id="fx-sum" class="muted" style="font-size:12.5px;margin-top:6px"></div>
+  <div class="btns">${old?`<button class="btn btn-warn" onclick="if(this.dataset.c){fxDel('${id}')}else{this.dataset.c=1;this.textContent='결과까지 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="fxSave('${id||''}')">저장</button></div>`);fxGrid()}
+function fxGrid(){const k=UI.fxk;$('#fx-grid').innerHTML=k.key.map((v,i)=>`<label><small style="cursor:pointer;${k.p3.includes(i+1)?'color:var(--red);font-weight:800':''}" onclick="event.preventDefault();fxP3(${i+1})">${i+1}${k.p3.includes(i+1)?'·3':''}</small><input class="ko" maxlength="1" inputmode="numeric" value="${v}" oninput="this.value=this.value.replace(/[^1-5]/g,'');UI.fxk.key[${i}]=this.value;if(this.value){const n=this.parentNode.nextElementSibling;if(n)n.querySelector('input').focus()}fxSum()"></label>`).join('');fxSum()}
+function fxP3(n){const p=UI.fxk.p3,i=p.indexOf(n);if(i>=0)p.splice(i,1);else p.push(n);fxGrid()}
+function fxSum(){const k=UI.fxk,tot=90+k.p3.length,filled=k.key.filter(Boolean).length;$('#fx-sum').innerHTML=`정답 ${filled}/45 · 3점 문항 ${k.p3.length}개 (${k.p3.slice().sort((a,b)=>a-b).join(', ')}) · 총점 <b style="color:${tot===100?'var(--ink)':'var(--red)'}">${tot}점</b>${tot===100?'':' — 3점 문항이 10개여야 100점이에요'}`}
+function fxPaste(v){const d=v.replace(/[①-⑤]/g,c=>'①②③④⑤'.indexOf(c)+1).replace(/[^1-5]/g,'');if(!d)return;d.slice(0,45).split('').forEach((c,i)=>UI.fxk.key[i]=c);fxGrid()}
+function fxSave(id){const k=UI.fxk,miss=k.key.findIndex(v=>!v);if(miss>=0){toast(`${miss+1}번 정답이 비어 있어요`);return}
+  if(90+k.p3.length!==100&&!confirm(`총점이 ${90+k.p3.length}점이에요. 그대로 저장할까요?`))return;
+  const no=parseInt($('#fx-no').value,10)||1,o={no,title:'F:OCUS '+no,date:$('#fx-d').value||TODAY,gr:$('#fx-g').value,key:k.key.map(Number),pts:k.key.map((_,i)=>k.p3.includes(i+1)?3:2),types:FX_TYPES.slice()};
+  DB.FX=DB.FX||[];let x=id&&DB.FX.find(y=>y.id===id);
+  if(x){Object.assign(x,o);frOf(x.id).forEach(r=>{Object.assign(r,frSnap(x),frScore(x,r.ans))});frRestat(x.id)}else{x=Object.assign({id:'fx'+uid(),by:ME.id,at:nowStr()},o);DB.FX.push(x)}
+  save();closeModal();UI.fx=x.id;render();toast(`${o.title} 저장했어요`)}
+function fxDel(id){DB.FR=(DB.FR||[]).filter(r=>r.fx!==id);DB.FX=DB.FX.filter(x=>x.id!==id);UI.fx=null;save();closeModal();render();toast('삭제했어요')}
+const frSnap=x=>({fx:x.id,title:x.title,date:x.date,key:x.key.slice(),pts:x.pts.slice()});
+/* 회차 화면: 답 입력 + 결과 표 */
+function fxView(id){const x=(DB.FX||[]).find(y=>y.id===id);if(!x){UI.fx=null;return tExam()}frLink();
+  const R=frOf(id).sort((a,b)=>b.score-a.score),avg=R.length?(R.reduce((a,r)=>a+r.score,0)/R.length).toFixed(1):'-';
+  const qr=x.key.map((_,i)=>R.length?Math.round(R.filter(r=>!r.wrong.includes(i+1)).length/R.length*100):null);
+  const worst=qr.map((p,i)=>({q:i+1,p})).filter(o=>o.p!==null).sort((a,b)=>a.p-b.p).slice(0,6);
+  return `<button class="btn btn-ghost btn-sm" onclick="UI.fx=null;render()">← 채점·성적으로</button>
+  <div class="ph" style="margin-top:10px"><div><h2 class="jua">🎯 ${esc(x.title)}</h2><p>${esc(x.date)} · ${esc(x.gr||'')} · 응시 ${R.length}명 · 평균 ${avg}점</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" onclick="fxNew('${id}')">정답·배점 수정</button><button class="btn btn-navy" onclick="frNew('${id}')">+ 학생 답 입력</button></div></div>
+  ${worst.length?`<div class="card" style="margin-bottom:14px"><b style="color:var(--ink)">많이 틀린 문항</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${worst.map(o=>`<span class="chip ${o.p<50?'c-redo':'c-sub'}">${o.q}번 ${esc(FX_TYPES[o.q-1])} · 정답률 ${o.p}%</span>`).join('')}</div></div>`:''}
+  <div class="tbwrap"><table class="tb"><tr><th>석차</th><th>이름</th><th>원점수</th><th>등급</th><th>틀린 문항</th><th></th></tr>
+  ${R.map((r,i)=>`<tr><td>${1+R.filter(y=>y.score>r.score).length}</td><td><b style="color:var(--ink)">${esc(frName(r))}</b>${r.sid?'':' <span class="chip c-todo" title="같은 이름·휴대폰 뒷번호로 등록되면 자동 연결돼요">미등록</span>'}</td><td><b>${r.score}</b></td><td>${r.grd}등급</td><td class="muted" style="font-size:12.5px">${r.wrong.length?r.wrong.join(', '):'없음 🎉'}</td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="frPrint('${r.id}')">🖨 리포트</button> <button class="btn btn-ghost btn-sm" onclick="frNew('${id}','${r.id}')">수정</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty" style="padding:14px">학생 답을 입력하면 바로 채점돼요</div></td></tr>'}</table></div>
+  ${R.length>1?`<button class="btn btn-ghost" style="margin-top:12px" onclick="frPrintAll('${id}')">🖨 전체 리포트 한 번에 인쇄</button>`:''}`}
+function frNew(fxid,rid){const x=DB.FX.find(y=>y.id===fxid),old=rid&&DB.FR.find(r=>r.id===rid);
+  const L=liveS().sort((a,b)=>a.name<b.name?-1:1);UI.fr={ans:old?old.ans.slice():Array(45).fill(''),sid:old?(old.sid||''):'',guest:old?!old.sid:false};
+  modal(`<h3 class="jua">${esc(x.title)} · 학생 답 입력</h3>
+  <div class="chips-sel" style="margin-top:6px"><button class="${UI.fr.guest?'':'on'}" onclick="UI.fr.guest=false;$('#fr-reg').style.display='block';$('#fr-gst').style.display='none';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">등록 학생</button><button class="${UI.fr.guest?'on':''}" onclick="UI.fr.guest=true;$('#fr-reg').style.display='none';$('#fr-gst').style.display='block';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">미등록 학생 (체험·외부 응시)</button></div>
+  <div id="fr-reg" style="display:${UI.fr.guest?'none':'block'}"><label class="lb">학생</label><select class="inp" id="fr-s"><option value="">학생 고르기</option>${L.map(s=>`<option value="${s.id}" ${UI.fr.sid===s.id?'selected':''}>${esc(s.name)} · ${esc([s.school,s.grade].filter(Boolean).join(' '))}</option>`).join('')}</select></div>
+  <div id="fr-gst" style="display:${UI.fr.guest?'block':'none'}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="lb">이름 *</label><input class="inp" id="fr-n" value="${esc(old&&!old.sid?old.name:'')}"></div><div><label class="lb">학생 또는 학부모 휴대폰 *</label><input class="inp" id="fr-p" inputmode="tel" placeholder="010-0000-0000" value="${esc(old&&!old.sid?old.phone||'':'')}"></div><div><label class="lb">학교</label><input class="inp" id="fr-sc" value="${esc(old&&!old.sid?old.school||'':'')}"></div><div><label class="lb">학년</label><input class="inp" id="fr-gr" value="${esc(old&&!old.sid?old.grade||'':x.gr||'')}"></div></div>
+  <p class="muted" style="font-size:12.5px;margin-top:6px">나중에 같은 이름 + 휴대폰 뒷번호로 학생 등록하면 이 기록이 자동으로 그 학생 앱에 들어가요.</p></div>
+  <label class="lb">학생 답 45개 붙여넣기 <span class="muted" style="font-weight:400">(OMR·답안지 숫자만)</span></label><input class="inp" placeholder="예) 3524135241…" oninput="const d=this.value.replace(/[^1-5]/g,'');d.slice(0,45).split('').forEach((c,i)=>UI.fr.ans[i]=c);frGrid()">
+  <div class="kgrid" id="fr-grid" style="margin-top:8px"></div><div id="fr-live" style="margin-top:8px;font-weight:700;color:var(--ink)"></div>
+  <div class="btns">${old?`<button class="btn btn-warn" onclick="if(this.dataset.c){frDel('${rid}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="frSave('${fxid}','${rid||''}')">채점하고 저장</button></div>`);frGrid()}
+function frGrid(){const x=DB.FX.find(y=>y.id===UI.fx),a=UI.fr.ans;
+  $('#fr-grid').innerHTML=a.map((v,i)=>{const st=v===''?'':+v===x.key[i]?'background:#E6F2E8':'background:#FBE3E3';return `<label><small>${i+1}</small><input class="ko" style="${st}" maxlength="1" inputmode="numeric" value="${v}" oninput="this.value=this.value.replace(/[^1-5]/g,'');UI.fr.ans[${i}]=this.value;if(this.value){const n=this.parentNode.nextElementSibling;if(n)n.querySelector('input').focus()}frLive();this.style.background=this.value===''?'':(+this.value===${x.key[i]}?'#E6F2E8':'#FBE3E3')"></label>`}).join('');frLive()}
+function frLive(){const x=DB.FX.find(y=>y.id===UI.fx),f=UI.fr.ans.filter(Boolean).length,r=frScore(x,UI.fr.ans);$('#fr-live').textContent=f?`입력 ${f}/45 · 지금까지 ${r.score}점 (${r.grd}등급)`:''}
+function frSave(fxid,rid){const x=DB.FX.find(y=>y.id===fxid),a=UI.fr.ans,miss=a.findIndex(v=>!v);
+  if(miss>=0&&!confirm(`${miss+1}번 등 빈 칸이 있어요. 빈 칸은 틀린 걸로 채점할까요?`))return;
+  let who;if(UI.fr.guest){const n=$('#fr-n').value.trim(),p=$('#fr-p').value.trim();if(!n||!last4(p)){toast('이름과 휴대폰 번호를 넣어주세요');return}who={sid:null,name:n,phone:p,ph4:last4(p),school:$('#fr-sc').value.trim(),grade:$('#fr-gr').value.trim()}}
+  else{const sid=$('#fr-s').value;if(!sid){toast('학생을 골라주세요');return}const s=stu(sid);who={sid,name:s.name,phone:'',ph4:'',school:s.school||'',grade:s.grade||''}}
+  DB.FR=DB.FR||[];if(who.sid&&frOf(fxid).some(r=>r.sid===who.sid&&r.id!==rid)){toast('이 학생은 이미 입력돼 있어요. 표에서 수정을 눌러 주세요');return}
+  const o=Object.assign({},frSnap(x),who,{ans:a.map(v=>v===''?0:+v)},frScore(x,a.map(v=>v===''?0:+v)));
+  let r=rid&&DB.FR.find(y=>y.id===rid);if(r)Object.assign(r,o,{upd:nowStr()});else{r=Object.assign({id:'fr'+uid(),by:ME.id,at:nowStr()},o);DB.FR.push(r)}
+  frRestat(fxid);frLink();save();closeModal();render();toast(`${who.name} ${r.score}점 · ${r.grd}등급 저장했어요`)}
+function frDel(rid){const r=DB.FR.find(y=>y.id===rid);DB.FR=DB.FR.filter(y=>y.id!==rid);if(r)frRestat(r.fx);save();closeModal();render()}
+
+/* ----- 리포트 (화면 + 인쇄 A4 한 장) ----- */
+function frPrev(r){return (DB.FR||[]).filter(y=>y.sid&&y.sid===r.sid&&y.id!==r.id&&(y.date<r.date||(y.date===r.date&&y.at<r.at))).sort((a,b)=>a.date<b.date?1:-1)[0]}
+function frComment(r){const G=frGroups(r).filter(g=>g.n>0),best=G.slice().sort((a,b)=>b.p-a.p||b.n-a.n)[0],weak=G.slice().sort((a,b)=>a.p-b.p||b.n-a.n)[0],pv=frPrev(r);
+  const w3=r.wrong.filter(q=>r.pts[q-1]===3).length,lis=r.wrong.filter(q=>q<=17).length;
+  let t=`이번 ${r.title} 원점수는 ${r.score}점(${r.grd}등급)입니다.`;
+  if(pv)t+=r.score>pv.score?` 지난 ${pv.title}(${pv.score}점)보다 ${r.score-pv.score}점 올랐어요. 👏`:r.score<pv.score?` 지난 ${pv.title}(${pv.score}점)보다 ${pv.score-r.score}점 내려갔어요.`:` 지난 ${pv.title}(${pv.score}점)과 같은 점수, 꾸준해요!`;
+  if(!r.wrong.length)return t+' 전 문항 정답! 지금 리듬을 그대로 유지해 주세요.';
+  t+=` 가장 안정적인 영역은 ${best.g}(${best.p}%), 보완이 필요한 영역은 ${weak.g}(${weak.p}%)입니다.`;
+  t+=` 틀린 문항은 ${r.wrong.length}개${w3||lis?` (${[w3?`3점 문항 ${w3}개`:'',lis?`듣기 ${lis}개`:''].filter(Boolean).join(', ')} 포함)`:''}예요.`;
+  if(weak.p<100)t+=` 추천 복습: ${FX_TIP[weak.g]}.`;return t}
+function frReportBody(r){const G=frGroups(r),pv=frPrev(r),st=r.st||{};const s=r.sid&&stu(r.sid);
+  const nm=frName(r),info=[s?s.school:r.school,s?s.grade:r.grade].filter(Boolean).join(' ');
+  return `<div class="fr-r"><div class="fr-h"><div><div class="fr-brand">F:OCUS <span>WEEKLY MOCK TEST</span></div><div class="fr-sub">포워드 영어학원 · ${esc(r.title)} · ${esc(r.date)}</div></div><div class="fr-who"><b>${esc(nm)}</b><span>${esc(info)}</span></div></div>
+  <div class="fr-top"><div class="fr-big"><small>원점수</small><b>${r.score}</b><em>/ 100</em></div><div class="fr-big"><small>등급</small><b>${r.grd}</b><em>등급</em></div>
+  <div class="fr-mini"><div><small>응시 평균</small><b>${st.avg!=null?st.avg:'-'}</b></div><div><small>석차</small><b>${st.rank?st.rank+' / '+st.n:'-'}</b></div><div><small>지난 회차</small><b>${pv?pv.score+'점 → '+(r.score>=pv.score?'▲':'▼')+Math.abs(r.score-pv.score):'-'}</b></div><div><small>맞힌 문항</small><b>${45-r.wrong.length} / 45</b></div></div></div>
+  <h4>영역별 정답률</h4><div class="fr-bars">${G.map(g=>`<div class="fr-bar"><span>${g.g}</span><i><u style="width:${g.p}%;background:${g.p>=80?'#7A9B80':g.p>=60?'#D9A441':'#C96B6B'}"></u></i><b>${g.p}%</b><small>${g.c}/${g.n}</small></div>`).join('')}</div>
+  <h4>틀린 문항</h4>${r.wrong.length?`<table class="fr-t"><tr><th>번호</th><th>유형</th><th>배점</th><th>내 답</th><th>정답</th></tr>${r.wrong.map(q=>`<tr><td>${q}</td><td>${esc(FX_TYPES[q-1])}</td><td>${r.pts[q-1]}점</td><td>${r.ans[q-1]||'-'}</td><td><b>${r.key[q-1]}</b></td></tr>`).join('')}</table>`:'<p class="fr-p">틀린 문항이 없어요 🎉</p>'}
+  <h4>선생님 코멘트</h4><p class="fr-p">${esc(frComment(r))}</p>
+  <div class="fr-f">Forward, For the World. · 포워드 영어학원 053-716-0859</div></div>`}
+const FR_CSS=`.fr-r{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#22303F;max-width:760px;margin:0 auto}
+.fr-h{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1F3A5F;padding-bottom:10px}.fr-brand{font-size:30px;font-weight:900;color:#1F3A5F;letter-spacing:1px}.fr-brand span{font-size:12px;letter-spacing:3px;color:#7A9B80;margin-left:6px}
+.fr-sub{font-size:13px;color:#667;margin-top:2px}.fr-who{text-align:right}.fr-who b{display:block;font-size:22px}.fr-who span{font-size:13px;color:#667}
+.fr-top{display:grid;grid-template-columns:1fr 1fr 2fr;gap:10px;margin:14px 0}.fr-big{background:#EEF2F7;border-radius:14px;padding:10px 14px}.fr-big small,.fr-mini small{display:block;font-size:11.5px;color:#667}.fr-big b{font-size:40px;color:#1F3A5F;line-height:1.1}.fr-big em{font-style:normal;font-size:13px;color:#667;margin-left:4px}
+.fr-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}.fr-mini div{background:#F1F5F1;border-radius:10px;padding:6px 10px}.fr-mini b{font-size:15px}
+.fr-r h4{font-size:14px;color:#1F3A5F;margin:14px 0 6px;border-left:4px solid #7A9B80;padding-left:8px}
+.fr-bar{display:grid;grid-template-columns:78px 1fr 44px 40px;gap:8px;align-items:center;font-size:12.5px;margin:4px 0}.fr-bar i{height:12px;background:#EEF0F2;border-radius:99px;overflow:hidden;display:block}.fr-bar u{display:block;height:100%;border-radius:99px}.fr-bar small{color:#889}
+.fr-t{width:100%;border-collapse:collapse;font-size:12.5px}.fr-t th,.fr-t td{border:1px solid #DDE2E8;padding:4px 6px;text-align:center}.fr-t th{background:#EEF2F7}
+.fr-p{font-size:13.5px;line-height:1.75;background:#FAFBF8;border:1px solid #E3E8E0;border-radius:10px;padding:10px 12px;margin:0}.fr-f{text-align:center;font-size:11px;color:#99A;margin-top:16px}
+@media print{@page{size:A4;margin:12mm}.fr-r{page-break-after:always}.fr-r:last-child{page-break-after:auto}}`;
+function frPrintHTML(list){const w=window.open('','_blank');if(!w){toast('팝업이 막혀 있어요. 팝업을 허용해 주세요');return}
+  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>${esc(list.length===1?list[0].title+' '+frName(list[0]):list[0].title+' 리포트')}</title><style>body{margin:0;padding:18px;background:#fff}${FR_CSS}@media screen{.fr-r{margin-bottom:40px}}</style></head><body>${list.map(frReportBody).join('')}<script>setTimeout(()=>print(),400)<\/script></body></html>`);w.document.close()}
+function frPrint(rid){const r=DB.FR.find(y=>y.id===rid);if(r)frPrintHTML([r])}
+function frPrintAll(fxid){const L=frOf(fxid).sort((a,b)=>frName(a)<frName(b)?-1:1);if(L.length)frPrintHTML(L)}
+/* ----- 학생 앱: 성적 탭 ----- */
+function sFocus(s){const L=(DB.FR||[]).filter(r=>r.sid===s.id).sort((a,b)=>a.date<b.date?1:-1);if(!L.length)return '';
+  return `<div class="sec-t"><h3 class="jua">🎯 F:OCUS 주간 모의고사</h3></div>${L.map(r=>`<button class="exam" onclick="UI.frv='${r.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">${esc(r.title)}</b><div class="muted" style="font-size:12.5px">${esc(r.date)} · ${r.grd}등급 · 리포트 보기 ›</div></div><div class="sc">${r.score}<small style="font-size:14px">점</small></div></button>`).join('')}`}
+function sFocusView(rid){const r=(DB.FR||[]).find(y=>y.id===rid);if(!r){UI.frv=null;return null}
+  return `<style>${FR_CSS}.fr-top{grid-template-columns:1fr 1fr}.fr-mini{grid-column:1/-1}</style><button class="btn btn-ghost btn-sm" onclick="UI.frv=null;render()">← 성적으로</button><div class="card" style="margin-top:12px">${frReportBody(r)}</div><button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="frPrint('${r.id}')">🖨 리포트 저장·인쇄</button>`}
 /* 수업 일지 누적 보기 */
 function logAll(sid){
   const s=stu(sid),all=DB.L.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);
@@ -2648,8 +2769,10 @@ function tExam(){
   if(UI.xe) return xEditor();
   if(UI.xg) return xGrade(UI.xg);
   if(UI.exam) return examGrade(UI.exam);
+  if(UI.fx) return fxView(UI.fx);
   const mine=myStudents().map(s=>s.id), ex=DB.E.filter(e=>isOwner()||e.by===ME.id||exS(e).some(s=>mine.includes(s.id))).sort((a,b)=>a.date<b.date?1:-1);
   return `<div class="ph"><div><h2 class="jua">채점 · 성적</h2><p>정답만 넣어두면 학생 답을 입력하는 순간 자동으로 채점돼요</p></div><button class="btn btn-navy" onclick="newExam()">+ 새 시험 만들기</button></div>
+  ${fxSection()}
   ${tXSection()}
   ${ex.length?`<div class="tbwrap"><table class="tb"><tr><th>시험</th><th>대상</th><th>날짜</th><th>문항</th><th>채점</th><th>평균</th><th></th></tr>${ex.map(e=>{const ss=exS(e),gr=ss.filter(s=>e.res[s.id]),avg=gr.length?Math.round(gr.reduce((a,s)=>a+examScore(e,s.id).pct,0)/gr.length):'-';return `<tr style="cursor:pointer" onclick="UI.exam='${e.id}';render()"><td><b style="color:var(--ink)">${esc(e.title)}</b></td><td>${ss.length}명</td><td>${esc(e.date)}</td><td>${e.key.length}</td><td>${gr.length}/${ss.length}명</td><td><b>${avg}${avg==='-'?'':'점'}</b></td><td><span class="btn btn-ghost btn-sm">채점하기 ›</span></td></tr>`}).join('')}</table></div>`:'<div class="empty"><div class="e">📝</div>아직 만든 시험이 없어요</div>'}`;
 }
@@ -2985,7 +3108,7 @@ function saveStu(id){
   const o={name,school:v('s'),grade:v('g'),tid:$('#es-t').value,days:readDays('es-days'),time:v('tm'),reg:v('r'),code,parent:v('p'),phone:v('ph')};
   let nid=id;
   if(id){const s=stu(id);delete s.cid;Object.assign(s,o)}else{nid='s'+uid();DB.S.push(Object.assign({id:nid},o));if(UI.regInq){consultToStu(UI.regInq,nid);UI.regInq=null}}
-  save();closeModal();
+  frLink();save();closeModal();
   if(!id){const vis=myStudents().some(x=>x.id===nid);UI.tv='people';UI.pv=vis?nid:null;render();scrollTo(0,0);toast(vis?`${name} 학생 등록 완료 · 코드 ${code} · 상담 내용을 남겨 보세요`:`${name} 학생 등록 완료 · 코드 ${code} · ${(tch(o.tid)||{name:''}).name} 선생님 담당으로 넣었어요`)}
   else{render();toast('저장했어요')}
 }
@@ -3013,7 +3136,7 @@ function saveBulk(){
     if(other){clash.push({name,code,with:other.name});code=code+'1';}
     const s={id:'s'+uid(),name,school,grade,phone,parent,tid:findT(tn),days:dd,reg:TODAY,code};DB.S.push(s);added.push(s);
   });
-  save();
+  frLink();save();
   modal(`<h3 class="jua">${added.length}명 등록 · ${updated.length}명 정보 갱신 🎉</h3><p class="muted" style="font-size:13.5px;margin:4px 0 10px">학생코드 = ${codeYear()} + 학생 휴대폰 뒷번호 4자리</p>
   ${clash.length?`<div style="background:var(--peach-soft);color:var(--red);border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:10px">⚠️ 휴대폰 뒷번호가 겹쳐서 코드 끝에 1을 붙였어요: ${clash.map(c=>esc(c.name)+' ('+esc(c.with)+'와 겹침)').join(', ')}</div>`:''}
   ${added.length?`<div class="tbwrap"><table class="tb"><tr><th>이름</th><th>학생코드</th></tr>${added.map(s=>`<tr><td>${esc(s.name)}</td><td style="font-family:monospace;font-weight:700">${s.code}</td></tr>`).join('')}</table></div>`:''}

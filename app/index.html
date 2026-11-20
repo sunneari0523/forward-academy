@@ -2213,18 +2213,44 @@ async function upAudio(file){
 function lsDel(id){if(LSP.id===id)lsClose();DB.LS=(DB.LS||[]).filter(x=>x.id!==id);save();render();toast('삭제했어요')}
 /* 화면이 새로 그려져도 끊기지 않는 고정 플레이어 */
 const LSP={id:null,rate:1};
+const MOCK_MIN=70;
+function mockKey(){return 'fw_mock_'+(ME&&ME.id)}
+function mockGet(){try{const m=JSON.parse(localStorage.getItem(mockKey())||'null');return m&&m.end>Date.now()-60000?m:null}catch(e){return null}}
 function lsBar(){let b=document.getElementById('lsbar');if(!b){b=document.createElement('div');b.id='lsbar';b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));width:min(560px,calc(100% - 20px));background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:10px 12px;z-index:40;display:none';
-  b.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b id="lsbar-t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:14px"></b><button class="btn btn-ghost btn-sm" onclick="lsSeek(-5)">⏪5초</button><button class="btn btn-ghost btn-sm" onclick="lsSeek(5)">5초⏩</button><button class="btn btn-ghost btn-sm" id="lsbar-r" onclick="lsRate()">1.0x</button><button class="btn btn-ghost btn-sm" onclick="lsClose()">✕</button></div><audio id="lsbar-a" controls preload="none" style="width:100%"></audio>';
+  b.innerHTML='<div id="lsbar-m" style="display:none;align-items:center;gap:10px;padding:4px 2px 8px;margin-bottom:6px;border-bottom:1px dashed var(--line)"><span style="font-size:13px;font-weight:700;color:var(--muted)">⏱ 모의고사</span><b id="lsbar-mt" style="font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:.5px">70:00</b><span class="muted" style="font-size:12px">남음</span><button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="mockStop()">타이머 끄기</button></div>'
+   +'<div id="lsbar-p"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b id="lsbar-t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:14px"></b><button class="btn btn-ghost btn-sm" onclick="lsSeek(-5)">⏪5초</button><button class="btn btn-ghost btn-sm" onclick="lsSeek(5)">5초⏩</button><button class="btn btn-ghost btn-sm" id="lsbar-r" onclick="lsRate()">1.0x</button><button class="btn btn-ghost btn-sm" onclick="lsClose()">✕</button></div><audio id="lsbar-a" controls preload="none" style="width:100%"></audio></div>';
   document.body.appendChild(b);const a=b.querySelector('audio');
   a.addEventListener('ended',()=>{try{localStorage.setItem('fw_ls_'+(ME&&ME.id)+'_'+LSP.id,'1')}catch(e){}if(ME&&ME.role==='student'&&UI.st==='listen'&&!busyTyping())render()});
   a.addEventListener('timeupdate',()=>{if(a.duration&&a.currentTime/a.duration>0.9)try{localStorage.setItem('fw_ls_'+(ME&&ME.id)+'_'+LSP.id,'1')}catch(e){}})}
   return b}
-function lsPlay(id){const x=(DB.LS||[]).find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
+function lsShow(){const b=lsBar(),m=mockGet(),p=!!LSP.id;b.querySelector('#lsbar-p').style.display=p?'block':'none';b.querySelector('#lsbar-m').style.display=m?'flex':'none';
+  const on=p||!!m;b.style.display=on?'block':'none';document.body.style.paddingBottom=on?(p&&m?'200px':p?'150px':'90px'):'';mockTick()}
+/* ▶ 누르면: 학생은 모의고사 타이머도 켤지 물어봐요 */
+function lsPlay(id){if(!(DB.LS||[]).some(y=>y.id===id))return;
+  if(ME&&ME.role==='student'&&LSP.id!==id&&!mockGet()){const x=DB.LS.find(y=>y.id===id);
+    modal(`<h3 class="jua">⏱ 모의고사 타이머도 켤까요?</h3><p style="font-size:14.5px;line-height:1.7;margin:8px 0 4px"><b>${esc(x.title)}</b></p><p class="muted" style="font-size:13.5px;line-height:1.7">집에서 모의고사를 치는 중이면 타이머를 켜세요.<br>듣기 재생과 <b>동시에 ${MOCK_MIN}분 타이머</b>가 시작되고, 끝나면 알려줘요.</p>
+    <div class="btns"><button class="btn btn-ghost" onclick="closeModal();lsGo('${id}',false)">듣기만 할게요</button><button class="btn btn-navy" onclick="closeModal();lsGo('${id}',true)">⏱ 타이머도 켜기</button></div>`);return}
+  lsGo(id,false)}
+function lsGo(id,mock){const x=(DB.LS||[]).find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
   if(LSP.id!==id){LSP.id=id;a.src=x.url;b.querySelector('#lsbar-t').textContent='🎧 '+x.title}
-  b.style.display='block';document.body.style.paddingBottom='150px';a.playbackRate=LSP.rate;a.play().catch(()=>{});render()}
+  a.playbackRate=LSP.rate;
+  const start=()=>{if(mock){try{localStorage.setItem(mockKey(),JSON.stringify({end:Date.now()+MOCK_MIN*60000,title:x.title}))}catch(e){}toast(`⏱ ${MOCK_MIN}분 타이머 시작! 화이팅 🐾`)}lsShow()};
+  if(mock){a.currentTime=0;a.play().then(start,start)}else{a.play().catch(()=>{});lsShow()}
+  render()}
 function lsSeek(n){const a=document.getElementById('lsbar-a');if(a)a.currentTime=Math.max(0,a.currentTime+n)}
 function lsRate(){const R=[1,1.1,1.2,0.8,0.9];LSP.rate=R[(R.indexOf(LSP.rate)+1)%R.length];const a=document.getElementById('lsbar-a');if(a)a.playbackRate=LSP.rate;document.getElementById('lsbar-r').textContent=LSP.rate.toFixed(1)+'x'}
-function lsClose(){const b=document.getElementById('lsbar');if(b){const a=b.querySelector('audio');a.pause();b.style.display='none'}document.body.style.paddingBottom='';LSP.id=null;if(ME)render()}
+function lsClose(){const b=document.getElementById('lsbar');if(b)b.querySelector('audio').pause();LSP.id=null;lsShow();if(ME)render()}
+function mockStop(){if(!document.getElementById('lsbar-m').dataset.c){const el=document.querySelector('#lsbar-m button');el.textContent='정말 끌까요?';document.getElementById('lsbar-m').dataset.c=1;setTimeout(()=>{const m=document.getElementById('lsbar-m');if(m){delete m.dataset.c;const e=m.querySelector('button');if(e)e.textContent='타이머 끄기'}},3000);return}
+  try{localStorage.removeItem(mockKey())}catch(e){}delete document.getElementById('lsbar-m').dataset.c;lsShow();toast('타이머를 껐어요')}
+function mockBeep(){try{const C=new (window.AudioContext||window.webkitAudioContext)();[0,0.5,1].forEach(t=>{const o=C.createOscillator(),g=C.createGain();o.frequency.value=880;o.connect(g);g.connect(C.destination);g.gain.setValueAtTime(0.25,C.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,C.currentTime+t+0.4);o.start(C.currentTime+t);o.stop(C.currentTime+t+0.4)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([400,200,400,200,400])}catch(e){}}
+function mockTick(){if(!ME||ME.role!=='student')return;const m=mockGet(),b=document.getElementById('lsbar');
+  if(!m){if(b&&b.querySelector('#lsbar-m').style.display!=='none')lsShow();return}
+  if(!b||b.querySelector('#lsbar-m').style.display==='none'){lsShow();return}
+  const left=m.end-Date.now();
+  if(left<=0){try{localStorage.removeItem(mockKey())}catch(e){}mockBeep();lsShow();
+    modal(`<div style="text-align:center"><div style="font-size:54px">⏰</div><h3 class="jua" style="font-size:24px;margin:6px 0">${MOCK_MIN}분 끝!</h3><p style="font-size:15px;line-height:1.7">펜 내려놓기 ✋<br><span class="muted" style="font-size:13.5px">${esc(m.title||'')}<br>채점하고 틀린 문제는 꼭 다시 봐요. 수고했어요 🐾</span></p></div><div class="btns"><button class="btn btn-navy" onclick="closeModal()">확인</button></div>`);return}
+  const t=Math.ceil(left/1000),el=b.querySelector('#lsbar-mt');el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');el.style.color=left<5*60000?'var(--red)':'var(--ink)'}
+setInterval(mockTick,1000);
 /* 수업 일지 누적 보기 */
 function logAll(sid){
   const s=stu(sid),all=DB.L.filter(l=>l.sid===sid).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);

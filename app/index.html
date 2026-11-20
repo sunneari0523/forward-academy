@@ -1596,10 +1596,10 @@ function kFrom(k){return k.from||'t'}
 function kRows(sid,tid){return (DB.K||[]).filter(k=>k.sid===sid&&kTid(k)===tid).sort((a,b)=>(a.at||'')<(b.at||'')?-1:(a.at||'')>(b.at||'')?1:0)}
 function kKey(sid,tid){return 'fw_kseen2_'+ME.id+'_'+sid+'_'+tid}
 function kSeenAt(sid,tid){try{return localStorage.getItem(kKey(sid,tid))||''}catch(e){return ''}}
-function kMarkSeen(sid,tid){const r=kRows(sid,tid),l=r[r.length-1];if(l)try{localStorage.setItem(kKey(sid,tid),l.at+'|'+l.id)}catch(e){}}
+function kMarkSeen(sid,tid){const k=seenMax(kRows(sid,tid));if(k&&k>kSeenAt(sid,tid))try{localStorage.setItem(kKey(sid,tid),k)}catch(e){}}
 function kUnread(sid,tid){const me=ME.role==='student'?'s':'t',ls=kSeenAt(sid,tid);return kRows(sid,tid).filter(k=>kFrom(k)!==me&&(k.at+'|'+k.id)>ls).length}
-function kUnreadStu(sid){return sKRooms(sid).reduce((n,t)=>n+(UI.st==='note'&&UI.kt===t?0:kUnread(sid,t)),0)}
-function kUnreadStaff(){return (DB.K||[]).filter(k=>kTid(k)===ME.id).map(k=>k.sid).filter((v,i,a)=>a.indexOf(v)===i).reduce((n,sid)=>n+(UI.tv==='msg'&&UI.mr==='k:'+sid?0:kUnread(sid,ME.id)),0)}
+function kUnreadStu(sid){return sKRooms(sid).reduce((n,t)=>{if(UI.st==='note'&&UI.kt===t){kMarkSeen(sid,t);return n}return n+kUnread(sid,t)},0)}
+function kUnreadStaff(){return (DB.K||[]).filter(k=>kTid(k)===ME.id).map(k=>k.sid).filter((v,i,a)=>a.indexOf(v)===i).reduce((n,sid)=>{if(UI.tv==='msg'&&UI.mr==='k:'+sid){kMarkSeen(sid,ME.id);return n}return n+kUnread(sid,ME.id)},0)}
 function sKRooms(sid){const s=stu(sid),set=[sTid(s),ownerId()];(DB.K||[]).filter(k=>k.sid===sid).forEach(k=>set.push(kTid(k)));return [...new Set(set.filter(Boolean))].filter(t=>tch(t))}
 function chatPane(o){let lastDay='';
   return `<div class="mhead"><button class="mback" onclick="${o.back}">‹</button><b>${esc(o.title)}</b><span class="muted" style="font-size:12.5px">${esc(o.sub||'')}</span>${o.extra||''}</div>
@@ -1658,9 +1658,10 @@ function roomMsgs(room){return (DB.M||[]).filter(m=>m.room===room).sort((a,b)=>(
 function myRooms(){const me=ME.id;return [{id:'all',name:'👥 전체방',sub:'모든 선생님'}].concat(staffList().filter(t=>t.id!==me).map(t=>({id:roomOf(me,t.id),name:tLabel(t),sub:'1:1',tid:t.id})))}
 function seenKey(room){return 'fw_seen_'+ME.id+'_'+room}
 function lastSeen(room){try{return localStorage.getItem(seenKey(room))||''}catch(e){return ''}}
-function markSeen(room){const ms=roomMsgs(room),l=ms[ms.length-1];if(l)try{localStorage.setItem(seenKey(room),l.at+'|'+l.id)}catch(e){}}
+function seenMax(rows){return rows.reduce((m,x)=>{const k=(x.at||'')+'|'+x.id;return k>m?k:m},'')}
+function markSeen(room){const k=seenMax(roomMsgs(room));if(k&&k>lastSeen(room))try{localStorage.setItem(seenKey(room),k)}catch(e){}}
 function roomUnread(room){const ls=lastSeen(room);return roomMsgs(room).filter(m=>m.by!==ME.id&&(m.at+'|'+m.id)>ls).length}
-function msgUnread(){if(!ME||ME.role==='student')return 0;DB.M=DB.M||[];return myRooms().reduce((n,r)=>n+(UI.tv==='msg'&&UI.mr===r.id?0:roomUnread(r.id)),0)}
+function msgUnread(){if(!ME||ME.role==='student')return 0;DB.M=DB.M||[];return myRooms().reduce((n,r)=>{if(UI.tv==='msg'&&UI.mr===r.id){markSeen(r.id);return n}return n+roomUnread(r.id)},0)}
 function tMsg(){
   DB.M=DB.M||[];DB.K=DB.K||[];const rooms=myRooms();if(UI.mr&&!UI.mr.startsWith('k:')&&!rooms.some(r=>r.id===UI.mr))UI.mr=null;
   if(!UI.mr&&matchMedia('(min-width:701px)').matches)UI.mr='all';

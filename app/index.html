@@ -865,7 +865,7 @@ function showLeave(){let o=document.getElementById('leavebox');if(!o){o=document
 function hideLeave(){const o=document.getElementById('leavebox');if(o)o.style.display='none'}
 function navSnap(){return {tv:UI.tv||null,st:UI.st||null,ws:UI.ws||null,pv:UI.pv||null,pmode:UI.pmode||null,exam:UI.exam||null,q:UI.q||null,vv:VS.view||'home',mr:UI.mr||null,cs:UI.cs||null,kt:UI.kt||null,xt:UI.xt||null,xg:UI.xg||null,iq:UI.iq||null,pw:UI.pw||null}}
 function navApply(o){UI.tv=o.tv||UI.tv;UI.st=o.st||UI.st;UI.ws=o.ws;UI.pv=o.pv;UI.pmode=o.pmode;UI.exam=o.exam;UI.q=o.q;VS.view=o.vv||'home';UI.mr=o.mr||null;UI.cs=o.cs||null;UI.kt=o.kt||null;UI.xt=o.xt||null;UI.xg=o.xg||null;if(o.iq)UI.iq=o.iq;if(o.pw)UI.pw=o.pw}
-function navRestoreOnLoad(){try{const st=history.state&&history.state.nav;if(!st||!ME)return;const o=JSON.parse(st);if(ME.role==='student'?!o.st:!o.tv)return;navApply(o);NAV.last=st;NAV.restoring=true}catch(e){}}
+function navRestoreOnLoad(){try{const st=history.state&&history.state.nav;if(!st||!ME)return;const o=JSON.parse(st);if(ME.role==='student'?!o.st:!o.tv)return;o.cs=null;navApply(o);NAV.last=st;NAV.restoring=true}catch(e){}}
 function navTrack(){
   if(!ME)return;const k=JSON.stringify(navSnap());
   if(NAV.restoring){NAV.restoring=false;NAV.last=k;return}
@@ -884,7 +884,7 @@ window.addEventListener('popstate',e=>{
   NAV.restoring=true;render();scrollTo(0,0);
 });
 window.addEventListener('beforeunload',e=>{if($('#modal').classList.contains('on')&&UI.mdirty){e.preventDefault();e.returnValue=''}});
-function goHome(){closeModal();if(!ME){location.href='../index.html';return}if(ME.role==='student'){UI.st='today';UI.q=null}else{UI.tv='home';UI.ws=null;UI.pv=null;UI.pmode=null;UI.exam=null;UI.q=null}VS.view='home';render();scrollTo(0,0)}
+function goHome(){closeModal();csLeave();if(!ME){location.href='../index.html';return}if(ME.role==='student'){UI.st='today';UI.q=null}else{UI.tv='home';UI.ws=null;UI.pv=null;UI.pmode=null;UI.exam=null;UI.q=null}VS.view='home';render();scrollTo(0,0)}
 function view(src){$('#viewerImg').src=src;$('#viewer').classList.add('on')}
 document.addEventListener('click',e=>{const im=e.target.closest('img[data-v]');if(im)view(im.src)});
 function pickFiles(cb){const f=$('#fileInp');f.value='';f.onchange=async()=>{const out=[];for(const file of [...f.files].slice(0,4)) out.push(await shrink(file));cb(out)};f.click()}
@@ -1583,14 +1583,14 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261120200331';
+const APP_VER='20261122114500';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
   UI.verSeen=1;if(!$('#verbar')){const d=document.createElement('div');d.id='verbar';d.innerHTML='✨ 새 버전이 나왔어요 · <b>눌러서 새로고침</b>';d.onclick=()=>location.reload();document.body.appendChild(d)}}).catch(()=>{})}
 setInterval(verCheck,180000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')verCheck()});setTimeout(verCheck,5000);
 const NAV_M1=['home','plan','msg','people'];
-function moreSheet(){const sec=UI.navSec||[];modal(`<h3 class="jua">메뉴</h3><div class="moregrid">${sec.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="closeModal();UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</div><div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>`)}
+function moreSheet(){const sec=UI.navSec||[];modal(`<h3 class="jua">메뉴</h3><div class="moregrid">${sec.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''}" onclick="closeModal();csLeave();UI.tv='${k}';UI.q=null;UI.exam=null;if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span class="i">${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}</div><div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button></div>`)}
 function tLabel(t){return t.role==='owner'?(/원장/.test(t.name)?t.name:t.name+' 원장'):t.name+' 선생님'}
 function kTid(k){return k.tid||k.by}
 function kFrom(k){return k.from||'t'}
@@ -1930,7 +1930,7 @@ function staffView(){
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,listen:tListen,staff:tStaff}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
-      <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="UI.tv='${k}';UI.q=null;UI.exam=null;UI.fx=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
+      <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="csLeave();UI.tv='${k}';UI.q=null;UI.exam=null;UI.fx=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
       <button class="out" onclick="logout()">로그아웃 →</button></aside>
     <main class="main"><div class="m-top"><img src="logo.png" alt="" style="cursor:pointer" onclick="goHome()"><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="changePw()">🔑</button><button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>${body}</main></div>`;
   if(UI.tv==='qa'&&UI.q){const b=$('#chatbody');if(b)b.scrollTop=b.scrollHeight}
@@ -3164,7 +3164,7 @@ function tInq(){
     <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn ${i.c?'btn-sage':'btn-navy'} btn-sm" onclick="UI.cs='${i.id}';render();scrollTo(0,0)">📋 상담 일지${i.c?' 보기':' 쓰기'}</button>${i.c&&i.c.sentAt?`<span class="chip c-ok" style="align-self:center">카톡 보냄 ${esc(i.c.sentAt.slice(5,10).replace('-','/'))}</span>`:''}<button class="btn btn-soft btn-sm" onclick="inqMemo('${i.id}')">📝 메모</button>${i.status==='reg'?'':`<button class="btn btn-ghost btn-sm" onclick="inqReg('${i.id}')">👤 학생으로 등록</button>`}${isOwner()?`<button class="btn btn-ghost btn-sm" onclick="inqDel('${i.id}',this)">삭제</button>`:''}</div></div>`).join(''):`<div class="empty">${UI.iq==='new'?'새로 들어온 문의가 없어요':'해당하는 문의가 없어요'}</div>`}`;
 }
 function inqBanner(){const nw=(DB.I||[]).filter(i=>i.status==='new').sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);if(!nw.length)return '';
-  return `<div class="card" style="margin-bottom:14px;border:2px solid var(--navy);background:var(--navy-soft);cursor:pointer" onclick="UI.tv='inq';UI.iq='new';render();scrollTo(0,0)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:16px">📥 새 상담 신청 ${nw.length}건</b><div style="margin-top:4px;font-size:14px">${nw.slice(0,3).map(i=>`${i.type?(i.type==='대면'?'🏫 ':'📱 '):''}${esc(i.name||'')} <span class="muted">${esc([i.school,i.grade].filter(Boolean).join(' '))} · ${esc(i.parent||'')}</span>`).join('<br>')}</div></div><span class="btn btn-navy btn-sm">확인하고 전화하기 →</span></div></div>`}
+  return `<div class="card" style="margin-bottom:14px;border:2px solid var(--navy);background:var(--navy-soft);cursor:pointer" onclick="csLeave();UI.tv='inq';UI.iq='new';render();scrollTo(0,0)"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b style="font-size:16px">📥 새 상담 신청 ${nw.length}건</b><div style="margin-top:4px;font-size:14px">${nw.slice(0,3).map(i=>`${i.type?(i.type==='대면'?'🏫 ':'📱 '):''}${esc(i.name||'')} <span class="muted">${esc([i.school,i.grade].filter(Boolean).join(' '))} · ${esc(i.parent||'')}</span>`).join('<br>')}</div></div><span class="btn btn-navy btn-sm">확인하고 전화하기 →</span></div></div>`}
 /* 신규 상담 일지 → 학부모 카톡 */
 const CSF=[
  ['기본 정보',[['name','학생 이름','예) 김하늘',1],['school','학교','예) 경북예고',1],['grade','학년','예) 중3 (예비고1)',1],['parent','학부모 연락처','010-',1],['date','상담일','',1,'date'],['how','상담 방식','방문 / 전화',1]]],
@@ -3195,6 +3195,10 @@ function welcomeMsg(i){
   return L.join('\n');
 }
 function newConsult(){const id='i'+uid();DB.I.push({id,status:'done',src:'direct',at:nowStr(),name:'',school:'',grade:'',parent:'',c:{date:TODAY,how:'방문',hon:'어머님'}});save();UI.iq='done';UI.cs=id;render();scrollTo(0,0)}
+/* 상담 일지에서 나갈 때: 저장하고 화면을 닫아서, 다음에 들어오면 새로 쓰게. 아무것도 안 적은 빈 일지는 지워요 */
+function csLeave(){if(!UI.cs)return;const i=inq(UI.cs);UI.cs=null;clearTimeout(UI.cst);
+  if(i&&i.src==='direct'){const c=i.c||{},blank=!['name','school','grade','parent'].some(k=>(i[k]||'').trim())&&!Object.keys(c).some(k=>!['date','how','hon','upd'].includes(k)&&String(c[k]||'').trim());if(blank)DB.I=DB.I.filter(x=>x.id!==i.id)}
+  save()}
 function cv(i,k){return ['name','school','grade','parent'].includes(k)?(i[k]||''):((i.c||{})[k]||'')}
 function consultSet(id,k,v){const i=inq(id);if(!i)return;i.c=i.c||{};if(['name','school','grade','parent'].includes(k))i[k]=v;else i.c[k]=v;i.c.upd=nowStr();clearTimeout(UI.cst);UI.cst=setTimeout(save,800);const pv=$('#cs-pv');if(pv)pv.textContent=welcomeMsg(i);const t=$('#cs-title');if(t&&k==='name')t.textContent=(v||'새 학생')+' 상담 일지'}
 function consultMsg(i){
@@ -3212,7 +3216,7 @@ function consultView(i){
   const c=i.c=i.c||{};if(!c.date)c.date=(i.at||TODAY).slice(0,10);if(!c.how&&i.type)c.how=i.type==='대면'?'방문':'전화 · 카톡';if(!c.hon)c.hon='어머님';
   const fld=([k,l,ph,half,type])=>{const v=esc(cv(i,k));const on=`oninput="consultSet('${i.id}','${k}',this.value)"`;
     return `<div class="${half?'half':''}"><label class="lb">${l}</label>${type==='area'?`<textarea class="inp" rows="4" placeholder="${esc(ph)}" ${on}>${v}</textarea>`:type==='date'?`<input class="inp" type="date" value="${v}" ${on} onchange="consultSet('${i.id}','${k}',this.value)">`:`<textarea class="inp auto" rows="${['name','school','grade','parent','how'].includes(k)?1:2}" placeholder="${esc(ph)}" ${on}>${v}</textarea>`}</div>`};
-  return `<button class="backlink" onclick="save();UI.cs=null;render();scrollTo(0,0)">← 상담 문의 목록</button>
+  return `<button class="backlink" onclick="csLeave();render();scrollTo(0,0)">← 상담 문의 목록</button>
   <div class="ph"><div><h2 class="jua" id="cs-title">${esc(i.name||'새 학생')} 상담 일지</h2><p>적는 대로 자동 저장돼요. 상담 기록은 선생님들만 보고, 오른쪽에 단톡방용 등록 안내 카톡이 만들어져요</p></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">${i.status==='reg'?'<span class="chip c-ok" style="align-self:center">등록 완료</span>':`<button class="btn btn-ghost" onclick="save();inqReg('${i.id}')">👤 학생으로 등록</button>`}</div></div>
   <div class="csplit"><div class="card csform">${CSF.map(([t,fs])=>`<h3 class="sec">${t}</h3><div class="csgrid">${fs.map(fld).join('')}</div>`).join('')}</div>

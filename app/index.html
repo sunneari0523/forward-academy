@@ -810,7 +810,9 @@ function load(){ try{ME=JSON.parse(store.get(SKEY))}catch(e){ME=null}
   try{DB=JSON.parse(store.get(KEY))}catch(e){DB=null} if(!DB||DB.v!==3){DB=seed();save();} DB.N=DB.N||[];DB.WB=DB.WB||[];DB.W=DB.W||[];DB.PR=DB.PR||[];DB.L=DB.L||[];DB.PC=DB.PC||[];DB.V=DB.V||[];DB.A=DB.A||[]; }
 function save(){ if(ONLINE){syncDot('busy');clearTimeout(pushT);pushT=setTimeout(pushNow,500);return}
   if(!store.set(KEY,JSON.stringify(DB))) toast('사진이 많아 이 기기 저장 공간이 꽉 찼어요 (시연 버전 한계)'); }
-const act=s=>!!s&&!s.grad, liveS=()=>DB.S.filter(act); // 졸업생(grad)은 목록에서 빠지고 기록은 남아요
+const act=s=>!!s&&!s.grad, liveS=()=>DB.S.filter(act);
+/* 테스트 계정(테스트학생 등)은 목록엔 그대로 두고, 학생 수·인원 통계에서만 빼요 */
+const isTestS=s=>!!s&&(s.id==='s_test'||/테스트|test/i.test((s.name||'')+' '+(s.school||''))), realS=()=>liveS().filter(s=>!isTestS(s)), nReal=L=>L.filter(s=>!isTestS(s)).length; // 졸업생(grad)은 목록에서 빠지고 기록은 남아요
 const stu=id=>DB.S.find(s=>s.id===id), tch=id=>DB.T.find(t=>t.id===id), cls=id=>DB.C.find(c=>c.id===id);
 const isOwner=()=>ME&&ME.role==='owner';
 function myClasses(){ if(!ME) return []; return isOwner()?DB.C:DB.C.filter(c=>c.tid===ME.id); }
@@ -1583,7 +1585,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261122114500';
+const APP_VER='20261122115500';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1943,7 +1945,7 @@ function barRows(rows,max,color){return rows.map(([k,n])=>`<div style="display:f
 function goalOf(ym){return (DB.G=DB.G||[]).find(g=>g.id===ym)}
 function tStaff(){
   DB.MT=DB.MT||[];DB.G=DB.G||[];
-  const all=liveS(), ym=ymOf(TODAY), g=goalOf(ym), tgt=g&&g.target?Number(g.target):0;
+  const all=realS(), ym=ymOf(TODAY), g=goalOf(ym), tgt=g&&g.target?Number(g.target):0;
   const newM=all.filter(s=>s.reg&&ymOf(s.reg)===ym).length, prevYm=ymOf(addD(ym+'-01',-1)), newP=all.filter(s=>s.reg&&ymOf(s.reg)===prevYm).length;
   const pct=tgt?Math.min(100,Math.round(all.length/tgt*100)):0, left=tgt?Math.max(0,tgt-all.length):0;
   const sch=cntBy(all,s=>s.school).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1)), grd=cntBy(all,s=>s.grade).sort((a,b)=>gradeKey(a[0])-gradeKey(b[0])||(a[0]<b[0]?-1:1));
@@ -1953,7 +1955,7 @@ function tStaff(){
   const open=DB.MT.flatMap(m=>(m.todo||[]).map((x,i)=>({m,x,i}))).filter(o=>!o.x.done).sort((a,b)=>a.m.date<b.m.date?1:-1);
   return `<div class="ph"><div><h2 class="jua">🧑‍🏫 강사방</h2><p>학원 전체 인원 현황과 주간 회의록을 함께 봐요</p></div></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
-    ${kpi('현재 인원',all.length+'명',`담당 선생님 ${tcs.length}명 · 졸업생 제외`)}
+    ${kpi('현재 인원',all.length+'명',`담당 선생님 ${tcs.length}명 · 졸업생·테스트 계정 제외`)}
     ${kpi(ymLbl(ym)+' 신규 등록',newM+'명',`${ymLbl(prevYm)} ${newP}명`)}
     <div class="card" style="padding:16px 18px;background:var(--sage-soft)"><div style="display:flex;justify-content:space-between;align-items:center"><span class="muted" style="font-size:13px;font-weight:700">${ymLbl(ym)} 목표 인원</span><button class="btn btn-ghost btn-sm" onclick="goalEdit()">${tgt?'수정':'정하기'}</button></div>
       ${tgt?`<div class="jua" style="font-size:30px;color:var(--ink);margin-top:2px">${all.length} <span style="font-size:18px;color:var(--muted)">/ ${tgt}명</span></div><div style="background:#fff;border-radius:99px;height:10px;overflow:hidden;margin:6px 0 4px"><div style="width:${pct}%;height:100%;background:var(--sage)"></div></div><div style="font-size:12.5px;color:var(--sage-d);font-weight:700">${left?`목표까지 ${left}명 남았어요 (${pct}%)`:'🎉 목표 달성!'}</div>${g.memo?`<div class="muted" style="font-size:12.5px;margin-top:4px">💬 ${esc(g.memo)}</div>`:''}`:`<div class="muted" style="font-size:13.5px;margin-top:10px">아직 이번 달 목표를 안 정했어요</div>`}</div>
@@ -1974,7 +1976,7 @@ function tStaff(){
   </div>`;
 }
 function goalEdit(){const ym=ymOf(TODAY),g=goalOf(ym)||{};
-  modal(`<h3 class="jua">${ymLbl(ym)} 목표 인원</h3><p class="muted" style="font-size:13.5px;margin-top:4px">이번 달 말까지 채우고 싶은 전체 학생 수를 적어 주세요. 지금 ${liveS().length}명이에요.</p>
+  modal(`<h3 class="jua">${ymLbl(ym)} 목표 인원</h3><p class="muted" style="font-size:13.5px;margin-top:4px">이번 달 말까지 채우고 싶은 전체 학생 수를 적어 주세요. 지금 ${realS().length}명이에요.</p>
   <label class="lb">목표 인원 (명)</label><input class="inp" id="gl-n" type="number" min="0" inputmode="numeric" value="${esc(g.target||'')}" placeholder="예) 40">
   <label class="lb">메모 (선택)</label><input class="inp" id="gl-m" value="${esc(g.memo||'')}" placeholder="예) 경북예고 예비고1 5명 더 받기">
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-navy" onclick="goalSave()">저장</button></div>`)}
@@ -2775,7 +2777,7 @@ const LISTHEAD='<tr><th>이름</th><th>학교·학년</th><th>담당·요일</th
 function hubList(){
   const F=FST(), list=stuFilter(myStudents()).sort((a,b)=>{const na=nextClass(a.id)||'9999',nb=nextClass(b.id)||'9999';return na!==nb?(na<nb?-1:1):(risk(b.id).why.length-risk(a.id).why.length)||(a.name<b.name?-1:1)});
   if(!list.length)return '<div class="empty">조건에 맞는 학생이 없어요</div>';
-  const cnt=`<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">학생 ${list.length}명</div>`;
+  const cnt=`<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">학생 ${nReal(list)}명</div>`;
   if(F.day!==null)return cnt+dayGroups(list,F.day).map(g=>`<div class="dgrp" style="--c:${g.c}"><span>${WD[F.day]}</span> ${g.h} <em>${g.list.length}명</em></div><div class="tbwrap"><table class="tb stable">${LISTHEAD}${g.list.map(spRow).join('')}</table></div>`).join('');
   return cnt+`<div class="tbwrap"><table class="tb stable">${LISTHEAD}${list.map(spRow).join('')}</table></div>`;
 }
@@ -3037,7 +3039,7 @@ function tPeople(){
   const all=myStudents(), ts=isOwner()?DB.T.filter(t=>all.some(s=>sTid(s)===t.id)):[];
   const ss=all.filter(s=>UI.pf==='all'||(UI.pf==='risk'?risk(s.id).lv:sTid(s)===UI.pf)).sort((a,b)=>(risk(b.id).why.length-risk(a.id).why.length)||(a.name<b.name?-1:1));
   const rate=sid=>{const ts=DB.tasks.filter(t=>t.sid===sid&&t.date<=TODAY&&t.date>=addD(TODAY,-13));return ts.length?Math.round(ts.filter(t=>t.status==='ok'||t.status==='sub').length/ts.length*100):null};
-  return `<div class="ph"><div><h2 class="jua">학생 관리</h2><p>학생 ${all.length}명 · 이름을 누르면 상담 일지와 상세 정보를 볼 수 있어요</p></div>
+  return `<div class="ph"><div><h2 class="jua">학생 관리</h2><p>학생 ${nReal(all)}명 · 이름을 누르면 상담 일지와 상세 정보를 볼 수 있어요</p></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${isOwner()?`<button class="btn btn-ghost" onclick="gradPick()">🎓 졸업 처리</button>`:''}<button class="btn btn-ghost" onclick="bulkAdd()">📋 여러 명 한 번에 등록</button><button class="btn btn-navy" onclick="editStu()">+ 학생 등록</button></div></div>
   <div class="chips-sel" style="margin-bottom:14px"><button class="${UI.pf==='all'?'on':''}" onclick="UI.pf='all';render()">전체 ${all.length}</button><button class="${UI.pf==='risk'?'on':''}" onclick="UI.pf='risk';render()" style="${UI.pf==='risk'?'':'color:var(--red)'}">⚠️ 주의 학생 ${all.filter(s=>risk(s.id).lv).length}</button>${ts.map(t=>`<button class="${UI.pf===t.id?'on':''}" onclick="UI.pf='${t.id}';render()">🧑‍🏫 ${esc(t.name)}</button>`).join('')}</div>
   ${ss.length?`<div class="tbwrap"><table class="tb ptab"><tr><th>이름</th><th>주의</th><th>학교 · 학년</th><th>담당 · 수업 요일</th><th>학생코드</th><th>2주 제출률</th><th>콩떡이</th><th>학생 / 학부모 연락처</th><th></th></tr>

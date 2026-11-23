@@ -526,6 +526,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .clog{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:#fff}
 .clog .h{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:6px}.clog .h b{color:var(--ink)}
 .clog .x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer}.clog .x:hover{color:var(--red)}
+.clgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.clcard{border-left:4px solid var(--sage)}.clcard .lb{margin-top:8px}
 .clog .t{white-space:pre-wrap;font-size:14.5px;line-height:1.6;color:var(--ink)}
 .backlink{background:none;border:none;color:var(--muted);font-weight:700;font-size:14px;padding:4px 0;margin-bottom:6px;cursor:pointer}
 .backlink:hover{color:var(--ink)}
@@ -2010,6 +2011,7 @@ function tHome(){
   ${visitCard()}
   ${pendingPR().map(r=>`<div class="prbanner" onclick="UI.tv='plan';UI.pmode=null;UI.ws='${r.sid}';UI.pw='${r.week}';UI.lf='all';render();scrollTo(0,0)">📝 <b>${esc((stu(r.sid)||{}).name||'')}</b> 학생이 ${lbl(r.week)} 주 플랜 수정을 요청했어요 <span>확인하기 ›</span></div>`).join('')}
   ${ttView()}
+  ${classLogCard()}
   ${careBoard()}
   <div class="mini-tiles">
     <button onclick="UI.tv='plan';UI.ws=null;UI.pmode='review';render()"><small>📸 확인할 숙제</small><b style="color:${hw.length?'#946A0A':'var(--ink)'}">${hw.length}</b></button>
@@ -2113,7 +2115,7 @@ function editSess(id,day,start,room){
   <input class="inp" placeholder="🔍 이름 · 학교 · 학년으로 찾기" oninput="UI.ss.q=this.value.trim();ssList()" style="margin-bottom:8px">
   <div class="chips-sel" id="ss-list" style="max-height:200px;overflow:auto"></div>
   ${c.week?`<label class="lb">메모 (선택)</label><input class="inp" id="ss-m" value="${esc(c.memo||'')}" placeholder="예) 시험 대비 보충 / 학교 행사로 변경">`:''}
-  <div class="btns">${id?`<button class="btn btn-warn" onclick="if(this.dataset.c){DB.C=DB.C.filter(x=>x.id!=='${id}'&&x.of!=='${id}');save();closeModal();render();toast('지웠어요')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">${c.week?'이 주 일정 삭제':'반 삭제'}</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="saveSess('${id||''}')">저장</button></div>`);
+  <div class="btns">${id?`<button class="btn btn-warn" onclick="if(this.dataset.c){DB.C=DB.C.filter(x=>x.id!=='${id}'&&x.of!=='${id}');save();closeModal();render();toast('지웠어요')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">${c.week?'이 주 일정 삭제':'반 삭제'}</button>`:''}${id&&(c.sids||[]).length&&!c._off?`<button class="btn btn-soft" onclick="UI.cl=null;classLog('${id}','${wd[TDAYS.indexOf(c.day)]}')">👥 이 반 일지 쓰기</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="saveSess('${id||''}')">저장</button></div>`);
   ssList();setTimeout(()=>{const e=$('#ss-n');if(e&&!id)e.focus()},50);
 }
 function moveSess(id){
@@ -2199,7 +2201,7 @@ function editLog(sid,id,date){
   const old=id?DB.L.find(x=>x.id===id):null, d=old?old.date:(date||TODAY), a=autoLog(sid,d);
   const L=old?Object.assign({},old):{sid,date:d,content:'',voca:a.voca,syntax:'',exam:a.exam,hw:a.hw,memo:''};
   UI.lg=L;
-  modal(`<h3 class="jua">📝 수업 일지 · ${esc(stu(sid).name)}</h3><p class="muted" style="font-size:13px">단어·내신 결과와 숙제는 기록된 내용으로 자동으로 채워져요. 고쳐도 돼요.</p>
+  modal(`<h3 class="jua">📝 수업 일지 · ${esc(stu(sid).name)}</h3>${(()=>{const cs=sessOf(sid).filter(c=>c.day===pd(L.date).getDay()&&(c.sids||[]).filter(i=>act(stu(i))).length>1);return cs.length&&!old?`<div class="onebox" style="margin-top:6px">👥 ${cs.map(c=>`<button class="btn btn-soft btn-sm" onclick="UI.cl=null;classLog('${c.id}','${L.date}')">${esc(c.name)} 반 전체 같이 쓰기</button>`).join(' ')}</div>`:''})()}<p class="muted" style="font-size:13px">단어·내신 결과와 숙제는 기록된 내용으로 자동으로 채워져요. 고쳐도 돼요.</p>
   <label class="lb">수업 날짜</label><input class="inp" type="date" id="lg-date" value="${L.date}" onchange="UI.lg.date=this.value;lgPrev()">
   <label class="lb">출결</label><div class="chips-sel" id="lg-att">${['출석','지각','결석'].map(a=>`<button class="${(L.att||'출석')===a?'on':''}" onclick="UI.lg.att='${a}';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on');lgPrev()">${a==='출석'?'✅':a==='지각'?'⏰':'❌'} ${a}</button>`).join('')}</div>
   <label class="lb">오늘 수업 내용 *</label><textarea class="inp" id="lg-content" rows="3" placeholder="예) 2과 본문 분석 1~3문단&#10;관계대명사 what 개념 + 문제 풀이" oninput="UI.lg.content=this.value;lgPrev()">${esc(L.content)}</textarea>
@@ -2221,6 +2223,71 @@ function saveLog2(sid,id,copy){
   if(copy)copyText(logMsg(Object.assign({by:L.by||ME.id},L)));
   save();closeModal();render();if(!copy)toast('수업 일지를 저장했어요');
   if(L.att==='결석')setTimeout(()=>addVideo([sid],L.date,L.content),400);
+}
+/* ----- 반 일지: 한 반 학생들 일지를 한 번에 ----- */
+function clDate(c){const wd=c.day,t=pd(TODAY).getDay();return addD(TODAY,-((t-wd+7)%7))}
+function classLog(cid,date){
+  const c=weekSess(wkStart(date||TODAY)).find(x=>x.id===cid)||DB.C.find(x=>x.id===cid);if(!c){toast('수업을 찾지 못했어요');return}
+  const d=date||(c.week?wkDays(c.week)[TDAYS.indexOf(c.day)]:clDate(c));
+  const sids=(c.sids||[]).filter(i=>act(stu(i))).sort((a,b)=>stu(a).name<stu(b).name?-1:1);
+  if(!sids.length){toast('이 반에 학생이 없어요');return}
+  const keep=UI.cl&&UI.cl.cid===cid?UI.cl.content:null;
+  const ex=sids.map(sid=>DB.L.find(l=>l.sid===sid&&l.date===d)).filter(Boolean);
+  const shared=keep!==null?keep:(ex[0]?ex[0].content||'':'');
+  UI.cl={cid,date:d,content:shared,rows:sids.map(sid=>{
+    const o=DB.L.find(l=>l.sid===sid&&l.date===d),a=autoLog(sid,d);
+    if(o){const own=o.content||'',extra=shared&&own.startsWith(shared)?own.slice(shared.length).trim():(own===shared?'':own);return {sid,id:o.id,att:o.att||'출석',extra,voca:o.voca||'',syntax:o.syntax||'',exam:o.exam||'',hw:o.hw||'',memo:o.memo||''}}
+    return {sid,id:null,att:'출석',extra:'',voca:a.voca,syntax:'',exam:a.exam,hw:a.hw,memo:''}})};
+  const R=UI.cl.rows,done=R.filter(r=>r.id).length;
+  modal(`<h3 class="jua">👥 반 일지 · ${esc(c.name)}</h3><p class="muted" style="font-size:13px">${WD[c.day]} ${c.start}~${c.end} · ${R.length}명${done?` · 이미 쓴 학생 ${done}명`:''}<br>공통 수업 내용은 한 번만 쓰면 모두에게 들어가요. 단어·내신 결과와 숙제는 학생별로 자동으로 채워져요.</p>
+  <label class="lb">수업 날짜</label><input class="inp" type="date" value="${d}" onchange="if(this.value)classLog('${cid}',this.value)">
+  <label class="lb">오늘 수업 내용 (공통) *</label><textarea class="inp" rows="3" placeholder="예) 2과 본문 분석 1~3문단&#10;관계대명사 what 개념 + 문제 풀이" oninput="UI.cl.content=this.value;clPrev()">${esc(shared)}</textarea>
+  <div id="cl-rows">${R.map((r,i)=>clCard(r,i)).join('')}</div>
+  <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="saveClassLog()">${R.length}명 일지 한 번에 저장</button></div>`);
+  clPrev();
+}
+function clCard(r,i){
+  const s=stu(r.sid),f=(k,ph)=>`<input class="inp" value="${esc(r[k])}" placeholder="${ph}" oninput="UI.cl.rows[${i}].${k}=this.value;clPrev(${i})">`;
+  return `<div class="clog clcard"><div class="h"><b style="font-size:15px">${esc(s.name)}</b><span class="muted">${esc(s.school||'')} ${esc(s.grade||'')}</span>${r.id?'<span class="chip c-ok">쓴 일지 수정</span>':''}</div>
+  <div class="chips-sel">${['출석','지각','결석'].map(a=>`<button class="${r.att===a?'on':''}" onclick="UI.cl.rows[${i}].att='${a}';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on');UI.mdirty=true;clPrev(${i})">${a==='출석'?'✅':a==='지각'?'⏰':'❌'} ${a}</button>`).join('')}</div>
+  <div class="clgrid"><div><label class="lb">단어</label>${f('voca','예) 3과 28/30')}</div><div><label class="lb">구문</label>${f('syntax','예) 8/10')}</div><div><label class="lb">내신</label>${f('exam','예) 85점')}</div></div>
+  <label class="lb">이 학생만 추가로 한 내용 <span class="muted" style="font-weight:400">(없으면 비워두세요)</span></label><input class="inp" value="${esc(r.extra)}" placeholder="예) 지난 시간 못 한 1과 서술형 보충" oninput="UI.cl.rows[${i}].extra=this.value;clPrev(${i})">
+  <label class="lb">다음 수업까지 숙제</label><textarea class="inp" rows="2" placeholder="플래너에 넣은 숙제가 자동으로 들어와요" oninput="UI.cl.rows[${i}].hw=this.value;clPrev(${i})">${esc(r.hw)}</textarea>
+  <label class="lb">선생님 한마디</label><textarea class="inp" rows="2" placeholder="예) 오늘 집중력이 좋았어요!" oninput="UI.cl.rows[${i}].memo=this.value;clPrev(${i})">${esc(r.memo)}</textarea>
+  <details style="margin-top:8px"><summary class="muted" style="font-size:12.5px;cursor:pointer">📱 학부모 카톡 미리보기</summary><pre class="kakao" id="cl-pv${i}" style="margin-top:6px"></pre></details></div>`;
+}
+function clLog(r){const C=UI.cl,content=[(C.content||'').trim(),(r.extra||'').trim()].filter(Boolean).join('\n');const o=r.id&&DB.L.find(x=>x.id===r.id);
+  return {sid:r.sid,date:C.date,att:r.att,content,voca:r.voca,syntax:r.syntax,exam:r.exam,hw:r.hw,memo:r.memo,by:o&&o.by||ME.id}}
+function clPrev(i){(i===undefined?UI.cl.rows.map((_,k)=>k):[i]).forEach(k=>{const e=$('#cl-pv'+k);if(e)e.textContent=logMsg(clLog(UI.cl.rows[k]))})}
+function saveClassLog(){
+  const C=UI.cl;if(!C)return;
+  const miss=C.rows.filter(r=>r.att!=='결석'&&!clLog(r).content);
+  if(miss.length){toast('오늘 수업 내용(공통)을 적어주세요');return}
+  const saved=[];
+  C.rows.forEach(r=>{const L=clLog(r);delete L.by;
+    if(r.id&&DB.L.find(x=>x.id===r.id)){Object.assign(DB.L.find(x=>x.id===r.id),L,{upd:nowStr()});saved.push(r.id)}
+    else{const n=Object.assign({id:'lg'+uid(),by:ME.id,at:nowStr()},L);DB.L.push(n);saved.push(n.id)}});
+  save();UI.cl=null;closeModal();render();
+  const abs=C.rows.filter(r=>r.att==='결석').map(r=>r.sid);
+  clDone(saved,abs,C.date,C.content);
+}
+function clDone(ids,abs,date,content){
+  UI.cldone={abs,date,content};
+  modal(`<h3 class="jua">✅ ${ids.length}명 일지를 저장했어요</h3><p class="muted" style="font-size:13px">학부모님께 보낼 카톡을 학생별로 복사해서 붙여넣기 하세요.</p>
+  ${ids.map(id=>{const L=DB.L.find(x=>x.id===id);if(!L)return '';return `<div class="list-row"><b style="flex:1;color:var(--ink)">${esc(stu(L.sid).name)} ${L.att&&L.att!=='출석'?`<span class="chip ${L.att==='결석'?'c-redo':'c-sub'}">${L.att}</span>`:''}</b><button class="btn btn-soft btn-sm" onclick="copyText(logMsg(DB.L.find(x=>x.id==='${id}')));this.textContent='✓ 복사함'">📋 카톡 복사</button></div>`}).join('')}
+  <div class="btns">${abs.length?`<button class="btn btn-soft" onclick="addVideo(UI.cldone.abs,UI.cldone.date,UI.cldone.content)">📺 결석생 보충 영상 올리기</button>`:''}<button class="btn btn-navy" onclick="closeModal()">닫기</button></div>`);
+}
+/* 홈: 반별 일지 쓰기 카드 (오늘 수업 + 최근 7일 안 쓴 수업) */
+function classLogCard(){
+  const out=[];
+  for(let d=addD(TODAY,-6);d<=TODAY;d=addD(d,1)){const wd=pd(d).getDay();
+    weekSess(wkStart(d)).filter(c=>!c._off&&c.day===wd&&(isOwner()?true:c.tid===ME.id)).forEach(c=>{
+      const sids=(c.sids||[]).filter(i=>act(stu(i)));if(!sids.length)return;const n=sids.filter(i=>hasLog(i,d)).length;
+      if(d===TODAY||n<sids.length)out.push({c,d,sids,n})})}
+  if(!out.length)return '';
+  out.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:a.c.start<b.c.start?-1:1);
+  return `<div class="card" style="margin-top:14px"><h3 class="sec" style="margin-top:0">👥 반 일지 쓰기 <span class="muted" style="font-size:12.5px;font-weight:400">한 반 학생들 일지를 한 화면에서 같이 써요</span></h3>
+  ${out.slice(0,8).map(x=>`<div class="list-row"><span style="font-size:18px">${x.n===x.sids.length?'✅':'📝'}</span><div style="flex:1;min-width:0"><b style="color:var(--ink);font-size:14px">${esc(x.c.name)}</b> <span class="muted" style="font-size:12.5px">${x.d===TODAY?'오늘':lbl(x.d)} ${x.c.start}${isOwner()?' · '+esc((tch(x.c.tid)||{}).name||''):''}</span><div class="muted" style="font-size:12.5px">${x.sids.map(i=>esc(stu(i).name)).join(', ')} · ${x.n}/${x.sids.length}명 씀</div></div><button class="btn ${x.n===x.sids.length?'btn-ghost':'btn-navy'} btn-sm" onclick="UI.cl=null;classLog('${x.c.id}','${x.d}')">${x.n===x.sids.length?'수정':'반 일지 쓰기'}</button></div>`).join('')}</div>`;
 }
 function addPC(sid){
   UI.pch=PCHOW[0];

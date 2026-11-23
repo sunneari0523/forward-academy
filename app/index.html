@@ -526,6 +526,11 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:
 .clog{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:#fff}
 .clog .h{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-bottom:6px}.clog .h b{color:var(--ink)}
 .clog .x{margin-left:auto;background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer}.clog .x:hover{color:var(--red)}
+.lgwrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}.lgmain{display:flex;flex-direction:column;gap:12px}.lgside{position:sticky;top:12px}
+.lgsec h3{display:flex;align-items:center;gap:8px}.lgn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px}.req{font-size:11.5px;color:var(--red);background:var(--peach-soft);border-radius:99px;padding:2px 8px;font-weight:700}
+.clgrid2{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.lgphs{display:flex;flex-wrap:wrap;gap:8px}.lgph{position:relative}.lgph img{width:96px;height:96px;object-fit:cover;border-radius:12px;border:1px solid var(--line);cursor:zoom-in}.lgph button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-size:11px;cursor:pointer}
+.lgadd{width:96px;height:96px;border-radius:12px;border:2px dashed var(--line);background:#fff;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer}.lgbar{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+@media(max-width:1000px){.lgwrap{grid-template-columns:1fr}.lgside{position:static}}@media(max-width:600px){.clgrid2{grid-template-columns:1fr}}
 .clog .t{white-space:pre-wrap;font-size:14.5px;line-height:1.6;color:var(--ink)}
 .backlink{background:none;border:none;color:var(--muted);font-weight:700;font-size:14px;padding:4px 0;margin-bottom:6px;cursor:pointer}
 .backlink:hover{color:var(--ink)}
@@ -1929,7 +1934,7 @@ function staffView(){
   const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['listen','🎧','듣기'],['att','⏱️','공부 시간',0],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()],['staff','🧑‍🏫','강사방']];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
-  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,listen:tListen,staff:tStaff}[UI.tv]();
+  let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,log:tLogPage,listen:tListen,staff:tStaff}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
       <nav>${nav.map(([k,i,l,n])=>`<button class="${UI.tv===k?'on':''} ${NAV_M1.includes(k)?'':'m2'}" onclick="csLeave();UI.tv='${k}';UI.q=null;UI.exam=null;UI.fx=null;if('${k}'==='plan'){UI.ws=null;UI.pmode=null}if('${k}'==='people')UI.pv=null;if('${k}'==='voca')VS.view='home';render();scrollTo(0,0)"><span>${i}</span>${l}${n?`<span class="n">${n}</span>`:''}</button>`).join('')}${(()=>{const sec=nav.filter(x=>!NAV_M1.includes(x[0])),on=sec.some(x=>x[0]===UI.tv),c=sec.reduce((a,x)=>a+(x[3]||0),0);UI.navSec=sec;return `<button class="mmore ${on?'on':''}" onclick="moreSheet()"><span>☰</span>${on?esc(sec.find(x=>x[0]===UI.tv)[2]):'더보기'}${c?`<span class="n">${c}</span>`:''}</button>`})()}</nav>
@@ -2186,42 +2191,86 @@ function autoLog(sid,date){
 }
 function logMsg(L){
   const s=stu(L.sid)||{name:''},t=tch(L.by)||{name:''},line=(k,v)=>v&&v.trim()?`- ${k}: ${v.trim()}\n`:'';
-  const tests=line('단어',L.voca)+line('구문',L.syntax)+line('내신',L.exam);
+  const tests=line('단어',L.voca)+line('쪽지',L.quiz)+line('구문',L.syntax)+line('내신',L.exam);
   if(L.att==='결석')return `[포워드 영어학원] ${s.name} 학생 결석 안내 (${lbl(L.date)})\n\n오늘 수업에 결석했어요.\n`+(L.content&&L.content.trim()?`\n📖 오늘 진행한 수업\n${L.content.trim().split('\n').map(x=>'- '+x.replace(/^[-·•]\s*/,'')).join('\n')}\n`:'')+`\n📺 수업 영상은 포워드 학습관리 앱 '오늘' 화면에 올려드릴게요.\n`+(L.hw&&L.hw.trim()?`\n📝 숙제\n${L.hw.trim().split('\n').map(x=>'- '+x.replace(/^[-·•]\s*/,'')).join('\n')}\n`:'')+(L.memo&&L.memo.trim()?`\n💬 ${L.memo.trim()}\n`:'')+`\n담당: ${t.name}${t.role==='owner'?' 원장':' 선생님'}\n문의: 053-716-0859`;
   return `[포워드 영어학원] ${s.name} 학생 수업 안내 (${lbl(L.date)})${L.att==='지각'?' · 지각':''}\n\n`+
    (L.content&&L.content.trim()?`📖 오늘 수업\n${L.content.trim().split('\n').map(x=>'- '+x.replace(/^[-·•]\s*/,'')).join('\n')}\n\n`:'')+
    (tests?`✅ 테스트 결과\n${tests}\n`:'')+
+   (L.wk!==false&&L.weak&&L.weak.trim()?`📌 보완할 점\n${L.weak.trim()}\n\n`:'')+
    (L.hw&&L.hw.trim()?`📝 다음 수업까지 숙제\n${L.hw.trim().split('\n').map(x=>'- '+x.replace(/^[-·•]\s*/,'')).join('\n')}\n\n`:'')+
    (L.memo&&L.memo.trim()?`💬 선생님 한마디\n${L.memo.trim()}\n\n`:'')+
    `담당: ${t.name}${t.role==='owner'?' 원장':' 선생님'}\n문의: 053-716-0859`;
 }
+const LG_OPT={hwDone:['✅ 다 해옴','🟡 일부만','❌ 안 해옴'],focus:['😀 좋음','🙂 보통','😟 부족']};
+function prevLog(sid,date){return DB.L.filter(l=>l.sid===sid&&l.date<date).sort((a,b)=>a.date<b.date?1:-1)[0]}
 function editLog(sid,id,date){
-  const old=id?DB.L.find(x=>x.id===id):null, d=old?old.date:(date||TODAY), a=autoLog(sid,d);
-  const L=old?Object.assign({},old):{sid,date:d,content:'',voca:a.voca,syntax:'',exam:a.exam,hw:a.hw,memo:''};
-  UI.lg=L;
-  modal(`<h3 class="jua">📝 수업 일지 · ${esc(stu(sid).name)}</h3><p class="muted" style="font-size:13px">단어·내신 결과와 숙제는 기록된 내용으로 자동으로 채워져요. 고쳐도 돼요.</p>
-  <label class="lb">수업 날짜</label><input class="inp" type="date" id="lg-date" value="${L.date}" onchange="UI.lg.date=this.value;lgPrev()">
-  <label class="lb">출결</label><div class="chips-sel" id="lg-att">${['출석','지각','결석'].map(a=>`<button class="${(L.att||'출석')===a?'on':''}" onclick="UI.lg.att='${a}';[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on');lgPrev()">${a==='출석'?'✅':a==='지각'?'⏰':'❌'} ${a}</button>`).join('')}</div>
-  <label class="lb">오늘 수업 내용 *</label><textarea class="inp" id="lg-content" rows="3" placeholder="예) 2과 본문 분석 1~3문단&#10;관계대명사 what 개념 + 문제 풀이" oninput="UI.lg.content=this.value;lgPrev()">${esc(L.content)}</textarea>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><label class="lb">단어 테스트</label><input class="inp" id="lg-voca" value="${esc(L.voca)}" placeholder="예) 3과 28/30 통과" oninput="UI.lg.voca=this.value;lgPrev()"></div>
-  <div><label class="lb">구문 테스트</label><input class="inp" id="lg-syntax" value="${esc(L.syntax)}" placeholder="예) 구문 8/10" oninput="UI.lg.syntax=this.value;lgPrev()"></div>
-  <div><label class="lb">내신 테스트</label><input class="inp" id="lg-exam" value="${esc(L.exam)}" placeholder="예) 내신 1차 85점" oninput="UI.lg.exam=this.value;lgPrev()"></div></div>
-  <label class="lb">다음 수업까지 숙제</label><textarea class="inp" id="lg-hw" rows="2" placeholder="플래너에 넣은 숙제가 자동으로 들어와요" oninput="UI.lg.hw=this.value;lgPrev()">${esc(L.hw)}</textarea>
-  <label class="lb">선생님 한마디 (학부모님께)</label><textarea class="inp" id="lg-memo" rows="2" placeholder="예) 오늘 집중력이 좋았어요! 서술형 조건 확인하는 습관만 잡으면 돼요." oninput="UI.lg.memo=this.value;lgPrev()">${esc(L.memo)}</textarea>
-  <label class="lb">📱 학부모님께 보낼 카톡 미리보기</label><pre class="kakao" id="lg-prev"></pre>
-  <div class="btns">${id?`<button class="btn btn-warn" onclick="if(this.dataset.c){DB.L=DB.L.filter(x=>x.id!=='${id}');save();closeModal();render()}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-soft" onclick="saveLog2('${sid}','${id||''}',1)">저장 + 카톡 문구 복사</button><button class="btn btn-navy" onclick="saveLog2('${sid}','${id||''}')">저장</button></div>`);
-  lgPrev();
+  const old=id?DB.L.find(x=>x.id===id):null, d=old?old.date:(date||TODAY), a=autoLog(sid,d), dk='fw_lgd_'+sid+'_'+(id||d);
+  let L=old?JSON.parse(JSON.stringify(old)):{sid,date:d,att:'출석',content:'',voca:a.voca,quiz:'',quizPh:[],syntax:'',exam:a.exam,hwDone:'',focus:'',weak:'',next:'',note:'',hw:a.hw,memo:'',wk:true};
+  try{const dr=localStorage.getItem(dk);if(dr){L=Object.assign(L,JSON.parse(dr));setTimeout(()=>toast('쓰던 내용을 불러왔어요'),300)}}catch(e){}
+  L.quizPh=L.quizPh||[];if(L.wk===undefined)L.wk=true;
+  const p=prevLog(sid,L.date);if(p&&p.next&&p.next.trim()&&!L.prev)L.prev={text:p.next.trim(),res:'',note:''};
+  UI.lgBack=UI.tv==='log'?UI.lgBack:navSnap();UI.lg=L;UI.lgId=id||'';UI.lgKey=dk;
+  closeModal();UI.tv='log';render();scrollTo(0,0);
 }
-function lgPrev(){const e=$('#lg-prev');if(e)e.textContent=logMsg(Object.assign({by:(UI.lg.by||ME.id)},UI.lg))}
+function lgSet(k,v){UI.lg[k]=v;lgDraft();lgPrev()}
+function lgDraft(){clearTimeout(UI.lgt);UI.lgt=setTimeout(()=>{try{localStorage.setItem(UI.lgKey,JSON.stringify(UI.lg))}catch(e){}},500)}
+function lgChips(k,opts){return `<div class="chips-sel">${opts.map(o=>`<button class="${UI.lg[k]===o?'on':''}" onclick="UI.lg['${k}']=UI.lg['${k}']==='${o}'?'':'${o}';lgDraft();lgPrev();[...this.parentNode.children].forEach(b=>b.classList.remove('on'));if(UI.lg['${k}'])this.classList.add('on')">${o}</button>`).join('')}</div>`}
+function lgIn(k,ph){return `<input class="inp" value="${esc(UI.lg[k]||'')}" placeholder="${ph}" oninput="lgSet('${k}',this.value)">`}
+function lgTa(k,ph,r){return `<textarea class="inp" rows="${r||3}" placeholder="${ph}" oninput="lgSet('${k}',this.value)">${esc(UI.lg[k]||'')}</textarea>`}
+function lgPhotos(){const e=$('#lg-ph');if(!e)return;e.innerHTML=UI.lg.quizPh.map((u,i)=>`<div class="lgph"><img data-v src="${u}"><button onclick="UI.lg.quizPh.splice(${i},1);lgDraft();lgPhotos()">✕</button></div>`).join('')+(UI.lg.quizPh.length<8?`<button class="lgadd" onclick="pickFiles(a=>{UI.lg.quizPh=UI.lg.quizPh.concat(a).slice(0,8);lgDraft();lgPhotos()})">📷<br>사진 추가</button>`:'')}
+function tLogPage(){
+  const L=UI.lg;if(!L||!stu(L.sid)){UI.tv='home';return tHome()}
+  const s=stu(L.sid),id=UI.lgId,abs=L.att==='결석',recent=DB.L.filter(l=>l.sid===L.sid&&l.id!==id).sort((a,b)=>a.date<b.date?1:-1).slice(0,3);
+  const vr=DB.R.filter(r=>r.sid===L.sid&&r.voca&&r.date>=addD(L.date,-6)&&r.date<=L.date).sort((a,b)=>a.date<b.date?1:-1);
+  const sec=(n,t,h,req)=>`<div class="card lgsec"><h3 class="sec" style="margin-top:0"><span class="lgn">${n}</span>${t}${req?' <span class="req">필수</span>':''}</h3>${h}</div>`;
+  setTimeout(()=>{lgPhotos();lgPrev()},0);
+  return `<div class="ph"><div><button class="btn btn-ghost btn-sm" onclick="lgExit()">← 돌아가기</button><h2 class="jua" style="margin-top:8px">📝 수업 일지 · ${esc(s.name)}</h2><p>${esc(s.school||'')} ${esc(s.grade||'')} · ${esc(sLabel(s))}${id?' · 쓴 일지 수정 중':''}</p></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">${id?`<button class="btn btn-warn" onclick="if(this.dataset.c){DB.L=DB.L.filter(x=>x.id!=='${id}');save();lgExit(1)}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-soft" onclick="saveLog2(1)">저장 + 카톡 복사</button><button class="btn btn-navy" onclick="saveLog2()">저장</button></div></div>
+  <div class="lgwrap"><div class="lgmain">
+  ${sec('1','수업 기본',`<div class="clgrid2"><div><label class="lb" style="margin-top:0">수업 날짜</label><input class="inp" type="date" value="${L.date}" onchange="UI.lg.date=this.value||UI.lg.date;lgDraft();lgPrev()"></div><div><label class="lb" style="margin-top:0">출결</label><div class="chips-sel">${['출석','지각','결석'].map(a=>`<button class="${L.att===a?'on':''}" onclick="UI.lg.att='${a}';lgDraft();render()">${a==='출석'?'✅':a==='지각'?'⏰':'❌'} ${a}</button>`).join('')}</div></div></div>
+    <label class="lb">오늘 수업 내용${abs?'':' *'}</label>${lgTa('content','예) 2과 본문 분석 1~3문단\n관계대명사 what 개념 + 문제 풀이',3)}
+    <div class="clgrid2"><div><label class="lb">수업 태도·집중도</label>${lgChips('focus',LG_OPT.focus)}</div><div><label class="lb">지난 숙제 해온 정도</label>${lgChips('hwDone',LG_OPT.hwDone)}</div></div>`,!abs)}
+  ${L.prev?sec('✔','지난 수업에서 "다음에 확인"하기로 한 것',`<div class="onebox" style="margin-top:0;white-space:pre-wrap">${esc(L.prev.text)}</div>
+    <label class="lb">확인 결과${abs?'':' *'}</label><div class="chips-sel">${['✅ 해결됨','🟡 아직 부족','⏭ 다음에 다시'].map(o=>`<button class="${L.prev.res===o?'on':''}" onclick="UI.lg.prev.res='${o}';lgDraft();[...this.parentNode.children].forEach(b=>b.classList.remove('on'));this.classList.add('on')">${o}</button>`).join('')}</div>
+    <input class="inp" style="margin-top:8px" value="${esc(L.prev.note||'')}" placeholder="예) 관계사 what 구분 5문제 중 4개 맞힘" oninput="UI.lg.prev.note=this.value;lgDraft()">`,!abs):''}
+  ${sec('2','테스트 결과',`<div class="clgrid2"><div><label class="lb" style="margin-top:0">단어 시험</label>${lgIn('voca','예) 3과 28/30 통과')}${vr.length?`<div class="muted" style="font-size:12px;margin-top:4px">이번 주 기록: ${vr.map(r=>esc(lbl(r.date)+' '+r.title.replace('단어 · ','')+' '+r.value)).join(' · ')}</div>`:''}</div>
+    <div><label class="lb" style="margin-top:0">쪽지시험 점수·범위</label>${lgIn('quiz','예) 2과 어법 쪽지 17/20')}</div>
+    <div><label class="lb">구문 테스트</label>${lgIn('syntax','예) 구문 8/10')}</div><div><label class="lb">내신 테스트</label>${lgIn('exam','예) 내신 1차 85점')}</div></div>
+    <label class="lb">📷 쪽지시험 친 거 사진 <span class="muted" style="font-weight:400">(채점한 시험지 · 최대 8장)</span></label><div id="lg-ph" class="lgphs"></div>`)}
+  ${sec('3','이번 주 부족한 점 · 다음 주 확인할 것',`<label class="lb" style="margin-top:0">이번 주 부족한 점${abs?'':' *'}</label>${lgTa('weak','예) 관계대명사 what / that 구분을 계속 헷갈림. 서술형에서 시제 조건 놓침',3)}
+    <label class="lb">다음 수업에 꼭 확인할 것${abs?'':' *'} <span class="muted" style="font-weight:400">(다음 일지 쓸 때 맨 위에 떠요)</span></label>${lgTa('next','예) what/that 구분 5문제 다시 풀리기, 2과 단어 재시험',2)}
+    <label class="lb" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${L.wk?'checked':''} onchange="UI.lg.wk=this.checked;lgDraft();lgPrev()"> 학부모 카톡에 '보완할 점'으로 넣기</label>`,!abs)}
+  ${sec('4','학생 개별 특이사항',`<p class="muted" style="font-size:12.5px;margin:0 0 6px">컨디션, 태도, 교우관계, 상담이 필요한 일 등 · 선생님들만 봐요 (카톡에 안 들어가요)</p>${lgTa('note','예) 요즘 수행평가 때문에 많이 피곤해 보임. 다음 주 학부모 상담 필요',3)}`)}
+  ${sec('5','숙제 · 학부모님께 한마디',`<label class="lb" style="margin-top:0">다음 수업까지 숙제</label>${lgTa('hw','플래너에 넣은 숙제가 자동으로 들어와요',3)}
+    <label class="lb">선생님 한마디 (학부모님께)</label>${lgTa('memo','예) 오늘 집중력이 좋았어요! 서술형 조건 확인하는 습관만 잡으면 돼요.',2)}`)}
+  </div>
+  <aside class="lgside"><div class="card"><h3 class="sec" style="margin-top:0">📱 학부모 카톡 미리보기</h3><pre class="kakao" id="lg-prev" style="max-height:46vh"></pre><button class="btn btn-soft btn-sm" style="width:100%;margin-top:8px" onclick="copyText(logMsg(Object.assign({by:UI.lg.by||ME.id},UI.lg)))">📋 문구만 복사</button></div>
+    <div class="card" style="margin-top:12px"><h3 class="sec" style="margin-top:0">🗂️ 지난 일지</h3>${recent.map(l=>`<div class="clog" style="margin-top:8px"><div class="h"><b>${lbl(l.date)}</b><span class="muted">${esc((tch(l.by)||{}).name||'')}</span></div><div class="t" style="font-size:13px">${esc(l.content||'')}${l.weak?`<div class="muted" style="margin-top:4px">⚠️ ${esc(l.weak)}</div>`:''}${l.note?`<div class="muted" style="margin-top:4px">🔒 ${esc(l.note)}</div>`:''}</div></div>`).join('')||'<div class="empty" style="padding:12px">첫 일지예요</div>'}</div></aside></div>
+  <div class="lgbar"><button class="btn btn-ghost" onclick="lgExit()">취소</button><button class="btn btn-soft" onclick="saveLog2(1)">저장 + 카톡 복사</button><button class="btn btn-navy" onclick="saveLog2()">저장</button></div>`;
+}
+function lgExit(saved){const dirty=!saved&&UI.lgKey&&(()=>{try{return !!localStorage.getItem(UI.lgKey)}catch(e){return false}})();
+  if(dirty&&!UI.lgOk){UI.lgOk=1;toast('저장 안 하고 나가려면 한 번 더 눌러주세요 (쓰던 내용은 이 기기에 남아요)');setTimeout(()=>UI.lgOk=0,3000);return}
+  UI.lgOk=0;if(saved)try{localStorage.removeItem(UI.lgKey)}catch(e){}
+  const b=UI.lgBack;UI.lg=null;if(b&&b.tv!=='log')navApply(b);else UI.tv='home';render();scrollTo(0,0)}
+function lgExtra(l){const r=(i,t)=>t&&String(t).trim()?`<div style="font-size:12.5px;margin-top:6px;color:var(--muted);white-space:pre-wrap">${i} ${esc(t)}</div>`:'';
+  return [l.focus||l.hwDone?r('🧭',[l.focus&&'태도 '+l.focus,l.hwDone&&'숙제 '+l.hwDone].filter(Boolean).join(' · ')):'',l.prev&&l.prev.res?r('✔',`지난번 확인: ${l.prev.res}${l.prev.note?' — '+l.prev.note:''}`):'',r('⚠️ 부족한 점:',l.weak),r('👉 다음에 확인:',l.next),r('🔒 특이사항:',l.note),
+  (l.quizPh||[]).length?`<div class="lgphs" style="margin-top:6px">${l.quizPh.map(u=>`<div class="lgph"><img data-v src="${u}" style="width:64px;height:64px"></div>`).join('')}</div>`:''].join('')}
+function lgPrev(){const e=$('#lg-prev');if(e&&UI.lg)e.textContent=logMsg(Object.assign({by:(UI.lg.by||ME.id)},UI.lg))}
+function saveLog2(copy){
+  const L=UI.lg,id=UI.lgId,abs=L.att==='결석',t=v=>(v||'').trim();
+  if(!abs){
+    if(!t(L.content)){toast('오늘 수업 내용을 적어주세요');return}
+    if(L.prev&&!L.prev.res){toast('지난 수업에서 확인하기로 한 것의 결과를 골라주세요');return}
+    if(!t(L.weak)){toast('이번 주 부족한 점을 적어주세요');return}
+    if(!t(L.next)){toast('다음 수업에 확인할 것을 적어주세요');return}
+  }
+  if(id&&DB.L.find(x=>x.id===id))Object.assign(DB.L.find(x=>x.id===id),L,{upd:nowStr()});else DB.L.push(Object.assign({id:'lg'+uid(),by:ME.id,at:nowStr()},L));
+  if(copy)copyText(logMsg(Object.assign({by:L.by||ME.id},L)));
+  save();const sid=L.sid,d=L.date,c=L.content;lgExit(1);if(!copy)toast('수업 일지를 저장했어요');
+  if(abs)setTimeout(()=>addVideo([sid],d,c),400);
+}
 function copyText(t){try{navigator.clipboard.writeText(t).then(()=>toast('복사했어요! 카톡에 붙여넣기 하세요 📋'),()=>fallbackCopy(t))}catch(e){fallbackCopy(t)}}
 function fallbackCopy(t){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast('복사했어요! 카톡에 붙여넣기 하세요 📋')}catch(e){toast('복사가 안 돼요. 미리보기를 길게 눌러 복사해 주세요')}a.remove()}
-function saveLog2(sid,id,copy){
-  const L=UI.lg;if(L.att!=='결석'&&(!L.content||!L.content.trim())){toast('오늘 수업 내용을 적어주세요');$('#lg-content').focus();return}
-  if(id){Object.assign(DB.L.find(x=>x.id===id),L,{upd:nowStr()})}else DB.L.push(Object.assign({id:'lg'+uid(),by:ME.id,at:nowStr()},L));
-  if(copy)copyText(logMsg(Object.assign({by:L.by||ME.id},L)));
-  save();closeModal();render();if(!copy)toast('수업 일지를 저장했어요');
-  if(L.att==='결석')setTimeout(()=>addVideo([sid],L.date,L.content),400);
-}
 function addPC(sid){
   UI.pch=PCHOW[0];
   modal(`<h3 class="jua">📞 학부모 연락 기록 · ${esc(stu(sid).name)}</h3><p class="muted" style="font-size:13px">학부모 ${esc(stu(sid).parent||'연락처 미등록')}</p>
@@ -2236,7 +2285,7 @@ function careSection(sid){
   return `<div class="grid2" style="margin-bottom:16px">
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 class="sec" style="margin:0">📝 수업 일지 <span class="muted" style="font-size:12.5px;font-weight:400">${logs.length}회</span></h3><button class="btn btn-navy btn-sm" onclick="editLog('${sid}')">+ 오늘 일지 쓰기</button></div>
     ${miss.length?`<div class="warnbox">⚠️ 일지 안 쓴 수업: ${miss.map(m=>`<button onclick="editLog('${sid}',null,'${m.date}')">${lbl(m.date)}</button>`).join(' ')}</div>`:''}
-    ${logs.slice(0,4).map(l=>`<div class="clog"><div class="h"><b>${lbl(l.date)}</b><span class="muted">${esc((tch(l.by)||{}).name||'')}</span><button class="x" onclick="copyText(logMsg(DB.L.find(x=>x.id==='${l.id}')))">📋 카톡 복사</button><button class="x" style="margin-left:0" onclick="editLog('${sid}','${l.id}')">수정</button></div><div class="t" style="font-size:13.5px">${esc(l.content)}${l.voca||l.syntax||l.exam?`<div class="muted" style="font-size:12.5px;margin-top:4px">${[l.voca&&'단어 '+l.voca,l.syntax&&'구문 '+l.syntax,l.exam&&'내신 '+l.exam].filter(Boolean).map(esc).join(' · ')}</div>`:''}</div></div>`).join('')||'<div class="empty" style="padding:16px">아직 일지가 없어요</div>'}
+    ${logs.slice(0,4).map(l=>`<div class="clog"><div class="h"><b>${lbl(l.date)}</b><span class="muted">${esc((tch(l.by)||{}).name||'')}</span><button class="x" onclick="copyText(logMsg(DB.L.find(x=>x.id==='${l.id}')))">📋 카톡 복사</button><button class="x" style="margin-left:0" onclick="editLog('${sid}','${l.id}')">수정</button></div><div class="t" style="font-size:13.5px">${esc(l.content)}${l.voca||l.quiz||l.syntax||l.exam?`<div class="muted" style="font-size:12.5px;margin-top:4px">${[l.voca&&'단어 '+l.voca,l.quiz&&'쪽지 '+l.quiz,l.syntax&&'구문 '+l.syntax,l.exam&&'내신 '+l.exam].filter(Boolean).map(esc).join(' · ')}</div>`:''}${lgExtra(l)}</div></div>`).join('')||'<div class="empty" style="padding:16px">아직 일지가 없어요</div>'}
     ${logs.length?`<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="UI.lm='all';logAll('${sid}')">📚 수업 일지 전체 ${logs.length}회 누적 보기 ›</button>`:''}
   </div>
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 class="sec" style="margin:0">📞 학부모 연락 ${pcBadge(sid)}</h3><button class="btn btn-navy btn-sm" onclick="addPC('${sid}')">+ 연락 기록</button></div>
@@ -2558,9 +2607,9 @@ function logAll(sid){
   let cur='';
   const rows=L.map(l=>{const m=l.date.slice(0,7),head=UI.lm==='all'&&m!==cur?`<h4 style="margin:16px 0 2px;color:var(--ink)">${mL(m)} <span class="muted" style="font-weight:400;font-size:12.5px">${all.filter(x=>x.date.startsWith(m)).length}회</span></h4>`:'';cur=m;
     const a=l.att||'출석',ac=a==='결석'?'c-redo':a==='지각'?'c-sub':'c-ok';
-    const tests=[l.voca&&'단어 '+l.voca,l.syntax&&'구문 '+l.syntax,l.exam&&'내신 '+l.exam].filter(Boolean).map(esc).join(' · ');
+    const tests=[l.voca&&'단어 '+l.voca,l.quiz&&'쪽지 '+l.quiz,l.syntax&&'구문 '+l.syntax,l.exam&&'내신 '+l.exam].filter(Boolean).map(esc).join(' · ');
     return `${head}<div class="clog"><div class="h"><span class="chip ${ac}">${a}</span><b>${lbl(l.date)}</b><span class="muted">${esc((tch(l.by)||{}).name||'')}</span><button class="x" onclick="copyText(logMsg(DB.L.find(x=>x.id==='${l.id}')))">📋 카톡 복사</button><button class="x" style="margin-left:0" onclick="editLog('${sid}','${l.id}')">수정</button></div>
-    <div class="t" style="font-size:13.5px">${esc(l.content||'')}${tests?`<div class="muted" style="font-size:12.5px;margin-top:4px">${tests}</div>`:''}${l.hw&&l.hw.trim()?`<div style="font-size:12.5px;margin-top:6px;color:var(--muted)">📚 숙제<br>${esc(l.hw)}</div>`:''}${l.memo&&l.memo.trim()?`<div style="font-size:12.5px;margin-top:6px;color:var(--muted)">💬 ${esc(l.memo)}</div>`:''}</div></div>`}).join('');
+    <div class="t" style="font-size:13.5px">${esc(l.content||'')}${tests?`<div class="muted" style="font-size:12.5px;margin-top:4px">${tests}</div>`:''}${lgExtra(l)}${l.hw&&l.hw.trim()?`<div style="font-size:12.5px;margin-top:6px;color:var(--muted)">📚 숙제<br>${esc(l.hw)}</div>`:''}${l.memo&&l.memo.trim()?`<div style="font-size:12.5px;margin-top:6px;color:var(--muted)">💬 ${esc(l.memo)}</div>`:''}</div></div>`}).join('');
   modal(`<h3 class="jua">📚 ${esc(s.name)} 수업 일지 누적</h3>
   <p class="muted" style="font-size:13px;margin:4px 0 10px">${UI.lm==='all'?'전체':mL(UI.lm)} ${L.length}회 · ✅ 출석 ${att.출석} · ⏰ 지각 ${att.지각} · ❌ 결석 ${att.결석}</p>
   <div class="chips-sel" style="flex-wrap:wrap">${['all'].concat(months).map(m=>`<button class="${UI.lm===m?'on':''}" onclick="UI.lm='${m}';logAll('${sid}')">${m==='all'?'전체':(+m.slice(5))+'월'}</button>`).join('')}</div>

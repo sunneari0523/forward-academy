@@ -1235,17 +1235,17 @@ let LG={role:/[?&]parent\b/.test(location.search)?'parent':'student',err:''};
 function loginView(){
   const r=LG.role;
   const quick=r==='student'?DB.S.map(s=>`<button onclick="loginAs('student','${s.id}')">${esc(s.name)} <span class="muted">${esc(s.code)}</span></button>`).join(''):
-    DB.T.filter(t=>r==='owner'?t.role==='owner':t.role==='teacher').map(t=>`<button onclick="loginAs('${t.role}','${t.id}')">${esc(t.name)}</button>`).join('');
-  const first=ONLINE&&r==='owner'?'<p class="muted" style="font-size:12.5px;margin-top:8px;text-align:center">처음 한 번은 원장 이름과 비밀번호를 정해서 들어가면 그대로 원장 계정이 만들어져요.</p>':'';
+    DB.T.map(t=>`<button onclick="loginAs('${t.role}','${t.id}')">${esc(t.name)}</button>`).join('');
+  const first='';
   $('#app').innerHTML=`${ONLINE?'':'<div class="demo-bar"><b>시연 버전</b> · 아래 시연 계정을 눌러 바로 들어가 보세요. 기록은 이 기기에만 저장돼요.</div>'}
   <div class="login"><div class="login-box">
     <a href="../index.html" title="홈페이지로"><img class="logo" src="logo.png" alt="포워드 영어학원"></a>
     <h1 class="jua">오늘의 공부, 시작해볼까요?</h1>
     <p class="sub">완전히 알 때까지, 포워드.</p>
-    <div class="seg" style="grid-template-columns:repeat(4,1fr)"><button class="${r==='student'?'on':''}" onclick="LG.role='student';LG.err='';loginView()">학생</button><button class="${r==='parent'?'on':''}" onclick="LG.role='parent';LG.err='';loginView()">학부모</button><button class="${r==='teacher'?'on':''}" onclick="LG.role='teacher';LG.err='';loginView()">강사</button><button class="${r==='owner'?'on':''}" onclick="LG.role='owner';LG.err='';loginView()">원장</button></div>
+    <div class="seg"><button class="${r==='student'?'on':''}" onclick="LG.role='student';LG.err='';loginView()">학생</button><button class="${r==='parent'?'on':''}" onclick="LG.role='parent';LG.err='';loginView()">학부모</button><button class="${r==='teacher'?'on':''}" onclick="LG.role='teacher';LG.err='';loginView()">강사</button></div>
     ${r==='student'?`<label class="lb">이름</label><input class="inp" id="ln" placeholder="이름" autocomplete="off"><label class="lb">학생코드</label><input class="inp" id="lc" placeholder="등록 연도 + 내 휴대폰 뒷번호 4자리 (예: 20261234)" inputmode="numeric">`
     :r==='parent'?`<label class="lb">아이디 (학생 이름)</label><input class="inp" id="ln" placeholder="자녀 이름" autocomplete="off"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" inputmode="numeric" placeholder="2026 + 학부모님 휴대폰 가운데 번호"><p class="muted" style="font-size:12.5px;margin-top:8px">예) 학부모님 번호가 010-1234-5678이면 비밀번호는 20261234<br>문의 053-716-0859</p>`
-    :`<label class="lb">이름</label><input class="inp" id="ln" placeholder="${r==='owner'?'원장':'강사 이름'}"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="비밀번호">`}
+    :`<label class="lb">이름</label><input class="inp" id="ln" placeholder="강사 이름 (원장도 여기서)"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="비밀번호">`}
     <button class="btn btn-navy" style="width:100%;margin-top:18px;padding:15px" onclick="doLogin()">${r==='student'?'나의 공부 시작하기 →':r==='parent'?'우리 아이 공부 보기 →':'관리 화면 들어가기 →'}</button>
     <div class="err">${esc(LG.err)}</div>${first}
     ${ONLINE?'':`<div class="quick"><div class="t">🧪 시연 계정 (눌러서 바로 로그인)</div><div class="list">${quick}</div></div>`}
@@ -1259,7 +1259,7 @@ async function doLogin(){
     if(!n||!c){LG.err=LG.role==='student'?'이름과 학생코드를 입력해 주세요':LG.role==='parent'?'자녀 이름과 비밀번호를 입력해 주세요':'이름과 비밀번호를 입력해 주세요';return loginView()}
     const b=document.querySelector('.login-box .btn-navy');if(b){b.disabled=true;b.textContent='확인 중…'}
     try{
-      const j=await rpc('fw_login',{p_role:LG.role,p_name:n,p_secret:c});
+      const j=await rpc('fw_login',{p_role:LG.role==='teacher'?'staff':LG.role,p_name:n,p_secret:c});
       if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':LG.role==='parent'?'자녀 이름과 비밀번호를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
       TOKEN=j.token;FOLDER=await sha(TOKEN);ME={role:j.role,id:j.id,token:j.token};store.set(SKEY,JSON.stringify(ME));LG.err='';
       loadingView();await pullNow(true);UI={};try{afterLoad()}catch(e){bootTrouble('화면을 여는 중 문제가 생겼어요: '+e.message+' — 이 화면을 캡처해서 알려주세요')}
@@ -1268,7 +1268,7 @@ async function doLogin(){
   }
   if(LG.role==='parent'){const k=DB.S.find(x=>x.name===n&&parentPw(x)&&parentPw(x)===c);if(!k){LG.err='자녀 이름과 비밀번호를 다시 확인해 주세요';return loginView()}const pa=paSynth(k.parent);DB.PA=[pa];loginAs('parent',pa.id);return}
   if(LG.role==='student'){const s=DB.S.find(x=>x.name===n&&x.code===c);if(!s){LG.err='이름과 학생코드를 다시 확인해 주세요';return loginView()}loginAs('student',s.id)}
-  else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
+  else{const t=DB.T.find(x=>x.name===n&&x.pw===c);if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
 function loginAs(role,id){ME={role,id};store.set(SKEY,JSON.stringify(ME));UI={};render()}
 /* ----- 🏫 등·하원 출결 ----- */

@@ -1608,7 +1608,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261124184235';
+const APP_VER='20261124213906';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1873,6 +1873,7 @@ function examScore(e,sid){const a=e.res[sid];if(!a)return null;let c=0;e.key.for
 function sScore(s){
   if(UI.xt&&xGet(UI.xt))return sXView(xGet(UI.xt));UI.xt=null;
   if(UI.frv){const v=sFocusView(UI.frv);if(v)return v}
+  if(UI.fri){const v=sFocusInput(UI.fri);if(v)return v}
   if(UI.fcv){const v=sCheckView(UI.fcv);if(v)return v}
   const ex=DB.E.filter(e=>e.res[s.id]).sort((a,b)=>a.date<b.date?-1:1);
   const recs=DB.R.filter(r=>r.sid===s.id&&!r.voca);
@@ -2398,7 +2399,7 @@ function fxView(id){const x=(DB.FX||[]).find(y=>y.id===id);if(!x){UI.fx=null;ret
   ${fxFilesCard(x)}
   ${worst.length?`<div class="card" style="margin-bottom:14px"><b style="color:var(--ink)">많이 틀린 문항</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${worst.map(o=>`<span class="chip ${o.p<50?'c-redo':'c-sub'}">${o.q}번 ${esc(FX_TYPES[o.q-1])} · 정답률 ${o.p}%</span>`).join('')}</div></div>`:''}
   <div class="tbwrap"><table class="tb"><tr><th>석차</th><th>이름</th><th>원점수</th><th>등급</th><th>틀린 문항</th><th></th></tr>
-  ${R.map((r,i)=>`<tr><td>${1+R.filter(y=>y.score>r.score).length}</td><td><b style="color:var(--ink)">${esc(frName(r))}</b>${r.sid?'':' <span class="chip c-todo" title="같은 이름·휴대폰 뒷번호로 등록되면 자동 연결돼요">미등록</span>'}</td><td><b>${r.score}</b></td><td>${r.grd}등급</td><td class="muted" style="font-size:12.5px">${r.wrong.length?r.wrong.join(', '):'없음 🎉'}</td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="frPrint('${r.id}')">🖨 리포트</button> <button class="btn btn-ghost btn-sm" onclick="frNew('${id}','${r.id}')">수정</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty" style="padding:14px">학생 답을 입력하면 바로 채점돼요</div></td></tr>'}</table></div>
+  ${R.map((r,i)=>`<tr><td>${1+R.filter(y=>y.score>r.score).length}</td><td><b style="color:var(--ink)">${esc(frName(r))}</b>${r.sid?'':' <span class="chip c-todo" title="같은 이름·휴대폰 뒷번호로 등록되면 자동 연결돼요">미등록</span>'}${r.self?' <span class="chip c-sub" title="학생이 자기 계정에서 직접 입력했어요">학생 입력</span>':''}</td><td><b>${r.score}</b></td><td>${r.grd}등급</td><td class="muted" style="font-size:12.5px">${r.wrong.length?r.wrong.join(', '):'없음 🎉'}</td><td style="white-space:nowrap"><button class="btn btn-soft btn-sm" onclick="frPrint('${r.id}')">🖨 리포트</button> <button class="btn btn-ghost btn-sm" onclick="frNew('${id}','${r.id}')">수정</button></td></tr>`).join('')||'<tr><td colspan="6"><div class="empty" style="padding:14px">학생 답을 입력하면 바로 채점돼요</div></td></tr>'}</table></div>
   ${R.length>1?`<button class="btn btn-ghost" style="margin-top:12px" onclick="frPrintAll('${id}')">🖨 전체 리포트 한 번에 인쇄</button>`:''}`}
 /* ----- F:OCUS 시험 자료 (문제지·정답·듣기) — FX 안에 있어서 선생님만 보여요 ----- */
 const FX_SLOTS=[['b4','📄 문제지 (B4 출력용)'],['pdf','📄 문제지 (A3 원본)'],['docx','📝 문제지 Word'],['ans','✅ 정답·해설 PDF'],['ansDocx','📝 정답·해설 Word'],['script','📜 듣기 대본'],['mp3','🎧 듣기 mp3']];
@@ -2480,8 +2481,36 @@ function frPrintHTML(list){const w=window.open('','_blank');if(!w){toast('팝업
 function frPrint(rid){const r=DB.FR.find(y=>y.id===rid);if(r)frPrintHTML([r])}
 function frPrintAll(fxid){const L=frOf(fxid).sort((a,b)=>frName(a)<frName(b)?-1:1);if(L.length)frPrintHTML(L)}
 /* ----- 학생 앱: 성적 탭 ----- */
-function sFocus(s){const L=(DB.FR||[]).filter(r=>r.sid===s.id).sort((a,b)=>a.date<b.date?1:-1);if(!L.length)return '';
-  return `<div class="sec-t"><h3 class="jua">🎯 F:OCUS 주간 모의고사</h3></div>${L.map(r=>`<button class="exam" onclick="UI.frv='${r.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">${esc(r.title)}</b><div class="muted" style="font-size:12.5px">${esc(r.date)} · ${r.grd}등급 · 리포트 보기 ›</div></div><div class="sc">${r.score}<small style="font-size:14px">점</small></div></button>`).join('')}`}
+/* 학생이 직접 답 입력 → 서버(fw_focus_submit)가 정답으로 채점해요. 학생 앱에는 정답이 안 내려와요 */
+function frOpen(s){const done=new Set((DB.FR||[]).filter(r=>r.sid===s.id).map(r=>r.fx));
+  return (DB.FX||[]).filter(x=>!done.has(x.id)&&(x.date||'')<=TODAY&&(!x.gr||x.gr==='전체'||!s.grade||x.gr.includes(s.grade))).sort((a,b)=>(b.no||0)-(a.no||0))}
+function friKey(id){return 'fw_fri_'+(ME&&ME.id)+'_'+id}
+function sFocusInput(id){const x=(DB.FX||[]).find(y=>y.id===id);if(!x){UI.fri=null;return null}
+  if(!UI.fra||UI.fra.id!==id){let a=null;try{a=JSON.parse(store.get(friKey(id)))}catch(e){}UI.fra={id,ans:Array.isArray(a)&&a.length===45?a:Array(45).fill('')}}
+  setTimeout(friGrid,0);
+  return `<button class="btn btn-ghost btn-sm" onclick="UI.fri=null;render()">← 성적으로</button>
+  <div class="card" style="margin-top:12px"><h3 class="jua" style="font-size:22px;color:var(--ink);margin:0">🎯 ${esc(x.title)} 답 입력</h3><p class="muted" style="font-size:13px;margin:4px 0 0">${esc(x.date)} · OMR에 마킹한 답 그대로 1~5 숫자로 넣어요. 적는 대로 이 폰에 저장돼서 나갔다 와도 괜찮아요.</p>
+  <label class="lb">한 번에 붙여넣기 <span class="muted" style="font-weight:400">(선택)</span></label><input class="inp" placeholder="예) 3524135241… 숫자만" inputmode="numeric" oninput="const d=this.value.replace(/[①-⑤]/g,c=>'①②③④⑤'.indexOf(c)+1).replace(/[^1-5]/g,'');d.slice(0,45).split('').forEach((c,i)=>UI.fra.ans[i]=c);friSave();friGrid()">
+  <div class="muted" style="font-size:12.5px;margin:10px 0 4px">1~17번 듣기 · 18~45번 독해 (입력하면 다음 칸으로 넘어가요)</div>
+  <div class="kgrid" id="fri-grid"></div><div id="fri-n" class="muted" style="font-size:13px;margin-top:8px"></div>
+  <button class="btn btn-navy" id="fri-go" style="width:100%;padding:15px;font-size:17px;margin-top:12px" onclick="friSubmit('${id}')">✅ 제출하고 채점 받기</button>
+  <p class="muted" style="font-size:12px;text-align:center;margin-top:6px">제출은 한 번만 할 수 있어요. 잘못 넣었으면 선생님께 말씀해 주세요.</p></div>`}
+function friSave(){store.set(friKey(UI.fra.id),JSON.stringify(UI.fra.ans))}
+function friGrid(){const g=$('#fri-grid');if(!g||!UI.fra)return;
+  g.innerHTML=UI.fra.ans.map((v,i)=>`<label><small>${i+1}</small><input class="ko" maxlength="1" inputmode="numeric" value="${v}" oninput="this.value=this.value.replace(/[^1-5]/g,'');UI.fra.ans[${i}]=this.value;friSave();friCount();if(this.value){const n=this.parentNode.nextElementSibling;if(n)n.querySelector('input').focus()}"></label>`).join('');friCount()}
+function friCount(){const e=$('#fri-n');if(e)e.textContent=`입력 ${UI.fra.ans.filter(Boolean).length} / 45`}
+async function friSubmit(id){const a=UI.fra.ans,empty=a.filter(v=>!v).length,s=stu(ME.id),x=(DB.FX||[]).find(y=>y.id===id);
+  if(empty&&!confirm(`빈 칸이 ${empty}개 있어요. 빈 칸은 틀린 걸로 채점돼요. 그래도 제출할까요?`))return;
+  if(!empty&&!confirm('제출하면 고칠 수 없어요. 제출할까요?'))return;
+  const b=$('#fri-go');b.disabled=true;b.textContent='채점하는 중…';
+  let r;try{r=await rpc('fw_focus_submit',{p_token:TOKEN,p_fx:id,p_ans:a.map(v=>v===''?0:+v)})}
+  catch(e){b.disabled=false;b.textContent='✅ 제출하고 채점 받기';if(e.auth)return forceLogout();toast(e.message||'제출이 안 됐어요. 다시 눌러 주세요');return}
+  DB.FR=DB.FR||[];DB.FR.push(r);SNAP['FR'+SEP+r.id]=JSON.stringify(r);store.del(friKey(id));UI.fri=null;UI.fra=null;UI.frv=r.id;
+  notify([sTid(s)||ownerId(),ownerId()],'🎯 '+s.name+' '+(x?x.title:'F:OCUS')+' 제출',r.score+'점 · '+r.grd+'등급');
+  render();scrollTo(0,0);toast(`${r.score}점 · ${r.grd}등급! 리포트를 확인해 보세요 🎯`);
+  pullNow(false).then(ch=>{if(ch&&!busyTyping())render()})}
+function sFocus(s){const L=(DB.FR||[]).filter(r=>r.sid===s.id).sort((a,b)=>a.date<b.date?1:-1),O=frOpen(s);if(!L.length&&!O.length)return '';
+  return `<div class="sec-t"><h3 class="jua">🎯 F:OCUS 주간 모의고사</h3></div>${O.map(x=>`<button class="exam" style="border:2px solid var(--sage)" onclick="UI.fri='${x.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.date)} · 내 답 입력하고 바로 채점 받기 ›</div></div><span class="btn btn-navy btn-sm">✏️ 답 입력</span></button>`).join('')}${L.map(r=>`<button class="exam" onclick="UI.frv='${r.id}';render();scrollTo(0,0)"><div style="flex:1"><b style="color:var(--ink)">${esc(r.title)}</b><div class="muted" style="font-size:12.5px">${esc(r.date)} · ${r.grd}등급 · 리포트 보기 ›</div></div><div class="sc">${r.score}<small style="font-size:14px">점</small></div></button>`).join('')}`}
 function sFocusView(rid){const r=(DB.FR||[]).find(y=>y.id===rid);if(!r){UI.frv=null;return null}
   return `<style>${FR_CSS}.fr-top{grid-template-columns:1fr 1fr}.fr-mini{grid-column:1/-1}</style><button class="btn btn-ghost btn-sm" onclick="UI.frv=null;render()">← 성적으로</button><div class="card" style="margin-top:12px">${frReportBody(r)}</div><button class="btn btn-soft" style="width:100%;margin-top:12px" onclick="frPrint('${r.id}')">🖨 리포트 저장·인쇄</button>`}
 /* =========================================================

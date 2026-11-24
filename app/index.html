@@ -1608,7 +1608,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261124215325';
+const APP_VER='20261124215518';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1833,17 +1833,17 @@ function sToday(s){
   <div class="sec-t"><h3 class="jua">${UI.day===TODAY?'오늘 할 일':lbl(UI.day)+' 할 일'}</h3><span class="muted" style="font-size:13.5px;font-weight:700">${done} / ${list.length} 완료</span></div>
   ${list.length?list.map(taskCard).join(''):`<div class="empty"><div class="e">🌿</div>이 날은 숙제가 없어요</div>`}`;
 }
-function taskLs(t){return t&&t.ls?(DB.LS||[]).find(y=>y.id===t.ls)||null:null}
+function taskLs(t){const ids=!t||!t.ls?[]:Array.isArray(t.ls)?t.ls:[t.ls];return ids.map(id=>(DB.LS||[]).find(y=>y.id===id)).filter(Boolean)}
 function taskCard(t){
   const [ic,bg]=KIND[t.kind], [sl,sc]=STAT[t.status], teacher=tch(t.by);
   let acts='';const tl=taskLs(t);
-  if(tl)acts+=`<button class="btn ${LSP.id===tl.id?'btn-navy':'btn-soft'}" style="flex:0 0 auto" onclick="lsPlay('${tl.id}')">${LSP.id===tl.id?'🔊 재생 중':'▶ 듣기 재생'}</button>`;
+
   if(t.kind==='voca'&&t.status!=='ok') acts+=`<button class="btn btn-navy" onclick="openVoca()">✏️ 단어 시험 보러 가기</button>`;
   else if(t.kind==='hw'&&(t.status==='todo'||t.status==='redo')) acts+=`<button class="btn btn-navy" onclick="submitHW('${t.id}')">📸 사진 찍어 제출</button>`;
   else if(t.kind==='hw'&&t.status==='sub') acts+=`<button class="btn btn-ghost btn-sm" onclick="submitHW('${t.id}')">사진 다시 올리기</button>`;
   acts+=`<button class="btn btn-soft ${t.kind==='voca'&&t.status!=='ok'||t.status==='todo'||t.status==='redo'?'':''}" style="flex:0 0 auto" onclick="askAbout('${t.id}')">💬 질문</button>`;
   return `<div class="task ${t.status==='ok'?'done':''}"><div class="row1"><div class="ic" style="background:${bg}">${t.status==='ok'?'✅':ic}</div><div style="flex:1"><div class="tt">${esc(t.title)}</div><div class="meta">${esc(teacher?teacher.name:'')} 선생님${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}${t.kind==='voca'&&t.status!=='ok'?' · 80점 넘으면 자동 완료':''}</div></div><span class="chip ${sc}">${sl}</span></div>
-  ${tl?`<div class="note" style="cursor:pointer" onclick="lsPlay('${tl.id}')">🎧 ${esc(tl.title)}${lsDone(tl.id)?' <span class="chip c-ok">들었어요</span>':''}</div>`:''}
+  ${tl.map((l,i)=>`<div class="note" style="cursor:pointer;display:flex;align-items:center;gap:8px" onclick="lsPlay('${l.id}')"><span class="btn ${LSP.id===l.id?'btn-navy':'btn-soft'} btn-sm" style="flex:0 0 auto">${LSP.id===l.id?'🔊':'▶'}</span><span style="flex:1;min-width:0">🎧 ${tl.length>1?(i+1)+'. ':''}${esc(l.title)}</span>${lsDone(l.id)?'<span class="chip c-ok">들었어요</span>':''}</div>`).join('')}
   ${t.photos.length?`<div class="thumbs">${t.photos.map(p=>`<img data-v src="${p}" alt="">`).join('')}</div>`:''}
   ${t.note?`<div class="note">${t.status==='redo'?'↩️ ':t.kind==='voca'?'🎯 ':'💬 '}${esc(t.note)}</div>`:''}
   <div class="acts">${acts}</div></div>`;
@@ -2876,7 +2876,7 @@ function tStuPlan(sid){
   UI.ps=[sid];UI.psFor=null;UI.pg=[];
   const cols=days.map(d=>{const items=DB.tasks.filter(t=>t.sid===sid&&t.date===d);const isC=sd.includes(pd(d).getDay());
     return `<div class="day ${isC?'cls':''} ${d<TODAY?'past':''} ${d===TODAY?'todayc':''}"><h4><span>${WD[pd(d).getDay()]} ${pd(d).getDate()}</span>${isC?'<small>수업</small>':''}</h4>
-      ${items.map(t=>`<div class="pitem ${t.kind} st-${t.status}" style="cursor:pointer" onclick="openTask('${t.id}')"><b>${t.kind==='voca'?'✏️ ':''}${t.ls?'🎧 ':''}${esc(t.title)}</b><span class="chip ${STAT[t.status][1]}" style="margin-top:4px;font-size:11px;padding:2px 8px">${t.status==='todo'&&d<TODAY?'미제출':STAT[t.status][0]}</span></div>`).join('')}
+      ${items.map(t=>`<div class="pitem ${t.kind} st-${t.status}" style="cursor:pointer" onclick="openTask('${t.id}')"><b>${t.kind==='voca'?'✏️ ':''}${taskLs(t).length?'🎧'+(taskLs(t).length>1?taskLs(t).length:'')+' ':''}${esc(t.title)}</b><span class="chip ${STAT[t.status][1]}" style="margin-top:4px;font-size:11px;padding:2px 8px">${t.status==='todo'&&d<TODAY?'미제출':STAT[t.status][0]}</span></div>`).join('')}
       <button class="addbtn" onclick="addPlan('${d}')">+ 숙제</button></div>`}).join('');
   UI.lf=UI.lf||'all';
   const hist=DB.tasks.filter(t=>t.sid===sid&&(UI.lf==='all'||(UI.lf==='miss'?(t.date<TODAY&&(t.status==='todo'||t.status==='redo')):t.status===UI.lf))).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
@@ -2905,7 +2905,7 @@ function openTask(id){
   const t=DB.tasks.find(x=>x.id===id);if(!t)return;const s=stu(t.sid);
   modal(`<h3 class="jua">${t.kind==='voca'?'✏️ ':''}${esc(t.title)}</h3><p class="muted" style="font-size:14px;margin-top:2px">${esc(s.name)} · ${lbl(t.date)} 숙제 · <span class="chip ${STAT[t.status][1]}">${STAT[t.status][0]}</span>${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}</p>
   ${t.photos.length?`<div class="hwimgs" style="margin-top:12px">${t.photos.map(p=>`<img data-v src="${p}">`).join('')}</div>`:`<p class="muted" style="font-size:13.5px;margin-top:12px">${t.kind==='voca'?'단어 시험은 학생이 단어 앱에서 80점 이상 받으면 자동으로 완료돼요.':'아직 올린 사진이 없어요.'}</p>`}
-  ${taskLs(t)?`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px">🎧 ${esc(taskLs(t).title)}<audio controls preload="none" src="${esc(taskLs(t).url)}" style="width:100%;margin-top:6px"></audio></div>`:''}
+  ${taskLs(t).map(l=>`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px">🎧 ${esc(l.title)}<audio controls preload="none" src="${esc(l.url)}" style="width:100%;margin-top:6px"></audio></div>`).join('')}
   ${t.note?`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px">💬 ${esc(t.note)}</div>`:''}
   <label class="lb">코멘트 ${t.status==='sub'?'(다시 제출 요청 시 필수)':'(선택)'}</label><input class="inp" id="cm-${t.id}" placeholder="예) 3번 풀이 과정도 써서 다시 올려줘">
   <label class="lb">날짜 옮기기</label><input class="inp" type="date" id="td-${t.id}" value="${t.date}">
@@ -2928,34 +2928,36 @@ function taskSet(id,st){
 function togStu(id){const i=UI.ps.indexOf(id);if(i>=0)UI.ps.splice(i,1);else UI.ps.push(id);render()}
 function addPlan(d){
   if(!UI.ps.length){toast('학생을 한 명 이상 골라주세요');return}
-  UI.ad={days:[d],kind:'hw',ls:''};
+  UI.ad={days:[d],kind:'hw',ls:[]};
   const days=wkDays(UI.pw);
   modal(`<h3 class="jua">숙제 내주기</h3><p class="muted" style="font-size:14px">${UI.ws?esc(stu(UI.ws).name)+' 학생에게':UI.ps.length+'명에게 똑같이'}</p>
   <label class="lb">숙제 내용</label><input class="inp" id="adt" placeholder="예) 워크북 p.30~35 / 3과 단어 5번씩" autocomplete="off">
   <div class="tpl">${DB.TPL.map((t,i)=>`<button onclick="useTpl(${i})">${esc(t)}</button>`).join('')}</div>
   <label class="lb">종류</label><div class="chips-sel" id="kindsel"><button class="on" onclick="setKind('hw')">📸 사진 제출 숙제</button><button onclick="setKind('voca')">✏️ 단어 시험 (자동 체크)</button></div>
-  <label class="lb">🎧 듣기 붙이기 <span class="muted" style="font-weight:400">(선택 · 학생 숙제에 ▶ 재생 버튼이 생겨요)</span></label>
-  <div style="display:flex;gap:8px"><select class="inp" id="adls" style="flex:1" onchange="UI.ad.ls=this.value">${adLsOpts()}</select><button class="btn btn-ghost" id="adls-up" style="flex:0 0 auto" onclick="adLsUp()">+ 새로 올리기</button></div>
+  <label class="lb">🎧 듣기 붙이기 <span class="muted" style="font-weight:400">(선택 · 여러 개 골라도 돼요 · 학생 숙제에 ▶ 재생 버튼이 생겨요)</span></label>
+  <div id="adls" style="max-height:184px;overflow:auto;border:1.5px solid var(--line);border-radius:12px;padding:4px">${adLsOpts()}</div><button class="btn btn-ghost btn-sm" id="adls-up" style="margin-top:6px" onclick="adLsUp()">+ 새 듣기 올리기</button>
   <label class="lb">날짜 (여러 개 고를 수 있어요)</label><div class="daypick" id="dpk">${days.map(x=>`<button class="${x===d?'on':''}" onclick="togDay('${x}',this)">${WD[pd(x).getDay()]}<br>${pd(x).getDate()}</button>`).join('')}</div>
   <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:14px"><input type="checkbox" id="adtpl"> 자주 쓰는 숙제로 저장</label>
   <div class="btns"><button class="btn btn-ghost" onclick="tryCloseModal()">취소</button><button class="btn btn-navy" onclick="savePlan()">숙제 내주기</button></div>`);
   setTimeout(()=>{const i=$('#adt');i.focus();i.onkeydown=e=>{if(e.key==='Enter')savePlan()}},50);
 }
-function adLsOpts(){const L=(DB.LS||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);return `<option value="">듣기 없음</option>${L.map(x=>`<option value="${x.id}" ${UI.ad&&UI.ad.ls===x.id?'selected':''}>${esc(x.title)} · ${esc(x.gr||'전체')}</option>`).join('')}`}
+function adLsOpts(){const L=(DB.LS||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1),sel=(UI.ad&&UI.ad.ls)||[];if(!L.length)return '<div class="muted" style="font-size:13px;padding:8px">아직 올린 듣기가 없어요. 아래에서 바로 올릴 수 있어요</div>';
+  return L.map(x=>{const k=sel.indexOf(x.id);return `<label style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;cursor:pointer;font-size:14px;${k>=0?'background:var(--sage-soft,#E6F2E8)':''}"><input type="checkbox" ${k>=0?'checked':''} onchange="adLsTog('${x.id}')"><span style="flex:1;min-width:0">${k>=0&&sel.length>1?'<b>'+(k+1)+'.</b> ':''}${esc(x.title)}</span><span class="muted" style="font-size:12px">${esc(x.gr||'전체')}</span></label>`}).join('')}
+function adLsTog(id){const a=UI.ad.ls,i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);const b=$('#adls');if(b){const st=b.scrollTop;b.innerHTML=adLsOpts();b.scrollTop=st}}
 /* 숙제 창 안에서 바로 mp3 올리기 → 🎧 듣기 목록에도 같이 들어가요 */
 function adLsUp(){const f=document.createElement('input');f.type='file';f.accept='audio/*,.mp3,.m4a';f.onchange=async()=>{const x=f.files[0];if(!x)return;if(x.size>45*1024*1024){toast('파일이 너무 커요 (45MB까지)');return}
-  const b=$('#adls-up');b.disabled=true;b.textContent='올리는 중…';let url;try{url=await upAudio(x)}catch(e){b.disabled=false;b.textContent='+ 새로 올리기';toast('파일 올리기에 실패했어요. 다시 시도해 주세요');return}
+  const b=$('#adls-up');b.disabled=true;b.textContent='올리는 중…';let url;try{url=await upAudio(x)}catch(e){b.disabled=false;b.textContent='+ 새 듣기 올리기';toast('파일 올리기에 실패했어요. 다시 시도해 주세요');return}
   const gs=[...new Set(UI.ps.map(id=>(stu(id)||{}).grade).filter(Boolean))],gr=gs.length===1&&LS_GR.includes(gs[0])?gs[0]:'전체';
   const o={id:'LS_'+uid(),title:x.name.replace(/\.[^.]+$/,''),gr,url,at:nowStr(),by:ME.id,size:x.size};DB.LS=DB.LS||[];DB.LS.push(o);save();
-  UI.ad.ls=o.id;const sel=$('#adls');if(sel)sel.innerHTML=adLsOpts();b.disabled=false;b.textContent='+ 새로 올리기';
-  const t=$('#adt');if(t&&!t.value.trim())t.value=/듣기$/.test(o.title)?o.title:o.title+' 듣기';toast('듣기를 올렸어요 🎧')};f.click()}
+  UI.ad.ls.push(o.id);const sel=$('#adls');if(sel)sel.innerHTML=adLsOpts();b.disabled=false;b.textContent='+ 새 듣기 올리기';
+  const t=$('#adt');if(t&&!t.value.trim()&&UI.ad.ls.length===1)t.value=/듣기$/.test(o.title)?o.title:o.title+' 듣기';toast('듣기를 올렸어요 🎧')};f.click()}
 function useTpl(i){const t=DB.TPL[i];$('#adt').value=t;setKind(t.indexOf('단어 시험')===0?'voca':'hw')}
 function setKind(k){UI.ad.kind=k;const b=$('#kindsel').children;b[0].classList.toggle('on',k==='hw');b[1].classList.toggle('on',k==='voca')}
 function togDay(d,el){const i=UI.ad.days.indexOf(d);if(i>=0)UI.ad.days.splice(i,1);else UI.ad.days.push(d);el.classList.toggle('on')}
 function savePlan(){
-  let title=$('#adt').value.trim();if(!title&&UI.ad.ls){const l=(DB.LS||[]).find(y=>y.id===UI.ad.ls);if(l)title=/듣기$/.test(l.title)?l.title:l.title+' 듣기'}if(!title){toast('숙제 내용을 적어주세요');return}
+  let title=$('#adt').value.trim();if(!title&&UI.ad.ls.length){const l=(DB.LS||[]).find(y=>y.id===UI.ad.ls[0]);if(l)title=(/듣기$/.test(l.title)?l.title:l.title+' 듣기')+(UI.ad.ls.length>1?` 외 ${UI.ad.ls.length-1}개`:'')}if(!title){toast('숙제 내용을 적어주세요');return}
   if(!UI.ad.days.length){toast('날짜를 골라주세요');return}
-  let n=0;UI.ad.days.forEach(d=>UI.ps.forEach(sid=>{DB.tasks.push(Object.assign({id:uid(),sid,date:d,title,kind:UI.ad.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY},UI.ad.ls?{ls:UI.ad.ls}:{}));n++}));
+  let n=0;UI.ad.days.forEach(d=>UI.ps.forEach(sid=>{DB.tasks.push(Object.assign({id:uid(),sid,date:d,title,kind:UI.ad.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY},UI.ad.ls.length?{ls:UI.ad.ls.slice()}:{}));n++}));
   if($('#adtpl').checked&&!DB.TPL.includes(title))DB.TPL.unshift(title);
   save();notify(UI.ps,'📚 선생님이 숙제를 등록했어요!',title+' · '+UI.ad.days.map(d=>lbl(d)).join(', '));closeModal();render();toast(`숙제 ${n}개를 내줬어요 ✅`);
 }
@@ -2972,7 +2974,7 @@ function copyWeek(){
   const src=DB.tasks.filter(t=>prev.includes(t.date)&&UI.ps.includes(t.sid));
   if(!src.length){toast('지난주에 낸 숙제가 없어요');return}
   const seen=new Set();let n=0;
-  src.forEach(t=>{const nd=addD(t.date,7),k=t.sid+nd+t.title;if(seen.has(k)||DB.tasks.some(x=>x.sid===t.sid&&x.date===nd&&x.title===t.title))return;seen.add(k);DB.tasks.push(Object.assign({id:uid(),sid:t.sid,date:nd,title:t.title,kind:t.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY},t.ls?{ls:t.ls}:{}));n++});
+  src.forEach(t=>{const nd=addD(t.date,7),k=t.sid+nd+t.title;if(seen.has(k)||DB.tasks.some(x=>x.sid===t.sid&&x.date===nd&&x.title===t.title))return;seen.add(k);DB.tasks.push(Object.assign({id:uid(),sid:t.sid,date:nd,title:t.title,kind:t.kind,status:'todo',photos:[],note:'',subAt:'',by:ME.id,made:TODAY},t.ls?{ls:Array.isArray(t.ls)?t.ls.slice():[t.ls]}:{}));n++});
   save();if(n)notify([...new Set(src.map(t=>t.sid))],'📚 선생님이 숙제를 등록했어요!','이번 주 숙제가 올라왔어요. 플래너를 확인해 주세요');render();toast(n?`지난주 숙제 ${n}개를 이번 주로 복사했어요`:'이미 똑같이 들어가 있어요');
 }
 

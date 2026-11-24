@@ -79,9 +79,9 @@ Deno.serve(async (req) => {
         return out({ ok: true });
       }
       if (b.op === "unsub") { await sb.from("fw_push_subs").delete().eq("endpoint", String(b.endpoint || "")); return out({ ok: true }); }
-      if (b.op === "who") { if (s.role === "student") return out({ uids: [] }); const { data } = await sb.from("fw_push_subs").select("uid"); return out({ uids: [...new Set((data || []).map((r) => r.uid))] }); }
+      if (b.op === "who") { if (s.role === "student" || s.role === "parent") return out({ uids: [] }); const { data } = await sb.from("fw_push_subs").select("uid"); return out({ uids: [...new Set((data || []).map((r) => r.uid))] }); }
       const want: string[] = (Array.isArray(b.to) ? b.to : []).map(String).slice(0, 200);
-      if (s.role === "student") { const st = await staffIds(); to = want.filter((x) => st.includes(x)); }
+      if (s.role === "student" || s.role === "parent") { const st = await staffIds(); to = want.filter((x) => st.includes(x)); }
       else to = want;
     }
     to = to.filter(Boolean);

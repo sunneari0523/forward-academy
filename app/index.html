@@ -618,6 +618,22 @@ table.tb{width:100%;border-collapse:collapse;font-size:14px}
 }
 .m-top{display:none;align-items:center;justify-content:space-between;margin-bottom:14px}
 .m-top img{height:28px}
+/* 👪 학부모 */
+.pk{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 8px}.pk button{padding:7px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:700;color:var(--muted)}.pk button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pkid{margin:4px 0 10px}
+.pwarn{background:var(--peach-soft);border:1.5px solid var(--peach);border-radius:16px;padding:13px 15px;margin-bottom:10px;color:var(--red)}.pwarn b{font-size:15px}.pwarn ul{margin:7px 0 4px 18px;font-size:13.5px;line-height:1.65}.pwarn li span{font-size:12px;font-weight:700;opacity:.8}.pwarn p{font-size:12.5px;margin:4px 0 0;color:#9b5a44}
+.pwarn.due{background:var(--butter-soft);border-color:#E2B44A;color:#946A0A}
+.psum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}.psum div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}.psum small{display:block;color:var(--muted);font-size:11.5px}.psum b{font-size:15px;color:var(--ink)}
+.task.plate{border-color:var(--peach);background:#FFF8F4}
+.pvr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.pvr:last-child{border-bottom:0}.pvr small{display:block;color:var(--muted);font-size:12px}.pvs{display:flex;align-items:center;gap:8px;flex:0 0 auto}.pvs .bar{width:70px;height:7px;border-radius:9px;background:#EEF0EE;overflow:hidden}.pvs .bar i{display:block;height:100%}
+.plog{margin-bottom:12px}.plh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.plog h4{font-size:13.5px;margin:12px 0 4px;color:var(--ink)}.plog ul{margin:0 0 0 18px;font-size:14px;line-height:1.65}.pmemo{background:var(--sage-soft);border-radius:12px;padding:9px 12px;font-size:14px;margin:0;white-space:pre-wrap}
+.pmt{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}.pmt-b{font-size:13px;font-weight:700;color:var(--navy2);padding:4px 0}.pm-new{background:var(--red);color:#fff;border-radius:9px;padding:1px 7px;font-size:11px;margin-left:4px}
+.pmt-l{margin-top:6px}.pm{border-radius:14px;padding:8px 11px;margin-bottom:6px;font-size:14px;max-width:92%}.pm.par{background:var(--sage-soft);margin-left:auto}.pm.stf{background:var(--navy-soft)}
+.pm-h{display:flex;align-items:center;gap:6px;font-size:12px}.pm-h small{color:var(--muted)}.pm-h .x{margin-left:auto;font-size:11.5px;color:var(--muted);background:none}.pm-t{white-space:pre-wrap;margin-top:2px;line-height:1.55}
+.pm-in{display:flex;gap:6px;align-items:flex-end;margin-top:4px}.pm-in .inp{flex:1;min-height:44px;margin:0}
+.pnote{background:var(--sage-soft);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.palist{margin-top:8px;max-height:52vh;overflow:auto}.par-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.par-row small{display:block;color:var(--muted);font-size:12px}
+.pmbox{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}.pmbox.new{border:2px solid var(--sage)}.pmbox-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 </style>
 <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icon-180.png"><meta name="theme-color" content="#D68FA5"><meta name="apple-mobile-web-app-title" content="포워드">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var w=r.active||r.waiting||r.installing;if(!(w&&/push-sw\.js/.test(w.scriptURL)))r.unregister()})}).catch(function(){});if(window.caches)caches.keys().then(function(k){k.forEach(function(x){caches.delete(x)})})}</script>
@@ -666,8 +682,8 @@ async function rpc(fn,args){
   if(!r.ok){const m=(j&&j.message)||('서버 오류 '+r.status);const er=new Error(m==='auth'?'다시 로그인해 주세요':m);er.auth=m==='auth';throw er}
   return j;
 }
-function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],FX:[],FR:[],FC:[],G:[],MT:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
-const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS','FX','FR','FC','G','MT'];
+function emptyDB(){return {v:3,T:[],C:[],S:[],tasks:[],E:[],R:[],Q:[],N:[],W:[],PR:[],L:[],PC:[],V:[],A:[],I:[],M:[],K:[],X:[],AT:[],SD:[],RS:[],FX:[],FR:[],FC:[],G:[],MT:[],PA:[],PM:[],WB:[],LS:[],P:{},TPL:['단어 시험 (다음 과)','단어 5번씩 쓰기','본문 분석 복습','문법 워크북 풀기','내신 기출 풀기','모의고사 1회 풀기','오답노트 정리','F:ORM 숙제','F:LOW 워크북'],evDone:0}}
+const COLS=['T','C','S','tasks','E','R','Q','N','W','PR','L','PC','V','A','I','M','K','X','AT','SD','RS','FX','FR','FC','G','MT','PA','PM'];
 function toRows(db){const m={};COLS.forEach(c=>(db[c]||[]).forEach(o=>{if(o&&o.id)m[c+SEP+o.id]=o}));Object.keys(db.P||{}).forEach(k=>m['P'+SEP+k]=db.P[k]);m['meta'+SEP+'TPL']={id:'TPL',list:db.TPL||[]};(db.WB||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});(db.LS||[]).forEach(o=>{if(o&&o.id)m['meta'+SEP+o.id]=o});return m}
 function fromRows(m){const db=emptyDB();let tpl=null;for(const k in m){const [c,id]=k.split(SEP),d=m[k];if(c==='P')db.P[id]=d;else if(c==='meta'){if(id==='TPL')tpl=d.list;else if(id.startsWith('WB_'))db.WB.push(d);else if(id.startsWith('LS_'))db.LS.push(d)}else if(db[c])db[c].push(d)}if(tpl)db.TPL=tpl;return db}
 function applyRows(rows){
@@ -867,7 +883,7 @@ function showLeave(){let o=document.getElementById('leavebox');if(!o){o=document
 function hideLeave(){const o=document.getElementById('leavebox');if(o)o.style.display='none'}
 function navSnap(){return {tv:UI.tv||null,st:UI.st||null,ws:UI.ws||null,pv:UI.pv||null,pmode:UI.pmode||null,exam:UI.exam||null,q:UI.q||null,vv:VS.view||'home',mr:UI.mr||null,cs:UI.cs||null,kt:UI.kt||null,xt:UI.xt||null,xg:UI.xg||null,iq:UI.iq||null,pw:UI.pw||null}}
 function navApply(o){UI.tv=o.tv||UI.tv;UI.st=o.st||UI.st;UI.ws=o.ws;UI.pv=o.pv;UI.pmode=o.pmode;UI.exam=o.exam;UI.q=o.q;VS.view=o.vv||'home';UI.mr=o.mr||null;UI.cs=o.cs||null;UI.kt=o.kt||null;UI.xt=o.xt||null;UI.xg=o.xg||null;if(o.iq)UI.iq=o.iq;if(o.pw)UI.pw=o.pw}
-function navRestoreOnLoad(){try{const st=history.state&&history.state.nav;if(!st||!ME)return;const o=JSON.parse(st);if(ME.role==='student'?!o.st:!o.tv)return;o.cs=null;navApply(o);NAV.last=st;NAV.restoring=true}catch(e){}}
+function navRestoreOnLoad(){try{const st=history.state&&history.state.nav;if(!st||!ME)return;const o=JSON.parse(st);if(ME.role==='parent')return;if(ME.role==='student'?!o.st:!o.tv)return;o.cs=null;navApply(o);NAV.last=st;NAV.restoring=true}catch(e){}}
 function navTrack(){
   if(!ME)return;const k=JSON.stringify(navSnap());
   if(NAV.restoring){NAV.restoring=false;NAV.last=k;return}
@@ -1215,7 +1231,7 @@ function processEvents(){
 }
 
 /* ---------- 로그인 ---------- */
-let LG={role:'student',err:''};
+let LG={role:/[?&]parent\b/.test(location.search)?'parent':'student',err:''};
 function loginView(){
   const r=LG.role;
   const quick=r==='student'?DB.S.map(s=>`<button onclick="loginAs('student','${s.id}')">${esc(s.name)} <span class="muted">${esc(s.code)}</span></button>`).join(''):
@@ -1226,10 +1242,11 @@ function loginView(){
     <a href="../index.html" title="홈페이지로"><img class="logo" src="logo.png" alt="포워드 영어학원"></a>
     <h1 class="jua">오늘의 공부, 시작해볼까요?</h1>
     <p class="sub">완전히 알 때까지, 포워드.</p>
-    <div class="seg"><button class="${r==='student'?'on':''}" onclick="LG.role='student';LG.err='';loginView()">학생</button><button class="${r==='teacher'?'on':''}" onclick="LG.role='teacher';LG.err='';loginView()">강사</button><button class="${r==='owner'?'on':''}" onclick="LG.role='owner';LG.err='';loginView()">원장</button></div>
+    <div class="seg" style="grid-template-columns:repeat(4,1fr)"><button class="${r==='student'?'on':''}" onclick="LG.role='student';LG.err='';loginView()">학생</button><button class="${r==='parent'?'on':''}" onclick="LG.role='parent';LG.err='';loginView()">학부모</button><button class="${r==='teacher'?'on':''}" onclick="LG.role='teacher';LG.err='';loginView()">강사</button><button class="${r==='owner'?'on':''}" onclick="LG.role='owner';LG.err='';loginView()">원장</button></div>
     ${r==='student'?`<label class="lb">이름</label><input class="inp" id="ln" placeholder="이름" autocomplete="off"><label class="lb">학생코드</label><input class="inp" id="lc" placeholder="등록 연도 + 내 휴대폰 뒷번호 4자리 (예: 20261234)" inputmode="numeric">`
+    :r==='parent'?`<label class="lb">휴대폰 번호</label><input class="inp" id="ln" placeholder="010-0000-0000" inputmode="tel" autocomplete="tel"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="학원에서 받은 비밀번호"><p class="muted" style="font-size:12.5px;margin-top:8px">학부모 계정은 학원에서 만들어 드려요. 문의 053-716-0859</p>`
     :`<label class="lb">이름</label><input class="inp" id="ln" placeholder="${r==='owner'?'원장':'강사 이름'}"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="비밀번호">`}
-    <button class="btn btn-navy" style="width:100%;margin-top:18px;padding:15px" onclick="doLogin()">${r==='student'?'나의 공부 시작하기 →':'관리 화면 들어가기 →'}</button>
+    <button class="btn btn-navy" style="width:100%;margin-top:18px;padding:15px" onclick="doLogin()">${r==='student'?'나의 공부 시작하기 →':r==='parent'?'우리 아이 공부 보기 →':'관리 화면 들어가기 →'}</button>
     <div class="err">${esc(LG.err)}</div>${first}
     ${ONLINE?'':`<div class="quick"><div class="t">🧪 시연 계정 (눌러서 바로 로그인)</div><div class="list">${quick}</div></div>`}
     <p style="text-align:center;margin-top:18px"><a href="../index.html" style="color:var(--muted);font-size:13.5px">← 홈페이지로</a></p>
@@ -1239,16 +1256,17 @@ function loginView(){
 async function doLogin(){
   const n=$('#ln').value.trim(),c=$('#lc').value.trim();
   if(ONLINE){
-    if(!n||!c){LG.err=LG.role==='student'?'이름과 학생코드를 입력해 주세요':'이름과 비밀번호를 입력해 주세요';return loginView()}
+    if(!n||!c){LG.err=LG.role==='student'?'이름과 학생코드를 입력해 주세요':LG.role==='parent'?'휴대폰 번호와 비밀번호를 입력해 주세요':'이름과 비밀번호를 입력해 주세요';return loginView()}
     const b=document.querySelector('.login-box .btn-navy');if(b){b.disabled=true;b.textContent='확인 중…'}
     try{
       const j=await rpc('fw_login',{p_role:LG.role,p_name:n,p_secret:c});
-      if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
+      if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':LG.role==='parent'?'휴대폰 번호와 비밀번호를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
       TOKEN=j.token;FOLDER=await sha(TOKEN);ME={role:j.role,id:j.id,token:j.token};store.set(SKEY,JSON.stringify(ME));LG.err='';
       loadingView();await pullNow(true);UI={};try{afterLoad()}catch(e){bootTrouble('화면을 여는 중 문제가 생겼어요: '+e.message+' — 이 화면을 캡처해서 알려주세요')}
     }catch(e){LG.err=e.message;loginView()}
     return;
   }
+  if(LG.role==='parent'){const p=paRows().find(x=>digits(x.phone)===digits(n)&&x.pw===c);if(!p){LG.err='휴대폰 번호와 비밀번호를 다시 확인해 주세요';return loginView()}loginAs('parent',p.id);return}
   if(LG.role==='student'){const s=DB.S.find(x=>x.name===n&&x.code===c);if(!s){LG.err='이름과 학생코드를 다시 확인해 주세요';return loginView()}loginAs('student',s.id)}
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
@@ -1750,7 +1768,7 @@ const SUN_END='2026-11-19',SUN_MSG=`9번째 나의 제자들아!
 부처랑 예수도 이정도 했으면 좀 봐줄듯`;
 const SUN_OPEN=Date.parse('2026-11-18T09:00:00+09:00');
 const SUN_ON=false;
-function sunWho(){if(!SUN_ON||!ME||TODAY>SUN_END||Date.now()<SUN_OPEN)return false;if(ME.role!=='student')return true;const s=stu(ME.id);return !!s&&/고\s*3/.test(s.grade||'')}
+function sunWho(){if(!SUN_ON||!ME||ME.role==='parent'||TODAY>SUN_END||Date.now()<SUN_OPEN)return false;if(ME.role!=='student')return true;const s=stu(ME.id);return !!s&&/고\s*3/.test(s.grade||'')}
 function sunSeen(){try{if(localStorage.getItem('fw_sun_'+ME.id))return true}catch(e){}return ME.role==='student'?!!(DB.P[ME.id]&&DB.P[ME.id].sun):!!(tch(ME.id)||{}).sun}
 function sunMark(){try{localStorage.setItem('fw_sun_'+ME.id,'1')}catch(e){}if(ME.role==='student')pet(ME.id).sun=1;else{const t=tch(ME.id);if(t)t.sun=1}save()}
 function sunDone(){closeModal()}
@@ -1759,7 +1777,7 @@ function sunPop(){if(!sunWho()||sunSeen())return false;setTimeout(sunMark,0);
 function pushPrompt(){
   if(!ONLINE||!ME||pushOn())return;try{if(sessionStorage.getItem('fw_pp'))return;sessionStorage.setItem('fw_pp','1')}catch(e){}
   if('Notification' in window&&Notification.permission==='denied'){return}
-  const ios=isIOS(),inApp=ios&&!isStandalone(),who=ME.role==='student'?'숙제 확인, 선생님 쪽지·답변':'숙제 제출, 질문, 쌤톡, 상담 신청';
+  const ios=isIOS(),inApp=ios&&!isStandalone(),who=ME.role==='student'?'숙제 확인, 선생님 쪽지·답변':ME.role==='parent'?'선생님 답글':'숙제 제출, 질문, 쌤톡, 상담 신청';
   modal(`<h3 class="jua">🔔 알림을 꼭 켜주세요!</h3><p style="font-size:14.5px;line-height:1.7">${who} 알림을 휴대폰으로 바로 받을 수 있어요. <b>한 번만 켜두면 계속 켜져 있어요.</b></p>
   ${inApp?`<div class="pp-steps"><b>아이폰은 이렇게 해주세요</b><ol><li>사파리 아래쪽 <b>공유 버튼(□↑)</b> 누르기</li><li><b>홈 화면에 추가</b> 누르기</li><li>홈 화면에 생긴 <b>포워드</b> 아이콘으로 열고 로그인</li><li>뜨는 창에서 <b>알림 켜기 → 허용</b></li></ol><p class="muted" style="font-size:12px;margin:4px 0 0">iOS 16.4 이상에서 돼요 · 앞으로도 홈 화면 아이콘으로 들어오면 편해요</p></div>`
   :`<div class="pp-steps"><ol><li>아래 <b>🔔 지금 알림 켜기</b> 누르기</li><li>휴대폰에서 묻는 창에서 <b>허용</b> 누르기</li></ol>${ios?'':'<p class="muted" style="font-size:12px;margin:4px 0 0">안드로이드는 크롬에서 열어 주세요. 홈 화면에 추가해두면 앱처럼 쓸 수 있어요 (메뉴 ⋮ → 홈 화면에 추가)</p>'}</div>`}
@@ -1776,7 +1794,7 @@ function logout(){{const b=document.getElementById('lsbar');if(b){b.querySelecto
    학생 화면
    ========================================================= */
 let UI={};
-function render(){ ttTipHide(); if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} if(ME.role==='student'&&stu(ME.id).grad)return gradView(); ME.role==='student'?studentView():staffView(); navTrack(); }
+function render(){ ttTipHide(); if(ME&&ME.role==='parent'){if(!paOf(ME.id)){ME=null;return loginView()}parentView();navTrack();return} if(!ME||(ME.role==='student'&&!stu(ME.id))||(ME.role!=='student'&&!tch(ME.id))){ME=null;return loginView()} if(ME.role==='student'&&stu(ME.id).grad)return gradView(); ME.role==='student'?studentView():staffView(); navTrack(); }
 function gradView(){const s=stu(ME.id);$('#app').innerHTML=`<div class="login"><div class="login-box" style="text-align:center"><img class="logo" src="logo.png" alt="포워드 영어학원"><div style="font-size:56px;margin:8px 0">🎓</div><h1 class="jua" style="font-size:26px">${esc(s.name)}, 졸업 축하해요!</h1><p class="sub" style="margin:12px 0 22px;line-height:1.7">그동안 포워드에서 정말 수고 많았어요.<br>앞으로의 길도 늘 응원할게요 🐾</p><button class="btn btn-navy" onclick="logout()">닫기</button></div></div>`}
 function sTasks(sid,date){return DB.tasks.filter(t=>t.sid===sid&&t.date===date)}
 function unreadS(sid){return DB.Q.filter(q=>q.sid===sid&&q.uS).length}
@@ -2006,7 +2024,7 @@ function tHome(){
   const vtoday=DB.tasks.filter(t=>ids.includes(t.sid)&&t.kind==='voca'&&t.date===TODAY), vdone=vtoday.filter(t=>t.status==='ok');
   const vres=DB.R.filter(r=>r.voca&&ids.includes(r.sid)&&r.date>=addD(TODAY,-2)).slice(-8).reverse();
   const toGrade=DB.E.filter(e=>exS(e).some(s=>ids.includes(s.id))).map(e=>({e,miss:exS(e).filter(s=>ids.includes(s.id)&&!e.res[s.id]).length})).filter(x=>x.miss).sort((a,b)=>a.e.date<b.e.date?1:-1);
-  return `<div class="ph" style="margin-bottom:10px"><div><h2 class="jua">안녕하세요, ${esc(tch(ME.id).name)}${isOwner()?'님':' 선생님'} 👋</h2><p>${lbl(TODAY)}</p></div></div>${inqBanner()}
+  return `<div class="ph" style="margin-bottom:10px"><div><h2 class="jua">안녕하세요, ${esc(tch(ME.id).name)}${isOwner()?'님':' 선생님'} 👋</h2><p>${lbl(TODAY)}</p></div></div>${inqBanner()}${pmBanner()}
   ${visitCard()}
   ${pendingPR().map(r=>`<div class="prbanner" onclick="UI.tv='plan';UI.pmode=null;UI.ws='${r.sid}';UI.pw='${r.week}';UI.lf='all';render();scrollTo(0,0)">📝 <b>${esc((stu(r.sid)||{}).name||'')}</b> 학생이 ${lbl(r.week)} 주 플랜 수정을 요청했어요 <span>확인하기 ›</span></div>`).join('')}
   ${ttView()}
@@ -3068,6 +3086,7 @@ function tStuProfile(sid){
       <div class="kv"><span>⏱️ 공부 시간</span><b style="cursor:pointer" onclick="UI.tv='att';UI.am='sdstu';UI.sds='${s.id}';render();scrollTo(0,0)">${sdLive(s.id)?'<span class="chip c-ok">지금 공부 중</span> ':''}오늘 ${fmtMin(sdDay(s.id,TODAY))}${sdStreak(s.id)>=2?' · 🔥'+sdStreak(s.id)+'일 연속':''} · 이번 주 ${fmtMin(sdWeek(s.id,wkStart(TODAY)))} ›</b></div>
       <div class="kv"><span>학생 연락처</span><b>${esc(s.phone||'-')}</b></div>
       <div class="kv"><span>학부모 연락처</span><b>${esc(s.parent||'-')}</b></div>
+      ${paCell(sid)}
       <div class="kv"><span>숙제 제출률</span><b>${st.rate===null?'-':st.rate+'%'} <span class="muted" style="font-weight:400">(누적 ${st.done}/${st.total})</span></b></div>
     </div>
     <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3 class="sec" style="margin-top:0">📝 상세 정보</h3><button class="btn btn-soft btn-sm" onclick="editCInfo('${sid}')">수정</button></div>
@@ -3375,16 +3394,202 @@ function resetAll(b){
   DB=Object.assign(emptyDB(),{T:DB.T,TPL:DB.TPL});save();render();toast('깨끗하게 비웠어요. 반부터 만들어 주세요');
 }
 
+/* =========================================================
+   👪 학부모 계정 · 학부모 화면 · 학부모 댓글
+   ========================================================= */
+const paRows=()=>DB.PA||(DB.PA=[]), pmRows=()=>DB.PM||(DB.PM=[]);
+const paOf=id=>paRows().find(p=>p.id===id);
+const digits=s=>String(s||'').replace(/\D/g,'');
+const fmtPh=s=>{const d=digits(s);return d.length===11?d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7):d.length===10?d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6):(s||'')};
+const paKids=p=>(p&&p.kids||[]).map(stu).filter(Boolean);
+const paForStu=sid=>paRows().filter(p=>(p.kids||[]).includes(sid));
+const hwLate=t=>(t.status==='todo'||t.status==='redo')&&t.date<TODAY;
+const hwDue=t=>(t.status==='todo'||t.status==='redo')&&t.date===TODAY;
+function pStat(t){return hwLate(t)?['⚠️ 미제출','c-redo']:t.status==='redo'?['↩️ 다시 제출 요청','c-redo']:t.status==='sub'?['📮 제출함 · 확인 중','c-sub']:t.status==='ok'?['✅ 완료','c-ok']:hwDue(t)?['⏰ 오늘 마감','c-todo']:['할 일','c-todo']}
+const pmFor=ref=>pmRows().filter(m=>m.ref===ref).sort((a,b)=>(a.at||'')<(b.at||'')?-1:1);
+const pmUnseen=()=>pmRows().filter(m=>m.role==='parent'&&!m.seen);
+function pmWho(m){if(m.role==='parent'){const p=paOf(m.by);return p?p.name:'학부모님'}const t=tch(m.by);return t?t.name+(t.role==='owner'?' 원장':' 선생님'):'선생님'}
+function pmRefTid(ref){const t=DB.tasks.find(x=>x.id===ref);if(t)return t.by;const l=DB.L.find(x=>x.id===ref);return l?l.by:null}
+function pmReopen(){if(UI.pmIn&&$('#modal').classList.contains('on'))pmInbox(UI.pmIn.sid);else{UI.pmIn=null;render()}}
+
+/* 댓글 묶음 (숙제·일지·선생님께) */
+function pmThread(sid,ref,kind,ctx,force){
+  const list=pmFor(ref),open=force||UI.pco===ref,par=ME.role==='parent';
+  const un=par?0:list.filter(m=>m.role==='parent'&&!m.seen).length;
+  const items=list.map(m=>`<div class="pm ${m.role==='parent'?'par':'stf'}"><div class="pm-h"><b>${m.role==='parent'?'👪':'🧑‍🏫'} ${esc(pmWho(m))}</b><small>${esc((m.at||'').slice(5))}</small>${m.by===ME.id?`<button class="x" onclick="pmDel('${m.id}')">삭제</button>`:''}</div><div class="pm-t">${esc(m.text)}</div></div>`).join('');
+  const box=`<div class="pmt-l">${items||`<p class="muted" style="font-size:13px;margin:2px 0 6px">${par?'궁금한 점이나 전하실 말씀을 남겨 주세요. 선생님이 확인하고 답해 드려요.':'아직 댓글이 없어요.'}</p>`}
+    <div class="pm-in"><textarea class="inp" id="pmi-${ref}" rows="2" placeholder="${par?'선생님께 남길 말을 적어주세요':'학부모님께 답글을 적어주세요'}"></textarea><button class="btn btn-navy btn-sm" onclick="pmAdd('${sid}','${ref}','${kind}',${esc(JSON.stringify(ctx||''))})">등록</button></div></div>`;
+  if(force)return `<div class="pmt">${box}</div>`;
+  return `<div class="pmt"><button class="pmt-b" onclick="UI.pco=UI.pco==='${ref}'?null:'${ref}';${par?'':`pmSeen('${ref}');`}render()">💬 댓글${list.length?' '+list.length:' 달기'}${un?` <span class="pm-new">새 댓글 ${un}</span>`:''} ${open?'▲':'▼'}</button>${open?box:''}</div>`;
+}
+function pmAdd(sid,ref,kind,ctx){
+  const e=document.getElementById('pmi-'+ref),t=(e&&e.value||'').trim();if(!t){toast('내용을 적어주세요');return}
+  const par=ME.role==='parent',s=stu(sid);
+  pmRows().push({id:'pm'+uid(),sid,ref,kind,ctx:ctx||'',text:t.slice(0,1000),by:ME.id,role:par?'parent':'staff',at:nowStr(),seen:par?0:1});
+  if(!par)pmRows().forEach(m=>{if(m.ref===ref&&m.role==='parent')m.seen=1});
+  save();if(e){e.value='';e.blur()}
+  if(par)notify([sTid(s),ownerId(),pmRefTid(ref)],'👪 학부모 댓글 · '+(s?s.name:''),t.slice(0,80));
+  else notify([...new Set(pmFor(ref).filter(m=>m.role==='parent').map(m=>m.by))],'💬 선생님 답글 · '+(s?s.name:''),t.slice(0,80));
+  toast(par?'선생님께 댓글을 남겼어요 💌':'답글을 남겼어요');
+  pmReopen();
+}
+function pmDel(id){const m=pmRows().find(x=>x.id===id);if(!m||m.by!==ME.id)return;if(!confirm('이 댓글을 지울까요?'))return;DB.PM=pmRows().filter(x=>x.id!==id);save();pmReopen()}
+function pmSeen(ref){let ch=false;pmRows().forEach(m=>{if(m.ref===ref&&m.role==='parent'&&!m.seen){m.seen=1;ch=true}});if(ch)save()}
+
+/* ---------- 학부모 화면 ---------- */
+function parentView(){
+  const p=paOf(ME.id),kids=paKids(p).filter(act);
+  if(!kids.length){$('#app').innerHTML=`<div class="login"><div class="login-box" style="text-align:center"><img class="logo" src="logo.png" alt="포워드 영어학원"><p style="margin:18px 0;line-height:1.7">연결된 학생이 아직 없어요.<br>학원으로 문의해 주세요 · 053-716-0859</p><button class="btn btn-ghost" onclick="logout()">로그아웃</button></div></div>`;return}
+  if(!UI.pk||!kids.some(k=>k.id===UI.pk))UI.pk=kids[0].id;
+  const s=stu(UI.pk);UI.pt=UI.pt||'hw';
+  const late=DB.tasks.filter(t=>t.sid===s.id&&hwLate(t)).length;
+  const nav=[['hw','📸','숙제',late],['voca','✏️','단어 시험',0],['log','📝','수업 일지',0],['msg','💬','선생님께',0]];
+  const body=UI.pt==='voca'?pVoca(s):UI.pt==='log'?pLog(s):UI.pt==='msg'?pMsg(s):pHW(s);
+  $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':'<div class="demo-bar"><b>시연 버전</b> · 학부모 화면</div>'}<div class="s-wrap">
+    <div class="s-top"><div class="who"><img src="logo-mark.png" alt=""><div><b>${esc(p.name||'학부모님')}</b><small>포워드 영어학원 학부모</small></div></div><div style="display:flex;gap:6px">${pushBtn('btn-navy')}<button class="btn btn-ghost btn-sm" onclick="logout()">로그아웃</button></div></div>
+    ${kids.length>1?`<div class="pk">${kids.map(k=>`<button class="${k.id===s.id?'on':''}" onclick="UI.pk='${k.id}';UI.pco=null;render()">${esc(k.name)}</button>`).join('')}</div>`:''}
+    <div class="pkid"><b class="jua" style="font-size:20px">${esc(s.name)}</b> <span class="muted">${esc(s.school||'')} ${esc(s.grade||'')}</span></div>
+    ${pWarn(s)}${pSummary(s)}${body}</div>
+    <div class="bnav"><div class="in" style="--n:${nav.length}">${nav.map(([k,i,l,b])=>`<button class="${UI.pt===k?'on':''}" onclick="UI.pt='${k}';UI.pco=null;render();scrollTo(0,0)"><span class="i">${i}</span>${l}${b?`<span class="badge">${b}</span>`:''}</button>`).join('')}</div></div>`;
+}
+function pWarn(s){
+  const late=DB.tasks.filter(t=>t.sid===s.id&&hwLate(t)).sort((a,b)=>a.date<b.date?-1:1);
+  const due=DB.tasks.filter(t=>t.sid===s.id&&hwDue(t));
+  if(!late.length&&!due.length)return '';
+  return `${late.length?`<div class="pwarn"><b>⚠️ 아직 제출하지 않은 숙제가 ${late.length}개 있어요</b>
+    <ul>${late.slice(0,5).map(t=>`<li>${esc(lbl(t.date))} 마감 · ${esc(t.title)} <span>${diffD(t.date,TODAY)}일 지남</span></li>`).join('')}${late.length>5?`<li>외 ${late.length-5}개</li>`:''}</ul>
+    <p>아이와 함께 한 번 확인해 주세요. 궁금한 점은 숙제 아래 💬 댓글로 남겨 주시면 돼요.</p></div>`:''}
+  ${due.length?`<div class="pwarn due"><b>⏰ 오늘 마감인 숙제 ${due.length}개가 아직 제출 전이에요</b><ul>${due.map(t=>`<li>${esc(t.title)}</li>`).join('')}</ul></div>`:''}`;
+}
+function pSummary(s){
+  const ws=wkStart(TODAY),we=addD(ws,6),wk=DB.tasks.filter(t=>t.sid===s.id&&t.date>=ws&&t.date<=we&&t.date<=TODAY);
+  const done=wk.filter(t=>t.status==='ok'||t.status==='sub').length;
+  const v=DB.R.filter(r=>r.sid===s.id&&r.voca).sort((a,b)=>a.date<b.date?1:-1)[0];
+  const l=DB.L.filter(x=>x.sid===s.id).sort((a,b)=>a.date<b.date?1:-1)[0];
+  return `<div class="psum"><div><small>이번 주 숙제</small><b>${wk.length?done+' / '+wk.length:'-'}</b></div><div><small>최근 단어 시험</small><b>${v?esc(v.value):'-'}</b></div><div><small>최근 수업 일지</small><b>${l?esc(lbl(l.date)):'-'}</b></div></div>`;
+}
+function pHW(s){
+  UI.pr=UI.pr||14;const from=addD(TODAY,-UI.pr),to=addD(TODAY,14);
+  const all=DB.tasks.filter(t=>t.sid===s.id),list=all.filter(t=>t.date>=from&&t.date<=to||hwLate(t))
+    .sort((a,b)=>(hwLate(b)-hwLate(a))||(a.date<b.date?1:a.date>b.date?-1:0));
+  const more=all.some(t=>t.date<from&&!hwLate(t));
+  return `<div class="sec-t"><h3 class="jua">📸 숙제</h3><span class="muted" style="font-size:13px">최근 ${UI.pr}일 · 앞으로 2주</span></div>
+  ${list.length?list.map(t=>{const [sl,sc]=pStat(t),tc=tch(t.by),k=KIND[t.kind]||KIND.hw;
+    return `<div class="task ${t.status==='ok'?'done':''} ${hwLate(t)?'plate':''}"><div class="row1"><div class="ic" style="background:${k[1]}">${t.status==='ok'?'✅':k[0]}</div><div style="flex:1"><div class="tt">${esc(t.title)}</div><div class="meta">${esc(lbl(t.date))} 마감${tc?' · '+esc(tc.name)+' 선생님':''}${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}</div></div><span class="chip ${sc}">${sl}</span></div>
+    ${(t.photos||[]).length?`<div class="thumbs">${t.photos.map(ph=>`<img data-v src="${esc(ph)}" alt="">`).join('')}</div>`:''}
+    ${t.note?`<div class="note">💬 ${esc(t.note)}</div>`:''}
+    ${pmThread(s.id,t.id,'hw',lbl(t.date)+' '+t.title)}</div>`}).join(''):`<div class="empty"><div class="e">🌿</div>이 기간에는 숙제가 없어요</div>`}
+  ${more?`<button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="UI.pr+=28;render()">이전 숙제 더 보기</button>`:''}`;
+}
+function pVoca(s){
+  const rs=DB.R.filter(r=>r.sid===s.id&&r.voca).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  const mo=TODAY.slice(0,7),n=rs.filter(r=>(r.date||'').slice(0,7)===mo).length,lim=UI.pvn||40;
+  return `<div class="sec-t"><h3 class="jua">✏️ 단어 시험 결과</h3><span class="muted" style="font-size:13px">이번 달 ${n}번 응시</span></div>
+  ${rs.length?`<div class="card" style="padding:6px 14px">${rs.slice(0,lim).map(r=>{const [a,b]=String(r.value||'').split('/').map(Number),pct=b?Math.round(a/b*100):0;
+    return `<div class="pvr"><div><b>${esc(String(r.title||'').replace('단어 · ',''))}</b><small>${esc(lbl(r.date))}</small></div><div class="pvs"><span class="bar"><i style="width:${pct}%;background:${pct>=80?'var(--sage)':'var(--peach)'}"></i></span><b>${esc(r.value)}</b></div></div>`}).join('')}</div>
+  ${rs.length>lim?`<button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px" onclick="UI.pvn=${lim+40};render()">더 보기</button>`:''}`
+  :`<div class="empty"><div class="e">✏️</div>아직 단어 시험 기록이 없어요</div>`}`;
+}
+function pLog(s){
+  const ls=DB.L.filter(l=>l.sid===s.id).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(a.at||'')<(b.at||'')?1:-1);
+  const ln=v=>v&&v.trim()?v.trim().split('\n').filter(x=>x.trim()).map(x=>`<li>${esc(x.replace(/^[-·•]\s*/,''))}</li>`).join(''):'';
+  return `<div class="sec-t"><h3 class="jua">📝 수업 일지</h3><span class="muted" style="font-size:13px">${ls.length}개</span></div>
+  ${ls.length?ls.map(l=>{const t=tch(l.by),att=l.att||'출석',tests=[['단어',l.voca],['구문',l.syntax],['내신',l.exam]].filter(x=>x[1]&&x[1].trim());
+    return `<div class="card plog"><div class="plh"><b>${esc(lbl(l.date))}</b><span class="chip ${att==='결석'?'c-redo':att==='지각'?'c-sub':'c-ok'}">${att==='결석'?'❌':att==='지각'?'⏰':'✅'} ${att}</span><span class="muted" style="margin-left:auto;font-size:12.5px">${t?esc(t.name)+(t.role==='owner'?' 원장':' 선생님'):''}</span></div>
+    ${ln(l.content)?`<h4>📖 오늘 수업</h4><ul>${ln(l.content)}</ul>`:''}
+    ${tests.length?`<h4>✅ 테스트 결과</h4><ul>${tests.map(([k,v])=>`<li>${k}: ${esc(v.trim())}</li>`).join('')}</ul>`:''}
+    ${ln(l.hw)?`<h4>📝 다음 수업까지 숙제</h4><ul>${ln(l.hw)}</ul>`:''}
+    ${l.memo&&l.memo.trim()?`<h4>💬 선생님 한마디</h4><p class="pmemo">${esc(l.memo.trim())}</p>`:''}
+    ${pmThread(s.id,l.id,'log',lbl(l.date)+' 수업 일지')}</div>`}).join(''):`<div class="empty"><div class="e">📝</div>아직 수업 일지가 없어요</div>`}`;
+}
+function pMsg(s){
+  return `<div class="sec-t"><h3 class="jua">💬 선생님께 남기기</h3></div>
+  <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">숙제·일지와 상관없는 이야기도 편하게 남겨 주세요. 급한 일은 053-716-0859로 연락 주세요.</p>
+  <div class="card">${pmThread(s.id,'gen_'+s.id,'gen','선생님께',true)}</div>`;
+}
+
+/* ---------- 강사·원장: 학부모 계정 관리 ---------- */
+function paGuide(p){
+  const ks=paKids(p).map(k=>k.name).join(', ');
+  return `[포워드 영어학원] 학부모 계정 안내\n\n안녕하세요, ${p.name||'학부모님'}.\n이제 ${ks} 학생의 숙제 제출 현황, 단어 시험 결과, 수업 일지를 학원 사이트에서 바로 확인하실 수 있어요. 숙제·일지마다 댓글로 선생님께 말씀도 남기실 수 있어요.\n\n👉 https://forwardeng.co.kr/app/?parent\n- 휴대폰 번호: ${fmtPh(p.phone)}\n- 비밀번호: ${p.pw}\n\n문의: 053-716-0859`;
+}
+function paNewPw(){return String(Math.floor(100000+Math.random()*900000))}
+function paCell(sid){
+  const ps=paForStu(sid),nc=pmRows().filter(m=>m.sid===sid).length;
+  return `<div class="kv"><span>👪 학부모 계정</span><b>${ps.map(p=>`<button class="linkb" onclick="paEdit('${sid}','${p.id}')">${esc(p.name)} · ${esc(fmtPh(p.phone))}</button>`).join('<br>')||'<span class="muted" style="font-weight:400">없음</span>'}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${ps.length?'':`<button class="btn btn-soft btn-sm" onclick="paEdit('${sid}')">+ 계정 만들기</button>`}<button class="btn btn-ghost btn-sm" onclick="pmInbox('${sid}')">💬 학부모 댓글${nc?' '+nc:''}</button><button class="btn btn-ghost btn-sm" onclick="paList()">전체 계정</button></div></b></div>`;
+}
+function paEdit(sid,id){
+  const s=sid?stu(sid):null;let p=id?paOf(id):null,joined=false;
+  if(!p&&s&&digits(s.parent).length>=9){p=paRows().find(x=>digits(x.phone)===digits(s.parent))||null;if(p&&!(p.kids||[]).includes(sid))joined=true}
+  UI.pa=p?Object.assign({},p,{kids:[...new Set([...(p.kids||[]),...(sid?[sid]:[])])]}):{id:'pa'+uid(),name:s?s.name+' 어머님':'',phone:s?fmtPh(s.parent):'',pw:paNewPw(),kids:sid?[sid]:[]};
+  UI.paOld=!!p;UI.paJoin=joined;paModal();
+}
+function paModal(){
+  const p=UI.pa,opts=liveS().filter(x=>!p.kids.includes(x.id)).sort((a,b)=>a.name<b.name?-1:1);
+  modal(`<h3 class="jua">👪 학부모 계정</h3>
+  ${UI.paJoin?'<p class="pnote">같은 휴대폰 번호로 만든 계정이 있어서, 이 학생을 형제·자매로 함께 연결했어요. 저장하면 반영돼요.</p>':''}
+  <p class="muted" style="font-size:13px">학부모님은 휴대폰 번호 + 비밀번호로 로그인해서 자녀의 숙제·단어 시험·수업 일지를 보고 댓글을 남길 수 있어요. (기록을 고칠 수는 없어요)</p>
+  <label class="lb">부르는 이름</label><input class="inp" value="${esc(p.name)}" placeholder="예) 김예린 어머님" oninput="UI.pa.name=this.value">
+  <label class="lb">휴대폰 번호 (로그인 아이디)</label><input class="inp" value="${esc(p.phone)}" inputmode="tel" placeholder="010-0000-0000" oninput="UI.pa.phone=this.value">
+  <label class="lb">비밀번호</label><div style="display:flex;gap:6px"><input class="inp" id="pa-pw" value="${esc(p.pw)}" oninput="UI.pa.pw=this.value.trim()"><button class="btn btn-ghost" style="flex:0 0 auto" onclick="UI.pa.pw=paNewPw();$('#pa-pw').value=UI.pa.pw">🎲 새로</button></div>
+  <label class="lb">연결된 자녀</label><div class="chips-sel">${p.kids.map(k=>{const x=stu(k);return x?`<button class="on" onclick="UI.pa.kids=UI.pa.kids.filter(y=>y!=='${k}');paModal()">${esc(x.name)} ✕</button>`:''}).join('')||'<span class="muted">없음</span>'}</div>
+  <select class="inp" style="margin-top:8px" onchange="if(this.value){UI.pa.kids.push(this.value);paModal()}"><option value="">+ 자녀 추가 (형제·자매)</option>${opts.map(x=>`<option value="${x.id}">${esc(x.name)} · ${esc(x.school||'')} ${esc(x.grade||'')}</option>`).join('')}</select>
+  <div class="btns">${UI.paOld?`<button class="btn btn-warn" onclick="if(this.dataset.c){paDel('${p.id}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-soft" onclick="paSave(1)">저장 + 안내 문자 복사</button><button class="btn btn-navy" onclick="paSave()">저장</button></div>`);
+}
+function paSave(copy){
+  const p=UI.pa;p.name=(p.name||'').trim();p.pw=String(p.pw||'').trim();
+  if(digits(p.phone).length<10){toast('휴대폰 번호를 확인해 주세요');return}
+  if(p.pw.length<4){toast('비밀번호는 4자리 이상으로 정해주세요');return}
+  if(!p.kids.length){toast('자녀를 한 명 이상 연결해 주세요');return}
+  if(paRows().some(x=>x.id!==p.id&&digits(x.phone)===digits(p.phone))){toast('이 번호로 만든 학부모 계정이 이미 있어요');return}
+  p.phone=fmtPh(p.phone);if(!p.name)p.name=(stu(p.kids[0])||{name:''}).name+' 학부모님';
+  const i=paRows().findIndex(x=>x.id===p.id),o=Object.assign({},p,{upd:nowStr()});
+  if(i>=0)DB.PA[i]=o;else{o.at=nowStr();o.by=ME.id;paRows().push(o)}
+  save();closeModal();if(copy)copyText(paGuide(o));else toast('학부모 계정을 저장했어요');render();
+}
+function paDel(id){DB.PA=paRows().filter(x=>x.id!==id);save();closeModal();toast('학부모 계정을 지웠어요');render()}
+function paBulk(){
+  const map={};liveS().forEach(s=>{const d=digits(s.parent);if(d.length>=10&&!paForStu(s.id).length)(map[d]=map[d]||[]).push(s)});
+  let n=0;Object.keys(map).forEach(d=>{const ex=paRows().find(x=>digits(x.phone)===d),ids=map[d].map(s=>s.id);
+    if(ex){ex.kids=[...new Set([...(ex.kids||[]),...ids])];ex.upd=nowStr()}else paRows().push({id:'pa'+uid(),name:map[d][0].name+' 어머님',phone:fmtPh(d),pw:paNewPw(),kids:ids,at:nowStr(),by:ME.id});n+=ids.length});
+  save();toast(n?`학생 ${n}명의 학부모 계정을 만들었어요`:'새로 만들 학생이 없어요');paList();
+}
+function paList(){
+  const ps=paRows().slice().sort((a,b)=>(a.name||'')<(b.name||'')?-1:1);
+  const left=liveS().filter(s=>digits(s.parent).length>=10&&!paForStu(s.id).length).length;
+  const none=liveS().filter(s=>!paForStu(s.id).length&&digits(s.parent).length<10).length;
+  modal(`<h3 class="jua">👪 학부모 계정 ${ps.length}개</h3>
+  ${left?`<div class="pnote">학부모 연락처는 있는데 계정이 없는 학생이 <b>${left}명</b> 있어요. <button class="btn btn-navy btn-sm" style="margin-top:6px" onclick="paBulk()">한 번에 만들기</button><br><small class="muted">같은 번호(형제·자매)는 한 계정으로 묶고, 비밀번호는 6자리로 자동으로 정해져요.</small></div>`:''}
+  ${none?`<p class="muted" style="font-size:12.5px">학부모 연락처가 없는 학생 ${none}명은 학생 기본 정보에 연락처를 넣은 뒤 만들 수 있어요.</p>`:''}
+  <div class="palist">${ps.map(p=>`<div class="par-row"><div><b>${esc(p.name)}</b><small>${esc(fmtPh(p.phone))} · 비밀번호 <span style="font-family:monospace">${esc(p.pw||'')}</span></small><small>👧 ${paKids(p).map(k=>esc(k.name)).join(', ')||'연결된 자녀 없음'}</small></div><div style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-soft btn-sm" onclick="copyText(paGuide(paOf('${p.id}')))">📋 안내 문자</button><button class="btn btn-ghost btn-sm" onclick="paEdit(null,'${p.id}')">수정</button></div></div>`).join('')||'<div class="empty" style="padding:20px">아직 학부모 계정이 없어요</div>'}</div>
+  <div class="btns"><button class="btn btn-navy" onclick="closeModal()">닫기</button></div>`);
+}
+
+/* ---------- 강사·원장: 학부모 댓글 모아보기 ---------- */
+function pmBanner(){const u=pmUnseen();if(!u.length)return '';
+  return `<div class="card" style="margin-bottom:14px;border:2px solid var(--sage);background:var(--sage-soft);cursor:pointer" onclick="pmInbox()"><b style="font-size:16px">👪 새 학부모 댓글 ${u.length}개</b><div class="muted" style="margin-top:4px;font-size:13.5px">${esc(u.slice(-2).map(m=>(stu(m.sid)||{name:''}).name+': '+String(m.text||'').slice(0,30)).join(' · '))} <b style="color:var(--ink)">확인하고 답하기 ›</b></div></div>`}
+function pmInbox(sid){
+  UI.pmIn={sid:sid||null};
+  const all=pmRows().filter(m=>!sid||m.sid===sid),refs={};
+  all.forEach(m=>{const r=refs[m.ref]||(refs[m.ref]={ref:m.ref,sid:m.sid,kind:m.kind,ctx:m.ctx,last:'',un:0});if((m.at||'')>r.last)r.last=m.at||'';if(m.role==='parent'&&!m.seen)r.un++});
+  const list=Object.values(refs).sort((a,b)=>(b.un>0)-(a.un>0)||(a.last<b.last?1:-1)).slice(0,30);
+  modal(`<h3 class="jua">👪 학부모 댓글${sid?' · '+esc((stu(sid)||{name:''}).name):''}</h3>
+  ${list.length?list.map(r=>`<div class="pmbox ${r.un?'new':''}"><div class="pmbox-h"><b>${esc((stu(r.sid)||{name:'(삭제된 학생)'}).name)}</b><span class="chip c-todo">${r.kind==='hw'?'📸 숙제':r.kind==='log'?'📝 수업 일지':'💬 선생님께'}</span><span class="muted" style="font-size:12.5px">${esc(r.ctx||'')}</span></div>${pmThread(r.sid,r.ref,r.kind,r.ctx,true)}</div>`).join(''):'<div class="empty" style="padding:22px">아직 학부모 댓글이 없어요</div>'}
+  <div class="btns"><button class="btn btn-ghost" onclick="UI.pmIn=null;paList()">학부모 계정 관리</button><button class="btn btn-navy" onclick="UI.pmIn=null;closeModal();render()">닫기</button></div>`);
+  let ch=false;all.forEach(m=>{if(m.role==='parent'&&!m.seen){m.seen=1;ch=true}});if(ch)save();
+}
+
 /* ---------- 시작 ---------- */
 /* ----- 오늘 접속 기록 ----- */
 function trackVisit(){
-  if(!ME)return;const id=TODAY+'|'+ME.id,now=Date.now();let a=DB.A.find(x=>x.id===id);
+  if(!ME||ME.role==='parent')return;const id=TODAY+'|'+ME.id,now=Date.now();let a=DB.A.find(x=>x.id===id);
   if(a&&now-(a.t||0)<30*60000)return;
   if(!a){a={id,sid:ME.id,date:TODAY,role:ME.role,n:0,first:nowStr()};DB.A.push(a)}
   a.n=(a.n||0)+1;a.t=now;a.last=nowStr();save();
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(trackVisit,1500)});
-async function loadHits(){if(!ONLINE||!TOKEN||!ME||ME.role==='student')return;try{const j=await rpc('fw_stats',{p_token:TOKEN});UI.hits=j}catch(e){}}
+async function loadHits(){if(!ONLINE||!TOKEN||!ME||ME.role==='student'||ME.role==='parent')return;try{const j=await rpc('fw_stats',{p_token:TOKEN});UI.hits=j}catch(e){}}
 function visitCard(){
   const a=DB.A.filter(x=>x.date===TODAY), st=a.filter(x=>x.role==='student'), tc=a.filter(x=>x.role!=='student');
   const h=UI.hits||{};

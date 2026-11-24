@@ -1244,7 +1244,7 @@ function loginView(){
     <p class="sub">완전히 알 때까지, 포워드.</p>
     <div class="seg" style="grid-template-columns:repeat(4,1fr)"><button class="${r==='student'?'on':''}" onclick="LG.role='student';LG.err='';loginView()">학생</button><button class="${r==='parent'?'on':''}" onclick="LG.role='parent';LG.err='';loginView()">학부모</button><button class="${r==='teacher'?'on':''}" onclick="LG.role='teacher';LG.err='';loginView()">강사</button><button class="${r==='owner'?'on':''}" onclick="LG.role='owner';LG.err='';loginView()">원장</button></div>
     ${r==='student'?`<label class="lb">이름</label><input class="inp" id="ln" placeholder="이름" autocomplete="off"><label class="lb">학생코드</label><input class="inp" id="lc" placeholder="등록 연도 + 내 휴대폰 뒷번호 4자리 (예: 20261234)" inputmode="numeric">`
-    :r==='parent'?`<label class="lb">휴대폰 번호</label><input class="inp" id="ln" placeholder="010-0000-0000" inputmode="tel" autocomplete="tel"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="학원에서 받은 비밀번호"><p class="muted" style="font-size:12.5px;margin-top:8px">학부모 계정은 학원에서 만들어 드려요. 문의 053-716-0859</p>`
+    :r==='parent'?`<label class="lb">아이디 (학생 이름)</label><input class="inp" id="ln" placeholder="자녀 이름" autocomplete="off"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" inputmode="numeric" placeholder="2026 + 학부모님 휴대폰 가운데 번호"><p class="muted" style="font-size:12.5px;margin-top:8px">예) 학부모님 번호가 010-1234-5678이면 비밀번호는 20261234<br>문의 053-716-0859</p>`
     :`<label class="lb">이름</label><input class="inp" id="ln" placeholder="${r==='owner'?'원장':'강사 이름'}"><label class="lb">비밀번호</label><input class="inp" id="lc" type="password" placeholder="비밀번호">`}
     <button class="btn btn-navy" style="width:100%;margin-top:18px;padding:15px" onclick="doLogin()">${r==='student'?'나의 공부 시작하기 →':r==='parent'?'우리 아이 공부 보기 →':'관리 화면 들어가기 →'}</button>
     <div class="err">${esc(LG.err)}</div>${first}
@@ -1256,17 +1256,17 @@ function loginView(){
 async function doLogin(){
   const n=$('#ln').value.trim(),c=$('#lc').value.trim();
   if(ONLINE){
-    if(!n||!c){LG.err=LG.role==='student'?'이름과 학생코드를 입력해 주세요':LG.role==='parent'?'휴대폰 번호와 비밀번호를 입력해 주세요':'이름과 비밀번호를 입력해 주세요';return loginView()}
+    if(!n||!c){LG.err=LG.role==='student'?'이름과 학생코드를 입력해 주세요':LG.role==='parent'?'자녀 이름과 비밀번호를 입력해 주세요':'이름과 비밀번호를 입력해 주세요';return loginView()}
     const b=document.querySelector('.login-box .btn-navy');if(b){b.disabled=true;b.textContent='확인 중…'}
     try{
       const j=await rpc('fw_login',{p_role:LG.role,p_name:n,p_secret:c});
-      if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':LG.role==='parent'?'휴대폰 번호와 비밀번호를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
+      if(!j){LG.err=LG.role==='student'?'이름과 학생코드를 다시 확인해 주세요':LG.role==='parent'?'자녀 이름과 비밀번호를 다시 확인해 주세요':'이름과 비밀번호를 다시 확인해 주세요';return loginView()}
       TOKEN=j.token;FOLDER=await sha(TOKEN);ME={role:j.role,id:j.id,token:j.token};store.set(SKEY,JSON.stringify(ME));LG.err='';
       loadingView();await pullNow(true);UI={};try{afterLoad()}catch(e){bootTrouble('화면을 여는 중 문제가 생겼어요: '+e.message+' — 이 화면을 캡처해서 알려주세요')}
     }catch(e){LG.err=e.message;loginView()}
     return;
   }
-  if(LG.role==='parent'){const p=paRows().find(x=>digits(x.phone)===digits(n)&&x.pw===c);if(!p){LG.err='휴대폰 번호와 비밀번호를 다시 확인해 주세요';return loginView()}loginAs('parent',p.id);return}
+  if(LG.role==='parent'){const k=DB.S.find(x=>x.name===n&&parentPw(x)&&parentPw(x)===c);if(!k){LG.err='자녀 이름과 비밀번호를 다시 확인해 주세요';return loginView()}const pa=paSynth(k.parent);DB.PA=[pa];loginAs('parent',pa.id);return}
   if(LG.role==='student'){const s=DB.S.find(x=>x.name===n&&x.code===c);if(!s){LG.err='이름과 학생코드를 다시 확인해 주세요';return loginView()}loginAs('student',s.id)}
   else{const t=DB.T.find(x=>x.name===n&&x.pw===c&&(LG.role==='owner'?x.role==='owner':x.role==='teacher'));if(!t){LG.err='이름과 비밀번호를 다시 확인해 주세요 (시연: 0000)';return loginView()}loginAs(t.role,t.id)}
 }
@@ -3402,13 +3402,12 @@ const paOf=id=>paRows().find(p=>p.id===id);
 const digits=s=>String(s||'').replace(/\D/g,'');
 const fmtPh=s=>{const d=digits(s);return d.length===11?d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7):d.length===10?d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6):(s||'')};
 const paKids=p=>(p&&p.kids||[]).map(stu).filter(Boolean);
-const paForStu=sid=>paRows().filter(p=>(p.kids||[]).includes(sid));
 const hwLate=t=>(t.status==='todo'||t.status==='redo')&&t.date<TODAY;
 const hwDue=t=>(t.status==='todo'||t.status==='redo')&&t.date===TODAY;
 function pStat(t){return hwLate(t)?['⚠️ 미제출','c-redo']:t.status==='redo'?['↩️ 다시 제출 요청','c-redo']:t.status==='sub'?['📮 제출함 · 확인 중','c-sub']:t.status==='ok'?['✅ 완료','c-ok']:hwDue(t)?['⏰ 오늘 마감','c-todo']:['할 일','c-todo']}
 const pmFor=ref=>pmRows().filter(m=>m.ref===ref).sort((a,b)=>(a.at||'')<(b.at||'')?-1:1);
 const pmUnseen=()=>pmRows().filter(m=>m.role==='parent'&&!m.seen);
-function pmWho(m){if(m.role==='parent'){const p=paOf(m.by);return p?p.name:'학부모님'}const t=tch(m.by);return t?t.name+(t.role==='owner'?' 원장':' 선생님'):'선생님'}
+function pmWho(m){if(m.role==='parent')return m.name||'학부모님';const t=tch(m.by);return t?t.name+(t.role==='owner'?' 원장':' 선생님'):'선생님'}
 function pmRefTid(ref){const t=DB.tasks.find(x=>x.id===ref);if(t)return t.by;const l=DB.L.find(x=>x.id===ref);return l?l.by:null}
 function pmReopen(){if(UI.pmIn&&$('#modal').classList.contains('on'))pmInbox(UI.pmIn.sid);else{UI.pmIn=null;render()}}
 
@@ -3425,7 +3424,7 @@ function pmThread(sid,ref,kind,ctx,force){
 function pmAdd(sid,ref,kind,ctx){
   const e=document.getElementById('pmi-'+ref),t=(e&&e.value||'').trim();if(!t){toast('내용을 적어주세요');return}
   const par=ME.role==='parent',s=stu(sid);
-  pmRows().push({id:'pm'+uid(),sid,ref,kind,ctx:ctx||'',text:t.slice(0,1000),by:ME.id,role:par?'parent':'staff',at:nowStr(),seen:par?0:1});
+  pmRows().push(Object.assign({id:'pm'+uid(),sid,ref,kind,ctx:ctx||'',text:t.slice(0,1000),by:ME.id,role:par?'parent':'staff',at:nowStr(),seen:par?0:1},par?{name:(paOf(ME.id)||{}).name||'학부모님'}:{}));
   if(!par)pmRows().forEach(m=>{if(m.ref===ref&&m.role==='parent')m.seen=1});
   save();if(e){e.value='';e.blur()}
   if(par)notify([sTid(s),ownerId(),pmRefTid(ref)],'👪 학부모 댓글 · '+(s?s.name:''),t.slice(0,80));
@@ -3508,61 +3507,27 @@ function pMsg(s){
   <div class="card">${pmThread(s.id,'gen_'+s.id,'gen','선생님께',true)}</div>`;
 }
 
-/* ---------- 강사·원장: 학부모 계정 관리 ---------- */
-function paGuide(p){
-  const ks=paKids(p).map(k=>k.name).join(', ');
-  return `[포워드 영어학원] 학부모 계정 안내\n\n안녕하세요, ${p.name||'학부모님'}.\n이제 ${ks} 학생의 숙제 제출 현황, 단어 시험 결과, 수업 일지를 학원 사이트에서 바로 확인하실 수 있어요. 숙제·일지마다 댓글로 선생님께 말씀도 남기실 수 있어요.\n\n👉 https://forwardeng.co.kr/app/?parent\n- 휴대폰 번호: ${fmtPh(p.phone)}\n- 비밀번호: ${p.pw}\n\n문의: 053-716-0859`;
+/* ---------- 강사·원장: 학부모 로그인 안내 ----------
+   아이디 = 학생 이름, 비밀번호 = 등록 연도(학생코드 앞 4자리) + 학부모 휴대폰 가운데 자리
+   같은 학부모 번호를 가진 형제·자매는 한 화면에서 같이 보여요 */
+const phMid=ph=>{const d=digits(ph);return d.length>=10?d.slice(3,d.length-4):''};
+function parentPw(s){const m=phMid(s&&s.parent);return m?String(s.code||'2026').slice(0,4)+m:''}
+function paSynth(ph){const d=digits(ph),ks=DB.S.filter(x=>digits(x.parent)===d);
+  return {id:'pp'+d,phone:fmtPh(d),kids:ks.map(x=>x.id),name:ks.filter(act).map(x=>x.name).join('·')+' 학부모님'}}
+function paGuide(s){
+  return `[포워드 영어학원] 학부모님 로그인 안내\n\n안녕하세요, ${s.name} 학부모님.\n이제 ${s.name} 학생의 숙제 제출 현황, 단어 시험 결과, 수업 일지를 학원 사이트에서 바로 확인하실 수 있어요. 숙제·일지마다 댓글로 선생님께 말씀도 남기실 수 있어요.\n\n👉 https://forwardeng.co.kr/app/?parent\n- 아이디: ${s.name} (학생 이름)\n- 비밀번호: ${parentPw(s)}\n  (${String(s.code||'2026').slice(0,4)} + 학부모님 휴대폰 가운데 번호)\n\n문의: 053-716-0859`;
 }
-function paNewPw(){return String(Math.floor(100000+Math.random()*900000))}
 function paCell(sid){
-  const ps=paForStu(sid),nc=pmRows().filter(m=>m.sid===sid).length;
-  return `<div class="kv"><span>👪 학부모 계정</span><b>${ps.map(p=>`<button class="linkb" onclick="paEdit('${sid}','${p.id}')">${esc(p.name)} · ${esc(fmtPh(p.phone))}</button>`).join('<br>')||'<span class="muted" style="font-weight:400">없음</span>'}
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${ps.length?'':`<button class="btn btn-soft btn-sm" onclick="paEdit('${sid}')">+ 계정 만들기</button>`}<button class="btn btn-ghost btn-sm" onclick="pmInbox('${sid}')">💬 학부모 댓글${nc?' '+nc:''}</button><button class="btn btn-ghost btn-sm" onclick="paList()">전체 계정</button></div></b></div>`;
-}
-function paEdit(sid,id){
-  const s=sid?stu(sid):null;let p=id?paOf(id):null,joined=false;
-  if(!p&&s&&digits(s.parent).length>=9){p=paRows().find(x=>digits(x.phone)===digits(s.parent))||null;if(p&&!(p.kids||[]).includes(sid))joined=true}
-  UI.pa=p?Object.assign({},p,{kids:[...new Set([...(p.kids||[]),...(sid?[sid]:[])])]}):{id:'pa'+uid(),name:s?s.name+' 어머님':'',phone:s?fmtPh(s.parent):'',pw:paNewPw(),kids:sid?[sid]:[]};
-  UI.paOld=!!p;UI.paJoin=joined;paModal();
-}
-function paModal(){
-  const p=UI.pa,opts=liveS().filter(x=>!p.kids.includes(x.id)).sort((a,b)=>a.name<b.name?-1:1);
-  modal(`<h3 class="jua">👪 학부모 계정</h3>
-  ${UI.paJoin?'<p class="pnote">같은 휴대폰 번호로 만든 계정이 있어서, 이 학생을 형제·자매로 함께 연결했어요. 저장하면 반영돼요.</p>':''}
-  <p class="muted" style="font-size:13px">학부모님은 휴대폰 번호 + 비밀번호로 로그인해서 자녀의 숙제·단어 시험·수업 일지를 보고 댓글을 남길 수 있어요. (기록을 고칠 수는 없어요)</p>
-  <label class="lb">부르는 이름</label><input class="inp" value="${esc(p.name)}" placeholder="예) 김예린 어머님" oninput="UI.pa.name=this.value">
-  <label class="lb">휴대폰 번호 (로그인 아이디)</label><input class="inp" value="${esc(p.phone)}" inputmode="tel" placeholder="010-0000-0000" oninput="UI.pa.phone=this.value">
-  <label class="lb">비밀번호</label><div style="display:flex;gap:6px"><input class="inp" id="pa-pw" value="${esc(p.pw)}" oninput="UI.pa.pw=this.value.trim()"><button class="btn btn-ghost" style="flex:0 0 auto" onclick="UI.pa.pw=paNewPw();$('#pa-pw').value=UI.pa.pw">🎲 새로</button></div>
-  <label class="lb">연결된 자녀</label><div class="chips-sel">${p.kids.map(k=>{const x=stu(k);return x?`<button class="on" onclick="UI.pa.kids=UI.pa.kids.filter(y=>y!=='${k}');paModal()">${esc(x.name)} ✕</button>`:''}).join('')||'<span class="muted">없음</span>'}</div>
-  <select class="inp" style="margin-top:8px" onchange="if(this.value){UI.pa.kids.push(this.value);paModal()}"><option value="">+ 자녀 추가 (형제·자매)</option>${opts.map(x=>`<option value="${x.id}">${esc(x.name)} · ${esc(x.school||'')} ${esc(x.grade||'')}</option>`).join('')}</select>
-  <div class="btns">${UI.paOld?`<button class="btn btn-warn" onclick="if(this.dataset.c){paDel('${p.id}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}<button class="btn btn-ghost" onclick="closeModal()">취소</button><button class="btn btn-soft" onclick="paSave(1)">저장 + 안내 문자 복사</button><button class="btn btn-navy" onclick="paSave()">저장</button></div>`);
-}
-function paSave(copy){
-  const p=UI.pa;p.name=(p.name||'').trim();p.pw=String(p.pw||'').trim();
-  if(digits(p.phone).length<10){toast('휴대폰 번호를 확인해 주세요');return}
-  if(p.pw.length<4){toast('비밀번호는 4자리 이상으로 정해주세요');return}
-  if(!p.kids.length){toast('자녀를 한 명 이상 연결해 주세요');return}
-  if(paRows().some(x=>x.id!==p.id&&digits(x.phone)===digits(p.phone))){toast('이 번호로 만든 학부모 계정이 이미 있어요');return}
-  p.phone=fmtPh(p.phone);if(!p.name)p.name=(stu(p.kids[0])||{name:''}).name+' 학부모님';
-  const i=paRows().findIndex(x=>x.id===p.id),o=Object.assign({},p,{upd:nowStr()});
-  if(i>=0)DB.PA[i]=o;else{o.at=nowStr();o.by=ME.id;paRows().push(o)}
-  save();closeModal();if(copy)copyText(paGuide(o));else toast('학부모 계정을 저장했어요');render();
-}
-function paDel(id){DB.PA=paRows().filter(x=>x.id!==id);save();closeModal();toast('학부모 계정을 지웠어요');render()}
-function paBulk(){
-  const map={};liveS().forEach(s=>{const d=digits(s.parent);if(d.length>=10&&!paForStu(s.id).length)(map[d]=map[d]||[]).push(s)});
-  let n=0;Object.keys(map).forEach(d=>{const ex=paRows().find(x=>digits(x.phone)===d),ids=map[d].map(s=>s.id);
-    if(ex){ex.kids=[...new Set([...(ex.kids||[]),...ids])];ex.upd=nowStr()}else paRows().push({id:'pa'+uid(),name:map[d][0].name+' 어머님',phone:fmtPh(d),pw:paNewPw(),kids:ids,at:nowStr(),by:ME.id});n+=ids.length});
-  save();toast(n?`학생 ${n}명의 학부모 계정을 만들었어요`:'새로 만들 학생이 없어요');paList();
+  const s=stu(sid),pw=parentPw(s),nc=pmRows().filter(m=>m.sid===sid).length;
+  return `<div class="kv"><span>👪 학부모 로그인</span><b>${pw?`아이디 ${esc(s.name)} · 비밀번호 <span style="font-family:monospace">${esc(pw)}</span>`:'<span class="muted" style="font-weight:400">학부모 연락처를 넣으면 자동으로 생겨요</span>'}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${pw?`<button class="btn btn-soft btn-sm" onclick="copyText(paGuide(stu('${sid}')))">📋 안내 문자 복사</button>`:''}<button class="btn btn-ghost btn-sm" onclick="pmInbox('${sid}')">💬 학부모 댓글${nc?' '+nc:''}</button><button class="btn btn-ghost btn-sm" onclick="paList()">전체 보기</button></div></b></div>`;
 }
 function paList(){
-  const ps=paRows().slice().sort((a,b)=>(a.name||'')<(b.name||'')?-1:1);
-  const left=liveS().filter(s=>digits(s.parent).length>=10&&!paForStu(s.id).length).length;
-  const none=liveS().filter(s=>!paForStu(s.id).length&&digits(s.parent).length<10).length;
-  modal(`<h3 class="jua">👪 학부모 계정 ${ps.length}개</h3>
-  ${left?`<div class="pnote">학부모 연락처는 있는데 계정이 없는 학생이 <b>${left}명</b> 있어요. <button class="btn btn-navy btn-sm" style="margin-top:6px" onclick="paBulk()">한 번에 만들기</button><br><small class="muted">같은 번호(형제·자매)는 한 계정으로 묶고, 비밀번호는 6자리로 자동으로 정해져요.</small></div>`:''}
-  ${none?`<p class="muted" style="font-size:12.5px">학부모 연락처가 없는 학생 ${none}명은 학생 기본 정보에 연락처를 넣은 뒤 만들 수 있어요.</p>`:''}
-  <div class="palist">${ps.map(p=>`<div class="par-row"><div><b>${esc(p.name)}</b><small>${esc(fmtPh(p.phone))} · 비밀번호 <span style="font-family:monospace">${esc(p.pw||'')}</span></small><small>👧 ${paKids(p).map(k=>esc(k.name)).join(', ')||'연결된 자녀 없음'}</small></div><div style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-soft btn-sm" onclick="copyText(paGuide(paOf('${p.id}')))">📋 안내 문자</button><button class="btn btn-ghost btn-sm" onclick="paEdit(null,'${p.id}')">수정</button></div></div>`).join('')||'<div class="empty" style="padding:20px">아직 학부모 계정이 없어요</div>'}</div>
+  const ss=liveS().slice().sort((a,b)=>a.name<b.name?-1:1),ok=ss.filter(s=>parentPw(s)),no=ss.filter(s=>!parentPw(s));
+  modal(`<h3 class="jua">👪 학부모 로그인 안내</h3>
+  <p class="pnote">아이디는 <b>학생 이름</b>, 비밀번호는 <b>등록 연도 + 학부모님 휴대폰 가운데 번호</b>예요. (예: 010-1234-5678 → 20261234)<br><small class="muted">형제·자매는 학부모 번호가 같으면 한 화면에서 함께 보여요.</small></p>
+  ${no.length?`<p class="muted" style="font-size:12.5px">학부모 연락처가 없는 학생 ${no.length}명(${no.slice(0,6).map(s=>esc(s.name)).join(', ')}${no.length>6?' 외':''})은 학생 기본 정보에 연락처를 넣으면 바로 로그인할 수 있어요.</p>`:''}
+  <div class="palist">${ok.map(s=>`<div class="par-row"><div><b>${esc(s.name)}</b><small>${esc(s.school||'')} ${esc(s.grade||'')} · 학부모 ${esc(fmtPh(s.parent))}</small><small>비밀번호 <span style="font-family:monospace">${esc(parentPw(s))}</span></small></div><button class="btn btn-soft btn-sm" onclick="copyText(paGuide(stu('${s.id}')))">📋 안내 문자</button></div>`).join('')||'<div class="empty" style="padding:20px">학부모 연락처가 등록된 학생이 없어요</div>'}</div>
   <div class="btns"><button class="btn btn-navy" onclick="closeModal()">닫기</button></div>`);
 }
 
@@ -3576,7 +3541,7 @@ function pmInbox(sid){
   const list=Object.values(refs).sort((a,b)=>(b.un>0)-(a.un>0)||(a.last<b.last?1:-1)).slice(0,30);
   modal(`<h3 class="jua">👪 학부모 댓글${sid?' · '+esc((stu(sid)||{name:''}).name):''}</h3>
   ${list.length?list.map(r=>`<div class="pmbox ${r.un?'new':''}"><div class="pmbox-h"><b>${esc((stu(r.sid)||{name:'(삭제된 학생)'}).name)}</b><span class="chip c-todo">${r.kind==='hw'?'📸 숙제':r.kind==='log'?'📝 수업 일지':'💬 선생님께'}</span><span class="muted" style="font-size:12.5px">${esc(r.ctx||'')}</span></div>${pmThread(r.sid,r.ref,r.kind,r.ctx,true)}</div>`).join(''):'<div class="empty" style="padding:22px">아직 학부모 댓글이 없어요</div>'}
-  <div class="btns"><button class="btn btn-ghost" onclick="UI.pmIn=null;paList()">학부모 계정 관리</button><button class="btn btn-navy" onclick="UI.pmIn=null;closeModal();render()">닫기</button></div>`);
+  <div class="btns"><button class="btn btn-ghost" onclick="UI.pmIn=null;paList()">학부모 로그인 안내</button><button class="btn btn-navy" onclick="UI.pmIn=null;closeModal();render()">닫기</button></div>`);
   let ch=false;all.forEach(m=>{if(m.role==='parent'&&!m.seen){m.seen=1;ch=true}});if(ch)save();
 }
 

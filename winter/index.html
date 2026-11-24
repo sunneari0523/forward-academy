@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>겨울방학 특강 사전예약 · 포워드 영어학원</title>
+<link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FDF8F9;--ink:#5B3F4C;--text:#4A3A40;--muted:#8E7C82;--rose:#D68FA5;--rose-2:#EBB3C3;--rose-soft:#FCEEF2;--sage:#7A9B80;--sage-d:#5C7F64;--sage-soft:#E6F0E7;--butter-soft:#FFF5DA;--peach-soft:#FCEAE1;--line:#F2E4E8;--err:#C8566E}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "Noto Sans KR",sans-serif;word-break:keep-all}
+.top{background:linear-gradient(135deg,#FCEEF2 0%,#FDF8F9 55%,#E6F0E7 100%);padding:36px 20px 28px;text-align:center}
+.badge{display:inline-block;padding:5px 12px;border-radius:999px;background:var(--sage);color:#fff;font-size:12.5px;font-weight:700}
+h1{margin:12px 0 6px;font-family:Jua,sans-serif;font-weight:400;font-size:clamp(28px,6vw,38px);line-height:1.2;color:var(--ink)}
+.top p{margin:0;color:var(--muted);font-size:15px}
+.facts{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.facts span{background:#fff;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;color:var(--ink);box-shadow:0 6px 18px -12px rgba(200,120,150,.6)}
+main{max-width:640px;margin:0 auto;padding:24px 18px 60px}
+.sec{background:#fff;border-radius:22px;padding:22px 20px;margin-bottom:14px;box-shadow:0 12px 32px -18px rgba(200,120,150,.35)}
+.sec h2{margin:0 0 4px;font-family:Jua,sans-serif;font-weight:400;font-size:21px;color:var(--ink)}
+.sec .hint{margin:0 0 14px;font-size:13.5px;color:var(--muted)}
+.cur{display:grid;gap:10px}
+.cur label{position:relative;display:block;border:2px solid var(--line);border-radius:16px;padding:14px 16px 14px 48px;cursor:pointer;transition:border-color .15s,background .15s}
+.cur input{position:absolute;left:16px;top:17px;width:20px;height:20px;accent-color:var(--sage);margin:0}
+.cur b{display:block;font-size:16px;color:var(--ink)}
+.cur small{display:block;font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:2px}
+.cur label:has(input:checked){border-color:var(--sage);background:#F7FBF7}
+.cur label:focus-within{outline:3px solid var(--sage-soft);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f{display:block}
+.f.full{grid-column:1/-1}
+.f span{display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.f span i{font-style:normal;color:var(--rose)}
+.f input,.f select,.f textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font:16px "Noto Sans KR",sans-serif;color:var(--text);background:#fff}
+.f textarea{min-height:90px;resize:vertical}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--sage);box-shadow:0 0 0 3px var(--sage-soft)}
+.bad{border-color:var(--err)!important}
+.rules{background:var(--peach-soft);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.rules b{color:#B5674A}
+.rules ul{margin:6px 0 0;padding-left:18px;font-size:14.5px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;font-size:14.5px;cursor:pointer}
+.chk input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--sage);flex:none}
+.chk em{font-style:normal;color:var(--rose);font-weight:700}
+.privacy{font-size:12.5px;color:var(--muted);margin:0 0 4px 30px}
+.msg{min-height:22px;color:var(--err);font-size:14px;font-weight:700;text-align:center;margin:8px 0}
+.go{display:block;width:100%;border:0;border-radius:16px;padding:16px;background:var(--rose);color:#fff;font:700 17px "Noto Sans KR",sans-serif;cursor:pointer;box-shadow:0 12px 26px -14px rgba(214,143,165,.95)}
+.go:focus-visible{outline:3px solid var(--rose-2);outline-offset:3px}
+.go:disabled{opacity:.6;cursor:default}
+.done{display:none;text-align:center;padding:40px 22px}
+.done .ok{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;background:var(--sage-soft);display:grid;place-items:center;font-size:34px;color:var(--sage-d)}
+.done h2{font-size:26px}
+.done p{color:var(--muted);margin:6px 0}
+.done .sum{margin:16px auto 0;max-width:380px;text-align:left;background:var(--bg);border-radius:14px;padding:14px 16px;font-size:14.5px}
+.done .sum div{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+.done .sum span{color:var(--muted);flex:none}
+.foot{text-align:center;font-size:13px;color:var(--muted);margin-top:18px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="badge">2027 겨울방학 특강</span>
+  <h1>겨울방학 특강 사전예약</h1>
+  <p>방학 두 달, 공부 습관과 압도적인 양을 함께 만듭니다.</p>
+  <div class="facts"><span>1월 ~ 2월</span><span>평일 오후 1 ~ 4시</span><span>2개월 60만 원</span></div>
+</header>
+
+<main>
+<form id="apForm" novalidate>
+  <section class="sec">
+    <h2>1. 커리큘럼 선택</h2>
+    <p class="hint">학생에게 맞는 과정을 하나 골라 주세요.</p>
+    <div class="cur" id="cur"></div>
+  </section>
+
+  <section class="sec">
+    <h2>2. 학생 정보</h2>
+    <p class="hint">2027년 기준 학년으로 적어 주세요.</p>
+    <div class="grid">
+      <label class="f"><span>학생 이름 <i>*</i></span><input id="sName" autocomplete="name" required></label>
+      <label class="f"><span>학교 <i>*</i></span><input id="sSchool" placeholder="예: 경북예고" required></label>
+      <label class="f"><span>학년 (2027년) <i>*</i></span>
+        <select id="sGrade" required>
+          <option value="">선택해 주세요</option>
+          <option>중1</option><option>중2</option><option>중3</option>
+          <option>고1</option><option>고2</option><option>고3</option>
+        </select></label>
+      <label class="f"><span>학생 연락처</span><input id="sPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000"></label>
+      <label class="f full"><span>학부모 연락처 <i>*</i></span><input id="pPhone" type="tel" inputmode="numeric" placeholder="010-0000-0000" required></label>
+      <label class="f full"><span>궁금한 점 · 요청 사항</span><textarea id="memo" placeholder="예: 현재 다니는 학원이 있어요 / 상담 가능한 시간"></textarea></label>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>3. 규칙 확인</h2>
+    <div class="rules">
+      <b>겨울방학 특강은 규칙을 엄격하게 운영합니다.</b>
+      <ul>
+        <li>무단결석·지각 <b>3회 이상</b> 시 강제 퇴원</li>
+        <li>숙제 미달 <b>2회 이상</b> 시 강제 퇴원</li>
+      </ul>
+    </div>
+    <label class="chk"><input type="checkbox" id="agRule"> <span>위 규칙을 확인했고, 학생과 함께 지키겠습니다. <em>(필수)</em></span></label>
+    <label class="chk"><input type="checkbox" id="agPriv"> <span>개인정보 수집·이용에 동의합니다. <em>(필수)</em></span></label>
+    <p class="privacy">수집 항목: 학생 이름·학교·학년·연락처, 학부모 연락처 · 목적: 특강 예약 및 수납 안내 · 보관: 특강 종료 후 파기</p>
+  </section>
+
+  <p class="msg" id="msg" role="alert"></p>
+  <button class="go" id="goBtn" type="submit">사전예약 신청하기</button>
+  <p class="foot">신청하시면 입금 계좌를 학부모님 연락처로 수납톡을 통해 보내드립니다. · 문의 053-716-0859</p>
+</form>
+
+<section class="sec done" id="done" aria-live="polite">
+  <div class="ok">✓</div>
+  <h2>사전예약이 접수되었습니다</h2>
+  <p>입금 계좌를 학부모님 연락처로 <b style="color:var(--sage-d)">수납톡</b>을 통해 보내드립니다.</p>
+  <div class="sum" id="sum"></div>
+  <p class="foot">문의 053-716-0859 · <a href="/" style="color:inherit">포워드 영어학원 홈으로</a></p>
+</section>
+</main>
+
+<script>
+{
+  const CUR = [
+    { id: "yego", s: "경북예고", t: "경북예고반", d: "단어 + 다음 학년 교과서·부교재 미리보기" },
+    { id: "mid", s: "중등", t: "중등반", d: "단어 + 중등 수능특강 영어·영어듣기" },
+    { id: "h12", s: "고1·고2", t: "고1·고2반", d: "단어 + 올림포스 독해의 기본 1·2 + 수능특강 Light 영어·영어독해연습 (독해 4권)" },
+    { id: "h3", s: "고3", t: "고3반", d: "단어 + 2027·2028학년도 수능특강 영어·영어독해연습" }
+  ];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  $("cur").innerHTML = CUR.map(c => `<label><input type="radio" name="cur" value="${c.id}"><b>${c.t}</b><small>${c.d}</small></label>`).join("");
+
+  const pre = new URLSearchParams(location.search).get("c");
+  if (pre) { const r = document.querySelector(`input[name=cur][value="${pre}"]`); if (r) r.checked = true; }
+
+  const tel = el => el.addEventListener("input", () => {
+    const d = el.value.replace(/\D/g, "").slice(0, 11);
+    el.value = d.length < 4 ? d : d.length < 8 ? d.slice(0, 3) + "-" + d.slice(3) : d.slice(0, 3) + "-" + d.slice(3, d.length - 4) + "-" + d.slice(-4);
+  });
+  tel($("sPhone")); tel($("pPhone"));
+
+    const SB = "https://ltvejlubynybtladghkm.supabase.co", KEY = "sb_publishable_3trcVQfRXg5HONzqdS2jkg_KyWlV73k";
+  async function saveApplication(data) {
+    const type = ("겨울특강 " + data.short).slice(0, 10);
+    const msg = ["[2027 겨울방학 특강 사전예약]", "과정: " + data.course,
+      data.phone ? "학생 연락처: " + data.phone : "", data.memo ? "요청: " + data.memo : "",
+      "규칙·개인정보 동의 완료 → 수납톡으로 입금 계좌 발송"].filter(Boolean).join("\n");
+    const p = { name: data.name, parent: data.parent, school: data.school, grade: data.grade, msg, type };
+    const r = await fetch(SB + "/rest/v1/rpc/fw_inquiry", { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify({ p }) });
+    if (!r.ok) return false;
+    fetch(SB + "/functions/v1/notify", { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "inquiry", title: "❄️ 겨울방학 특강 사전예약", body: "[" + data.course + "] " + data.name + " " + data.school + " " + data.grade + " · " + data.parent }) }).catch(() => {});
+    return true;
+  }
+
+  $("apForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    document.querySelectorAll(".bad").forEach(x => x.classList.remove("bad"));
+    const cur = document.querySelector("input[name=cur]:checked");
+    const need = [["sName", "학생 이름"], ["sSchool", "학교"], ["sGrade", "학년"], ["pPhone", "학부모 연락처"]];
+    let miss = !cur ? "커리큘럼을 선택해 주세요." : "";
+    if (!miss) for (const [id, nm] of need) { if (!$(id).value.trim()) { $(id).classList.add("bad"); miss = miss || nm + "을(를) 입력해 주세요."; } }
+    if (!miss && $("pPhone").value.replace(/\D/g, "").length < 10) { $("pPhone").classList.add("bad"); miss = "학부모 연락처를 다시 확인해 주세요."; }
+    if (!miss && !$("agRule").checked) miss = "특강 규칙 확인에 체크해 주세요.";
+    if (!miss && !$("agPriv").checked) miss = "개인정보 수집·이용에 동의해 주세요.";
+    $("msg").textContent = miss;
+    if (miss) { const b = document.querySelector(".bad"); if (b) b.focus(); return; }
+
+    const c = CUR.find(x => x.id === cur.value);
+    const data = { course: c.t, short: c.s, name: $("sName").value.trim(), school: $("sSchool").value.trim(), grade: $("sGrade").value,
+      phone: $("sPhone").value.trim(), parent: $("pPhone").value.trim(), memo: $("memo").value.trim(), at: new Date().toISOString() };
+    $("goBtn").disabled = true; $("goBtn").textContent = "보내는 중…";
+    let ok = false;
+    try { ok = await saveApplication(data); } catch (err) { ok = false; }
+    if (!ok) { $("goBtn").disabled = false; $("goBtn").textContent = "사전예약 신청하기"; $("msg").textContent = "신청이 저장되지 않았어요. 잠시 후 다시 시도하거나 053-716-0859로 연락해 주세요."; return; }
+
+    $("sum").innerHTML = [["과정", data.course], ["학생", data.name], ["학교·학년", data.school + " " + data.grade], ["학부모 연락처", data.parent]]
+      .map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("");
+    $("apForm").style.display = "none"; $("done").style.display = "block"; window.scrollTo(0, 0);
+  });
+}
+</script>
+</body>
+</html>

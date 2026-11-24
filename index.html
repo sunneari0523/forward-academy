@@ -794,5 +794,140 @@ fetch('https://ltvejlubynybtladghkm.supabase.co/rest/v1/rpc/fw_inquiry',{method:
 </script>
 <a href="#apply" id="fab" class="fab">📝 상담 신청</a>
 <script>(function(){var f=document.getElementById('fab'),t=document.getElementById('apply');if(!('IntersectionObserver' in window))return;new IntersectionObserver(function(e){f.classList.toggle('hide',e[0].isIntersecting)},{threshold:.15}).observe(t)})();</script>
+
+<!-- ❄️ 2027 겨울방학 특강 팝업 -->
+<style>
+/* ── 팝업 ── */
+#fwPop{--ink:#5B3F4C;--text:#4A3A40;--muted:#8E7C82;--rose:#D68FA5;--rose-2:#EBB3C3;--rose-soft:#FCEEF2;--sage:#7A9B80;--sage-d:#5C7F64;--sage-soft:#E6F0E7;--butter:#F4CF72;--butter-soft:#FFF5DA;--peach-soft:#FCEAE1;--line:#F2E4E8;
+  position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(74,58,64,.45);font-family:"Noto Sans KR",sans-serif;color:var(--text);word-break:keep-all}
+#fwPop[hidden]{display:none}
+#fwPop *{box-sizing:border-box}
+.fw-card{width:100%;max-width:460px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(91,63,76,.45);animation:fwIn .35s ease}
+@keyframes fwIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.fw-head{position:relative;padding:24px 24px 20px;background:linear-gradient(135deg,#FCEEF2 0%,#FDF8F9 55%,#E6F0E7 100%);text-align:center}
+.fw-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.8);color:var(--ink);font-size:18px;cursor:pointer}
+.fw-badge{display:inline-block;padding:5px 12px;border-radius:999px;background:var(--sage);color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em}
+.fw-title{margin:10px 0 4px;font-family:Jua,sans-serif;font-weight:400;font-size:30px;line-height:1.25;color:var(--ink)}
+.fw-title em{font-style:normal;color:var(--rose)}
+.fw-sub{margin:0;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.fw-sub b{color:var(--sage-d)}
+.fw-body{padding:18px 20px 4px;overflow-y:auto}
+.fw-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.fw-fact{padding:11px 6px;border-radius:14px;background:var(--rose-soft);text-align:center}
+.fw-fact small{display:block;font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.fw-fact b{display:block;font-size:14.5px;color:var(--ink);line-height:1.35}
+.fw-fact.money{background:var(--butter-soft)}
+.fw-h{margin:0 0 8px;font-family:Jua,sans-serif;font-weight:400;font-size:18px;color:var(--ink)}
+.fw-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fw-tabs button{flex:1 1 auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font:700 13px "Noto Sans KR";color:var(--muted);cursor:pointer}
+.fw-tabs button.on{background:var(--sage);border-color:var(--sage);color:#fff}
+.fw-panel{border:1.5px solid var(--sage-soft);border-radius:16px;padding:14px 16px;background:#FBFDFB;margin-bottom:16px}
+.fw-panel ul{margin:0;padding:0;list-style:none}
+.fw-panel li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.65;color:var(--text)}
+.fw-panel li::before{content:"✓";position:absolute;left:0;color:var(--sage);font-weight:900}
+.fw-why{display:flex;gap:8px;margin-bottom:16px}
+.fw-why div{flex:1;padding:12px;border-radius:14px;background:var(--sage-soft);font-size:13px;line-height:1.5;color:var(--sage-d);text-align:center}
+.fw-why b{display:block;font-family:Jua,sans-serif;font-weight:400;font-size:16px;color:var(--ink);margin-bottom:2px}
+.fw-rule{border-radius:16px;background:var(--peach-soft);padding:13px 16px;margin-bottom:12px}
+.fw-rule .fw-h{font-size:16px;color:#B5674A;margin-bottom:6px}
+.fw-rule ul{margin:0;padding-left:18px}
+.fw-rule li{font-size:13.5px;line-height:1.65}
+.fw-rule p{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.fw-foot{padding:14px 20px 16px;border-top:1px solid var(--line);background:#fff}
+.fw-cta{display:flex;gap:8px}
+.fw-cta a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:13px 8px;border-radius:14px;text-decoration:none;font-weight:700;font-size:14.5px}
+.fw-go{background:var(--rose);color:#fff;font-size:16px!important;padding:15px 8px!important;box-shadow:0 10px 22px -12px rgba(214,143,165,.9)}
+.fw-tel{background:var(--rose-soft);color:var(--ink)}
+.fw-close-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.fw-close-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.fw-close-row button{border:0;background:none;color:var(--muted);font:500 12.5px "Noto Sans KR";cursor:pointer;text-decoration:underline}
+@media (max-width:420px){.fw-title{font-size:26px}.fw-fact b{font-size:13.5px}}
+</style>
+<!-- ===================== 겨울방학 특강 팝업 ===================== -->
+<div id="fwPop" role="dialog" aria-modal="true" aria-labelledby="fwTitle" hidden>
+  <div class="fw-card">
+    <div class="fw-head">
+      <button class="fw-x" aria-label="닫기" onclick="fwClose()">✕</button>
+      <span class="fw-badge">2027 겨울방학 특강 모집</span>
+      <h2 class="fw-title" id="fwTitle">방학 두 달, <em>공부 습관</em>부터<br>다시 만듭니다</h2>
+      <p class="fw-sub">학기 중에는 하기 힘든 <b>압도적인 양</b>을<br>매일 학원에서 끝까지 해내는 집중 특강입니다.</p>
+    </div>
+
+    <div class="fw-body">
+      <div class="fw-facts">
+        <div class="fw-fact"><small>기간</small><b>1월 ~ 2월</b></div>
+        <div class="fw-fact"><small>시간</small><b>평일<br>오후 1 ~ 4시</b></div>
+        <div class="fw-fact money"><small>수강료</small><b>2개월<br>60만 원</b></div>
+      </div>
+
+      <h3 class="fw-h">학년별 커리큘럼</h3>
+      <div class="fw-tabs" role="tablist">
+        <button class="on" onclick="fwTab(0,this)">경북예고</button>
+        <button onclick="fwTab(1,this)">중등</button>
+        <button onclick="fwTab(2,this)">고1·고2</button>
+        <button onclick="fwTab(3,this)">고3</button>
+      </div>
+      <div class="fw-panel">
+        <ul class="fw-list"></ul>
+      </div>
+
+      <div class="fw-why">
+        <div><b>공부 습관</b>매일 같은 시간,<br>정해진 분량을 끝까지</div>
+        <div><b>양치기 공부</b>학기 중엔 못 하는 양을<br>방학에 몰아서</div>
+      </div>
+
+      <div class="fw-rule">
+        <h3 class="fw-h">꼭 지켜야 할 규칙</h3>
+        <ul>
+          <li>무단결석·지각 <b>3회 이상</b> 시 강제 퇴원</li>
+          <li>숙제 미달 <b>2회 이상</b> 시 강제 퇴원</li>
+        </ul>
+        <p>모든 학생이 끝까지 해낼 수 있도록 규칙을 엄격하게 운영합니다.</p>
+      </div>
+    </div>
+
+    <div class="fw-foot">
+      <div class="fw-cta">
+        <a class="fw-go" href="/winter/" target="_blank" rel="noopener">사전예약하기 →</a>
+      </div>
+      <div class="fw-close-row">
+        <label><input type="checkbox" id="fwToday"> 오늘 하루 보지 않기</label>
+        <button onclick="fwClose()">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CUR = [
+    ["단어", "다음 학년 교과서 미리보기", "다음 학년 부교재 미리보기"],
+    ["단어", "중등 수능특강 영어", "중등 수능특강 영어듣기"],
+    ["단어", "올림포스 독해의 기본 1·2", "수능특강 Light 영어 · 영어독해연습", "독해 교재 총 4권을 방학 안에 완주"],
+    ["단어", "2027·2028학년도 수능특강 영어", "2027·2028학년도 수능특강 영어독해연습"]
+  ];
+  var KEY = "fwWinterPop2027";
+  window.fwTab = function(i, btn){
+    var t = document.querySelectorAll("#fwPop .fw-tabs button");
+    for (var k = 0; k < t.length; k++) t[k].classList.toggle("on", t[k] === btn);
+    document.querySelector("#fwPop .fw-go").href = "/winter/?c=" + ["yego","mid","h12","h3"][i];
+    document.querySelector("#fwPop .fw-list").innerHTML = CUR[i].map(function(s){ return "<li>" + s + "</li>"; }).join("");
+  };
+  window.fwClose = function(){
+    try { if (document.getElementById("fwToday").checked) localStorage.setItem(KEY, new Date().toDateString()); } catch(e) {}
+    document.getElementById("fwPop").hidden = true;
+  };
+  window.fwOpen = function(force){
+    var hide = false;
+    try { hide = localStorage.getItem(KEY) === new Date().toDateString(); } catch(e) {}
+    if (force || !hide) document.getElementById("fwPop").hidden = false;
+  };
+  fwTab(0, document.querySelector("#fwPop .fw-tabs button"));
+  document.getElementById("fwPop").addEventListener("click", function(e){ if (e.target === this) fwClose(); });
+  /* 2026-11-24 21:00(한국 시간)부터 2027-02-28까지만 자동으로 떠요 */
+  var now = Date.now();
+  if (now >= Date.parse("2026-11-24T21:00:00+09:00") && now < Date.parse("2027-03-01T00:00:00+09:00")) fwOpen(false);
+})();
+</script>
 </body>
 </html>

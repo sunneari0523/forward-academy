@@ -1137,12 +1137,26 @@ function vFinish(){
   if(q.kind==='test')vReport(sc,n,q.title,pct);
   vGo('qres');
 }
-function vReport(sc,n,title,pct){
+/* 단어 숙제: 아직 안 끝난 것 중 가장 이른 것 */
+function vTask(sid){return DB.tasks.filter(x=>x.sid===sid&&x.kind==='voca'&&x.date<=TODAY&&(x.status==='todo'||x.status==='redo')).sort((a,b)=>a.date<b.date?-1:1)[0]}
+function vrLine(r){return `${r.m==='paper'?'✍️ 종이':'🔘 4지선다'} ${r.sc}/${r.n}${r.pass?' 통과':' 미달'} · ${esc((r.at||'').slice(5))}`}
+function vReport(sc,n,title,pct,mode){
   if(ME.role!=='student')return;
-  DB.R.push({id:uid(),sid:ME.id,title:'단어 · '+title,value:sc+'/'+n,date:TODAY,voca:1});
-  if(pct>=80){const t=DB.tasks.filter(x=>x.sid===ME.id&&x.kind==='voca'&&x.date<=TODAY&&x.status!=='ok').sort((a,b)=>a.date<b.date?-1:1)[0];if(t){t.status='ok';t.subAt=nowStr();t.note=`단어 시험 ${sc}/${n} 통과 (${title})`}feedPet(ME.id,20);VS.q.passed=!!t||true}
+  const paper=mode==='paper',pass=pct>=80;
+  DB.R.push(Object.assign({id:uid(),sid:ME.id,title:'단어 · '+title,value:sc+'/'+n,date:TODAY,voca:1},paper?{paper:1}:{}));
+  const t=vTask(ME.id);
+  if(t){
+    (t.vr=t.vr||[]).push({at:nowStr(),m:paper?'paper':'mc',sc,n,title,pass});
+    if(paper)t.note=`종이 시험 ${sc}/${n}${pass?'':' (80점 미만)'} · ${title} · 시험지 사진을 올리면 제출돼요`;
+    else if(pass){t.status='ok';t.subAt=nowStr();t.note=`4지선다 ${sc}/${n} 통과 (${title})`}
+    else t.note=`4지선다 ${sc}/${n} · 80점 미만이라 다시 도전해요 (${title})`;
+  }
+  VS.q.tid=t?t.id:null;VS.q.mode=paper?'paper':'mc';
+  if(pass){feedPet(ME.id,20);VS.q.passed=true}
   save();
 }
+/* 종이 시험 → 시험지 사진 올리기 */
+function vPaperPhoto(id){submitHW(id)}
 function vQRes(){
   const q=VS.q,n=q.ids.length,sc=q.right.length,pct=Math.round(sc/n*100);
   const wl=q.wrong.map(id=>WMAP[id]);
@@ -1151,7 +1165,9 @@ function vQRes(){
   if(q.kind==='split')head=`<h2 class="jua vh">스캔 완료! 🔍</h2><div class="vres"><div><b style="color:var(--sage-d)">${sc}</b><small>아는 단어</small></div><div><b style="color:var(--red)">${q.wrong.length}</b><small>모르는 단어</small></div></div><p class="muted" style="text-align:center;margin:6px 0 14px">모르는 단어 ${q.wrong.length}개를 나만의 단어장에 넣었어요.</p>
     ${q.wrong.length?`<button class="btn btn-navy" style="width:100%;padding:15px" onclick="vStartCard(VS.unk,'집중 암기',1)">STEP 2 · 집중 암기하러 가기 →</button>`:''}`;
   else head=`<h2 class="jua vh">${pct>=80?'통과! 🎉':'조금만 더! 💪'}</h2><div class="vres"><div><b style="color:${pct>=80?'var(--sage-d)':'var(--red)'}">${pct}점</b><small>${sc} / ${n}</small></div></div>
-    ${q.kind==='test'&&ME.role==='student'&&pct>=80?'<p style="text-align:center;color:var(--sage-d);font-weight:700;margin:8px 0">플래너 단어 숙제가 체크되고 콩떡이가 간식을 받았어요 🍤</p>':''}
+    ${q.kind==='test'&&ME.role==='student'?(q.mode==='paper'
+      ?(q.tid?`<p style="text-align:center;color:var(--sage-d);font-weight:700;margin:8px 0">점수를 단어 숙제에 저장했어요. 시험 본 종이를 찍어서 올리면 제출돼요 📸</p><button class="btn btn-navy" style="width:100%;padding:15px;margin-bottom:8px" onclick="vPaperPhoto('${q.tid}')">📸 시험지 사진 찍어 올리기</button>`:'<p class="muted" style="text-align:center;margin:8px 0">지금 남은 단어 숙제가 없어서 점수만 기록했어요.</p>')
+      :(q.tid?`<p style="text-align:center;color:var(--sage-d);font-weight:700;margin:8px 0">${pct>=80?'결과가 단어 숙제에 저장되고 숙제가 완료됐어요':'결과를 단어 숙제에 저장했어요. 80점 넘을 때까지 다시 도전!'}${pct>=80?' · 콩떡이가 간식을 받았어요 🍤':''}</p>`:(pct>=80?'<p style="text-align:center;color:var(--sage-d);font-weight:700;margin:8px 0">콩떡이가 간식을 받았어요 🍤</p>':''))):''}
     ${q.wrong.length?`<p class="muted" style="text-align:center;margin:6px 0 12px">틀린 단어 ${q.wrong.length}개는 나만의 단어장에 저장했어요.</p>`:''}
     ${q.kind==='unk'&&q.right.length?`<button class="btn btn-soft" style="width:100%;margin-bottom:8px" onclick="wbDel(VS.q.right);VS.unk=(VS.unk||[]).filter(i=>!VS.q.right.includes(i));toast('맞힌 ${q.right.length}단어를 단어장에서 뺐어요');this.disabled=true">✓ 맞힌 단어 ${q.right.length}개 단어장에서 빼기</button>`:''}
     ${q.wrong.length?`<button class="btn btn-navy" style="width:100%" onclick="vStartQuiz(VS.q.wrong.slice(),'${q.kind==='test'?'unk':q.kind}','틀린 단어 다시 풀기')">틀린 단어만 다시 풀기</button>`:''}`;
@@ -1216,7 +1232,7 @@ function vPaperDone(){
   if(isNaN(sc)){toast('맞은 개수를 넣어주세요');return}
   const pct=Math.round(sc/n*100);
   VS.q={ids:p.ids,kind:'test',title:p.title,right:p.ids.slice(0,sc),wrong:[],i:n};
-  vReport(sc,n,p.title,pct);vGo('qres');
+  vReport(sc,n,p.title,pct,'paper');vGo('qres');
 }
 
 /* ---------- 단어 앱 결과 받기 ---------- */
@@ -1226,8 +1242,10 @@ function processEvents(){
   fresh.forEach(e=>{
     e.done=1;
     if(e.t==='voca'&&e.sid&&stu(e.sid)){
-      const t=DB.tasks.find(x=>x.sid===e.sid&&x.kind==='voca'&&x.date<=TODAY&&x.status!=='ok');
-      if(t&&e.pct>=80){t.status='ok';t.subAt=nowStr();t.note=`단어 시험 ${e.score}/${e.n} 통과 (${e.title})`}
+      const t=vTask(e.sid);
+      if(t){(t.vr=t.vr||[]).push({at:nowStr(),m:'mc',sc:e.score,n:e.n,title:e.title,pass:e.pct>=80});
+        if(e.pct>=80){t.status='ok';t.subAt=nowStr();t.note=`4지선다 ${e.score}/${e.n} 통과 (${e.title})`}
+        else t.note=`4지선다 ${e.score}/${e.n} · 80점 미만이라 다시 도전해요 (${e.title})`}
       if(e.pct>=80){const r=feedPet(e.sid,20);if(ME&&ME.id===e.sid)got={r,e}}
       DB.R.push({id:uid(),sid:e.sid,title:'단어 · '+e.title,value:e.score+'/'+e.n,date:TODAY,voca:1});
     }
@@ -1838,11 +1856,15 @@ function taskCard(t){
   const [ic,bg]=KIND[t.kind], [sl,sc]=STAT[t.status], teacher=tch(t.by);
   let acts='';const tl=taskLs(t);
 
-  if(t.kind==='voca'&&t.status!=='ok') acts+=`<button class="btn btn-navy" onclick="openVoca()">✏️ 단어 시험 보러 가기</button>`;
+  const lastV=(t.vr||[]).slice(-1)[0];
+  if(t.kind==='voca'&&t.status==='sub') acts+=`<button class="btn btn-ghost btn-sm" onclick="submitHW('${t.id}')">시험지 사진 다시 올리기</button>`;
+  else if(t.kind==='voca'&&t.status!=='ok'&&lastV&&lastV.m==='paper') acts+=`<button class="btn btn-navy" onclick="submitHW('${t.id}')">📸 시험지 사진 올리기</button><button class="btn btn-ghost btn-sm" onclick="openVoca()">다시 시험</button>`;
+  else if(t.kind==='voca'&&t.status!=='ok') acts+=`<button class="btn btn-navy" onclick="openVoca()">✏️ 단어 시험 보러 가기</button>`;
   else if(t.kind==='hw'&&(t.status==='todo'||t.status==='redo')) acts+=`<button class="btn btn-navy" onclick="submitHW('${t.id}')">📸 사진 찍어 제출</button>`;
   else if(t.kind==='hw'&&t.status==='sub') acts+=`<button class="btn btn-ghost btn-sm" onclick="submitHW('${t.id}')">사진 다시 올리기</button>`;
   acts+=`<button class="btn btn-soft ${t.kind==='voca'&&t.status!=='ok'||t.status==='todo'||t.status==='redo'?'':''}" style="flex:0 0 auto" onclick="askAbout('${t.id}')">💬 질문</button>`;
-  return `<div class="task ${t.status==='ok'?'done':''}"><div class="row1"><div class="ic" style="background:${bg}">${t.status==='ok'?'✅':ic}</div><div style="flex:1"><div class="tt">${esc(t.title)}</div><div class="meta">${esc(teacher?teacher.name:'')} 선생님${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}${t.kind==='voca'&&t.status!=='ok'?' · 80점 넘으면 자동 완료':''}</div></div><span class="chip ${sc}">${sl}</span></div>
+  return `<div class="task ${t.status==='ok'?'done':''}"><div class="row1"><div class="ic" style="background:${bg}">${t.status==='ok'?'✅':ic}</div><div style="flex:1"><div class="tt">${esc(t.title)}</div><div class="meta">${esc(teacher?teacher.name:'')} 선생님${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}${t.kind==='voca'&&t.status!=='ok'&&t.status!=='sub'?' · 4지선다 80점↑ 자동 완료 · 종이 시험은 사진 제출':''}</div></div><span class="chip ${sc}">${sl}</span></div>
+  ${(t.vr||[]).length?`<div class="meta" style="margin-top:6px">${t.vr.slice(-3).map(vrLine).join('<br>')}${t.vr.length>3?` <span class="muted">외 ${t.vr.length-3}번</span>`:''}</div>`:''}
   ${tl.map((l,i)=>`<div class="note" style="cursor:pointer;display:flex;align-items:center;gap:8px" onclick="lsPlay('${l.id}')"><span class="btn ${LSP.id===l.id?'btn-navy':'btn-soft'} btn-sm" style="flex:0 0 auto">${LSP.id===l.id?'🔊':'▶'}</span><span style="flex:1;min-width:0">🎧 ${tl.length>1?(i+1)+'. ':''}${esc(l.title)}</span>${lsDone(l.id)?'<span class="chip c-ok">들었어요</span>':''}</div>`).join('')}
   ${t.photos.length?`<div class="thumbs">${t.photos.map(p=>`<img data-v src="${p}" alt="">`).join('')}</div>`:''}
   ${t.note?`<div class="note">${t.status==='redo'?'↩️ ':t.kind==='voca'?'🎯 ':'💬 '}${esc(t.note)}</div>`:''}
@@ -1853,7 +1875,8 @@ function submitHW(id){
     if(!imgs.length)return;
     UI.up={id,imgs};
     const t=DB.tasks.find(x=>x.id===id);
-    modal(`<h3 class="jua">숙제 제출하기</h3><p class="muted" style="font-size:14px">${esc(t.title)}</p>
+    const lv=t.kind==='voca'&&(t.vr||[]).slice(-1)[0];
+    modal(`<h3 class="jua">${t.kind==='voca'?'시험지 사진 제출':'숙제 제출하기'}</h3><p class="muted" style="font-size:14px">${esc(t.title)}${lv?' · '+vrLine(lv):''}</p>
       <div class="uppv" id="uppv">${imgs.map(i=>`<img src="${i}">`).join('')}</div>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="pickFiles(m=>{UI.up.imgs=UI.up.imgs.concat(m).slice(0,6);$('#uppv').innerHTML=UI.up.imgs.map(i=>'<img src=&quot;'+i+'&quot;>').join('')})">+ 사진 더 추가</button>
       <label class="lb">선생님께 한마디 (선택)</label><input class="inp" id="upmemo" placeholder="예) 5번은 잘 모르겠어요">
@@ -1862,8 +1885,10 @@ function submitHW(id){
 }
 function confirmHW(){
   const t=DB.tasks.find(x=>x.id===UI.up.id), memo=$('#upmemo').value.trim();
-  t.photos=UI.up.imgs;t.status='sub';t.subAt=nowStr();t.note=memo?'나: '+memo:'';
-  const r=feedPet(ME.id,30); save(); closeModal(); render();notify([sTid(stu(ME.id))],'📸 숙제 제출',stu(ME.id).name+' · '+t.title);
+  const lv=t.kind==='voca'&&(t.vr||[]).slice(-1)[0];
+  const vn=lv?`${lv.m==='paper'?'종이 시험':'4지선다'} ${lv.sc}/${lv.n}${lv.pass?'':' (80점 미만)'} · ${lv.title}`:'';
+  t.photos=UI.up.imgs;t.status='sub';t.subAt=nowStr();t.note=[vn,memo?'나: '+memo:''].filter(Boolean).join(' · ');
+  const r=feedPet(ME.id,30); save(); closeModal(); render();notify([sTid(stu(ME.id))],t.kind==='voca'?'📸 단어 시험지 제출':'📸 숙제 제출',stu(ME.id).name+' · '+t.title+(vn?' · '+vn:''));
   setTimeout(()=>petCelebrate(r,'🐟','냠냠! 숙제 고마워냥! 🐟'),60);
   toast('제출 완료! 콩떡이에게 생선을 줬어요 🐟');
 }
@@ -2904,7 +2929,8 @@ function tStuPlan(sid){
 function openTask(id){
   const t=DB.tasks.find(x=>x.id===id);if(!t)return;const s=stu(t.sid);
   modal(`<h3 class="jua">${t.kind==='voca'?'✏️ ':''}${esc(t.title)}</h3><p class="muted" style="font-size:14px;margin-top:2px">${esc(s.name)} · ${lbl(t.date)} 숙제 · <span class="chip ${STAT[t.status][1]}">${STAT[t.status][0]}</span>${t.subAt?' · 제출 '+esc(t.subAt.slice(5)):''}</p>
-  ${t.photos.length?`<div class="hwimgs" style="margin-top:12px">${t.photos.map(p=>`<img data-v src="${p}">`).join('')}</div>`:`<p class="muted" style="font-size:13.5px;margin-top:12px">${t.kind==='voca'?'단어 시험은 학생이 단어 앱에서 80점 이상 받으면 자동으로 완료돼요.':'아직 올린 사진이 없어요.'}</p>`}
+  ${t.photos.length?`<div class="hwimgs" style="margin-top:12px">${t.photos.map(p=>`<img data-v src="${p}">`).join('')}</div>`:`<p class="muted" style="font-size:13.5px;margin-top:12px">${t.kind==='voca'?'4지선다는 80점 이상이면 자동으로 완료되고, 종이 시험은 학생이 시험지 사진을 올리면 확인 대기로 와요.':'아직 올린 사진이 없어요.'}</p>`}
+  ${(t.vr||[]).length?`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px;line-height:1.7"><b>✏️ 시험 기록 ${t.vr.length}번</b><br>${t.vr.map(vrLine).join('<br>')}</div>`:''}
   ${taskLs(t).map(l=>`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px">🎧 ${esc(l.title)}<audio controls preload="none" src="${esc(l.url)}" style="width:100%;margin-top:6px"></audio></div>`).join('')}
   ${t.note?`<div style="background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:10px">💬 ${esc(t.note)}</div>`:''}
   <label class="lb">코멘트 ${t.status==='sub'?'(다시 제출 요청 시 필수)':'(선택)'}</label><input class="inp" id="cm-${t.id}" placeholder="예) 3번 풀이 과정도 써서 다시 올려줘">

@@ -1626,7 +1626,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261124215518';
+const APP_VER='20261126175650';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -1983,6 +1983,7 @@ function staffView(){
   const nav=[['home','🏠','현황'],['plan','🗓️','플래너·숙제',pendingHW().length+pendingPR().length],['voca','✏️','단어'],['exam','📝','채점·성적'],['people','👥','학생 관리'],['listen','🎧','듣기'],['att','⏱️','공부 시간',0],['inq','📥','상담 문의',(DB.I||[]).filter(i=>i.status==='new').length],['msg','💌','쌤톡',msgUnread()+kUnreadStaff()],['staff','🧑‍🏫','강사방']];
   DB.I=DB.I||[];{const nw=DB.I.filter(i=>i.status==='new').length;if(UI.inqN!=null&&nw>UI.inqN)setTimeout(()=>toast('📥 새 상담 신청이 들어왔어요!'),300);UI.inqN=nw}
   if(UI.tv==='hw'){UI.tv='plan';UI.pmode='review'}
+  if(TOKEN||!ONLINE)fxLsSync();
   let body={home:tHome,voca:vocabView,plan:tPlanHub,exam:tExam,qa:tQA,people:tPeople,inq:tInq,msg:tMsg,att:tAtt,listen:tListen,staff:tStaff}[UI.tv]();
   $('#app').innerHTML=`${ONLINE?'<div id="sync" class="sync ok">✓ 저장됨</div>':`<div class="demo-bar"><b>시연 버전</b> · ${isOwner()?'원장':'강사'} 화면 (${esc(me.name)})</div>`}<div class="st">
     <aside class="side"><img src="logo-mark.png" alt="" style="cursor:pointer" title="처음 화면" onclick="goHome()"><div class="me">${isOwner()?'원장':'강사'}<b>${esc(me.name)}</b><button class="pwbtn" onclick="changePw()">🔑 비밀번호 변경</button>${pushOn()?'':'<button class="pwbtn" onclick="pushSetup()">🔔 알림 켜기</button>'}</div>
@@ -2299,14 +2300,22 @@ function careSection(sid){
 }
 /* ----- 듣기 (모의고사·수능 듣기 mp3) ----- */
 const LS_GR=['전체','고1','고2','고3','중1','중2','중3'];
-const lsFor=s=>(DB.LS||[]).filter(x=>!x.gr||x.gr==='전체'||String(s.grade||'').includes(x.gr)).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
+/* F:OCUS 시험 자료에 올린 듣기 mp3도 자동으로 학생 🎧 듣기에 떠요 (예비고1 → 중3) */
+function fxLsGr(g){g=String(g||'');return /^예비고/.test(g)?'중3':g}
+function lsAll(){const seen=new Set();return (DB.LS||[]).filter(x=>!x.url||!seen.has(x.url)&&seen.add(x.url))}
+/* 선생님 앱이 열릴 때·mp3를 올릴 때, 아직 🎧 듣기에 없는 F:OCUS 듣기를 자동으로 추가 (새로 추가된 것만 알림) */
+function fxLsSync(){if(!ME||ME.role==='student'||ME.role==='parent')return [];DB.LS=DB.LS||[];const seen=new Set(DB.LS.map(x=>x.url)),add=[];
+  (DB.FX||[]).forEach(x=>{const u=x.files&&x.files.mp3;if(!u||seen.has(u))return;seen.add(u);const o={id:'LS_'+uid(),title:(x.title||'F:OCUS')+' 듣기',gr:fxLsGr(x.gr)||'전체',url:u,at:nowStr(),by:ME.id,fx:x.id};DB.LS.push(o);add.push(o)});
+  if(add.length){add.forEach(o=>notify(liveS().filter(s=>lsFor(s).some(y=>y.id===o.id)).map(s=>s.id),'🎧 새 듣기가 올라왔어요',o.title));save()}
+  return add}
+const lsFor=s=>lsAll().filter(x=>!x.gr||x.gr==='전체'||String(s.grade||'').includes(x.gr)).sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
 function lsDone(id){try{return localStorage.getItem('fw_ls_'+(ME&&ME.id)+'_'+id)==='1'}catch(e){return false}}
 function lsRows(list,staff){return list.map(x=>`<div class="clog" style="display:flex;align-items:center;gap:10px"><button class="btn ${LSP.id===x.id?'btn-navy':'btn-ghost'} btn-sm" onclick="lsPlay('${x.id}')">${LSP.id===x.id?'🔊':'▶'}</button><div style="flex:1;min-width:0"><b style="color:var(--ink)">${esc(x.title)}</b>${!staff&&lsDone(x.id)?' <span class="chip c-ok">들었어요</span>':''}<div class="muted" style="font-size:12.5px">${esc(x.gr||'전체')} · ${esc((x.at||'').slice(0,10))}${staff?' · '+esc((tch(x.by)||{}).name||''):''}</div></div>${staff?`<button class="x" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer" onclick="if(this.dataset.c){lsDel('${x.id}')}else{this.dataset.c=1;this.textContent='정말 삭제?'}">삭제</button>`:''}</div>`).join('')}
 function sListen(s){const L=lsFor(s);
   return `<h2 class="jua" style="margin:6px 0 4px">🎧 듣기</h2><p class="muted" style="font-size:13.5px;margin-bottom:8px">선생님이 올린 듣기 파일이에요. ▶를 누르면 아래에서 재생돼요. 속도도 바꿀 수 있어요.</p>
   ${L.length?lsRows(L,false):'<div class="empty">아직 올라온 듣기가 없어요 🎧</div>'}`}
 function tListen(){const L=(DB.LS||[]).slice().sort((a,b)=>(a.at||'')<(b.at||'')?1:-1);
-  return `<div class="ph"><div><h2 class="jua">🎧 듣기</h2><p>모의고사·수능 듣기 mp3를 올리면 그 학년 학생들 앱의 🎧 듣기 탭에 바로 떠요</p></div><button class="btn btn-navy" onclick="lsAdd()">+ 듣기 올리기</button></div>
+  return `<div class="ph"><div><h2 class="jua">🎧 듣기</h2><p>모의고사·수능 듣기 mp3를 올리면 그 학년 학생들 앱의 🎧 듣기 탭에 바로 떠요 · F:OCUS 시험 자료에 올린 듣기 mp3도 자동으로 떠요</p></div><button class="btn btn-navy" onclick="lsAdd()">+ 듣기 올리기</button></div>
   <div class="card">${L.length?lsRows(L,true):'<div class="empty" style="padding:16px">아직 올린 듣기가 없어요</div>'}</div>`}
 function lsAdd(){UI.la={gr:'전체',file:null};
   modal(`<h3 class="jua">🎧 듣기 올리기</h3>
@@ -2346,12 +2355,12 @@ function lsBar(){let b=document.getElementById('lsbar');if(!b){b=document.create
 function lsShow(){const b=lsBar(),m=mockGet(),p=!!LSP.id;b.querySelector('#lsbar-p').style.display=p?'block':'none';b.querySelector('#lsbar-m').style.display=m?'flex':'none';
   const on=p||!!m;b.style.display=on?'block':'none';document.body.style.paddingBottom=on?(p&&m?'200px':p?'150px':'90px'):'';mockTick()}
 /* ▶ 누르면: 학생은 모의고사 타이머도 켤지 물어봐요 */
-function lsPlay(id){if(!(DB.LS||[]).some(y=>y.id===id))return;
-  if(ME&&ME.role==='student'&&LSP.id!==id&&!mockGet()){const x=DB.LS.find(y=>y.id===id);
+function lsPlay(id){if(!lsAll().some(y=>y.id===id))return;
+  if(ME&&ME.role==='student'&&LSP.id!==id&&!mockGet()){const x=lsAll().find(y=>y.id===id);
     modal(`<h3 class="jua">⏱ 모의고사 타이머도 켤까요?</h3><p style="font-size:14.5px;line-height:1.7;margin:8px 0 4px"><b>${esc(x.title)}</b></p><p class="muted" style="font-size:13.5px;line-height:1.7">집에서 모의고사를 치는 중이면 타이머를 켜세요.<br>듣기 재생과 <b>동시에 ${MOCK_MIN}분 타이머</b>가 시작되고, 끝나면 알려줘요.</p>
     <div class="btns"><button class="btn btn-ghost" onclick="closeModal();lsGo('${id}',false)">듣기만 할게요</button><button class="btn btn-navy" onclick="closeModal();lsGo('${id}',true)">⏱ 타이머도 켜기</button></div>`);return}
   lsGo(id,false)}
-function lsGo(id,mock){const x=(DB.LS||[]).find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
+function lsGo(id,mock){const x=lsAll().find(y=>y.id===id);if(!x)return;const b=lsBar(),a=b.querySelector('audio');
   if(LSP.id!==id){LSP.id=id;a.src=x.url;b.querySelector('#lsbar-t').textContent='🎧 '+x.title}
   a.playbackRate=LSP.rate;
   const start=()=>{if(mock){try{localStorage.setItem(mockKey(),JSON.stringify({end:Date.now()+MOCK_MIN*60000,title:x.title}))}catch(e){}toast(`⏱ ${MOCK_MIN}분 타이머 시작! 화이팅 🐾`)}lsShow()};
@@ -2453,7 +2462,9 @@ function fxFilePick(){const f=document.createElement('input');f.type='file';f.on
 async function fxFileSave(){const o=UI.fxf,x=DB.FX.find(y=>y.id===o.id);if(!x)return;if(!o.file){toast('파일을 골라주세요');return}
   const b=$('#fxf-go');b.disabled=true;b.textContent='올리는 중… 잠시만요';
   let url;try{url=await upFile(o.file,o.slot)}catch(e){b.disabled=false;b.textContent='올리기';toast('파일 올리기에 실패했어요. 다시 시도해 주세요');return}
-  x.files=Object.assign({},x.files||{},{[o.slot]:url});save();closeModal();render();toast('올렸어요 📁')}
+  x.files=Object.assign({},x.files||{},{[o.slot]:url});
+  if(o.slot==='mp3')fxLsSync();
+  save();closeModal();render();toast(o.slot==='mp3'?'올렸어요 📁 학생 🎧 듣기에도 떠요':'올렸어요 📁')}
 function frNew(fxid,rid){const x=DB.FX.find(y=>y.id===fxid),old=rid&&DB.FR.find(r=>r.id===rid);
   const L=liveS().sort((a,b)=>a.name<b.name?-1:1);UI.fr={ans:old?old.ans.slice():Array(45).fill(''),sid:old?(old.sid||''):'',guest:old?!old.sid:false};
   modal(`<h3 class="jua">${esc(x.title)} · 학생 답 입력</h3>

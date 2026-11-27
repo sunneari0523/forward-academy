@@ -1627,7 +1627,7 @@ function xReport(sid){const s=stu(sid),d=xReportData(sid);
   ${ME.role!=='student'?`<label class="lb">카톡 미리보기</label><pre class="rpv">${esc(xReportMsg(sid))}</pre>`:''}
   <div class="btns"><button class="btn btn-ghost" onclick="closeModal()">닫기</button>${ME.role!=='student'?`<button class="btn btn-navy" onclick="copyText(xReportMsg('${sid}'))">📋 카톡용으로 복사</button>`:''}</div>`)}
 /* ----- 학생 쪽지 (선생님 ↔ 학생 채팅방) ----- */
-const APP_VER='20261126191253';
+const APP_VER='20261127175940';
 function verCheck(){if(!ONLINE)return;fetch('/app/ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=(v||'').trim();if(!v||v===APP_VER)return;
   const idle=!$('#modal').classList.contains('on')&&!busyTyping()&&!(VS.view==='quiz'||VS.view==='paper');
   if(document.visibilityState!=='visible'||idle&&UI.verSeen){location.reload();return}
@@ -2525,7 +2525,7 @@ function frPrintAll(fxid){const L=frOf(fxid).sort((a,b)=>frName(a)<frName(b)?-1:
 /* ----- 학생 앱: 성적 탭 ----- */
 /* 학생이 직접 답 입력 → 서버(fw_focus_submit)가 정답으로 채점해요. 학생 앱에는 정답이 안 내려와요 */
 function frOpen(s){const done=new Set((DB.FR||[]).filter(r=>r.sid===s.id).map(r=>r.fx));
-  return (DB.FX||[]).filter(x=>!done.has(x.id)&&(x.date||'')<=TODAY&&(!x.gr||x.gr==='전체'||!s.grade||x.gr.includes(s.grade))).sort((a,b)=>(b.no||0)-(a.no||0))}
+  return (DB.FX||[]).filter(x=>!done.has(x.id)&&(!x.gr||x.gr==='전체'||!s.grade||x.gr.includes(s.grade)||fxLsGr(x.gr)===s.grade)).sort((a,b)=>(b.no||0)-(a.no||0))}
 function friKey(id){return 'fw_fri_'+(ME&&ME.id)+'_'+id}
 function sFocusInput(id){const x=(DB.FX||[]).find(y=>y.id===id);if(!x){UI.fri=null;return null}
   if(!UI.fra||UI.fra.id!==id){let a=null;try{a=JSON.parse(store.get(friKey(id)))}catch(e){}UI.fra={id,ans:Array.isArray(a)&&a.length===45?a:Array(45).fill('')}}
